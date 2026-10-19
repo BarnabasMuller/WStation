@@ -1,4 +1,6 @@
-﻿# Budaörsi időjárás
+# WStation – Budaörsi időjárás
+
+Download and analyse the weather data from a home weather station. Uses the Weather Underground API to download the data.
 
 *Weather Underground PWS downloader and viewer for Windows – Hungarian, English, German and Spanish UI.*
 
