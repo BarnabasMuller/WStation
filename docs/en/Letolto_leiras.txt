@@ -1,0 +1,85 @@
+DOWNLOADER – GUIDE
+==================
+
+Letöltő.exe downloads the station's data from the Weather Underground PWS API and saves it into CSV
+files in the data folder. The Viewer's Refresh button runs this program, but it can also be started by hand.
+
+
+FILES
+-----
+
+  data\idojaras_adatok.csv           Main database: measurements about every 5 minutes (temperature, dew point,
+                                     humidity, wind, gusts, pressure, rain, solar radiation, UV...)
+  data\napi_osszesito.csv            Daily summaries for the last 7 days (WU's own calculation)
+  data\pillanatnyi_allapot.csv       One row of current conditions per run
+
+  appdata_letöltő\beallitasok.ini    Settings: API key, station, alerts, backup, language etc.
+  appdata_letöltő\lekerdezes_naplo.log      Readable log: what was queried and the result
+  appdata_letöltő\lekerdezes_allapot.json   The program's "memory": which days are already downloaded
+  appdata_letöltő\riasztasok.json           When an alert was last sent (repeat protection)
+  appdata_letöltő\mentesek\                 Backups (zip)
+
+The CSV files are formatted for Hungarian Excel (separator ; decimal comma).
+
+
+HOW DOES IT DECIDE WHAT TO DOWNLOAD?
+------------------------------------
+
+- Current conditions and today's measurements: at most every 5 minutes (there is no newer data).
+- Daily summary: at most hourly.
+- Missing days: from the configured period (BackfillDays or StartDate) it downloads the days not yet
+  present, newest first, at the most detailed (5-minute) resolution.
+- It respects WU's limits (1500 calls/day, 30/minute). If many days are missing, the next run fills in the rest.
+
+
+AUTOMATIC RUNS
+--------------
+
+The installer (or the Viewer's Settings tab) creates the "Budaörsi időjárás – letöltés" task in Windows
+Task Scheduler: every 15 / 30 / 60 minutes, every 3 hours, a custom interval, daily at a set time or
+weekly on chosen days. When scheduled, the Downloader opens no window. If a download is already
+running (e.g. from the Refresh button), the next one waits.
+
+It can also be set up by hand: Task Scheduler → Start a program: Letöltő.exe, argument: --nowait
+
+
+ALERTS (WINDOWS NOTIFICATIONS)
+------------------------------
+
+On every run (also when scheduled) it checks the latest measurements and sends a notification if
+there is frost risk, the pressure falls fast, gusts are strong, there is a cloudburst, or it is very hot.
+It alerts about the same event at most every few hours, and not during quiet hours (22–7 by default).
+Settings: on the Viewer's Settings tab (with a test notification), or the Riasztas… lines of beallitasok.ini.
+Drought and fire-danger warnings appear in the Viewer's watch bar.
+
+
+BACKUP
+------
+
+By default a zip of the data folder and the settings (with presets, garden diary and running log) is
+made once a week: appdata_letöltő\mentesek\mentes_<date>.zip. The latest 8 are kept.
+Settings: on the Viewer's Settings tab (frequency, number kept, "Back up now"), or the MentesNaponta
+and MentesekSzama lines in appdata_letöltő\beallitasok.ini.
+
+
+LANGUAGE
+--------
+
+The Downloader's messages (when started by hand) and the alerts use the language chosen in the Viewer
+(beallitasok.ini: Nyelv=hu / en / de / es). The log (lekerdezes_naplo.log) stays in Hungarian.
+
+
+HANDLED ERRORS
+--------------
+
+Missing or damaged CSV, rows or days deleted by hand, damaged state file, CSV left open in Excel,
+wrong API key, internet outage, two instances at once. The program always gives an understandable
+message, and the next run fills in the missing data. After an update new settings are added to
+beallitasok.ini automatically, the old ones are kept.
+
+
+EXIT CODES
+----------
+
+0 OK · 1 settings error (e.g. no API key) · 2 API key error · 3 file read/write error ·
+4 another instance is running · 5 no write permission · 9 unexpected error

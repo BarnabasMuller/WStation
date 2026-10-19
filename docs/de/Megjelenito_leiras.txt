@@ -1,0 +1,179 @@
+ANZEIGE – ANLEITUNG
+===================
+
+Megjelenítő.exe erstellt aus den Messungen im Ordner data Diagramme und Statistiken.
+Internet braucht man nur für die Schaltfläche Aktualisieren (zum Laden neuer Daten), nicht zum Anzeigen.
+
+
+SCHALTFLÄCHE AKTUALISIEREN
+--------------------------
+
+Startet den Downloader (neue Daten von Weather Underground) und liest danach den Ordner data neu ein.
+Die Kopfzeile zeigt, was gerade passiert. Ohne Internet oder ohne API-Schlüssel meldet sich das Programm
+und arbeitet mit den vorhandenen Daten weiter.
+
+
+REITER
+------
+
+  Übersicht     – Leiste „Was hat sich geändert“, Karten für heute, Beobachter, Himmel (Sonne, Mond), Wochenübersicht
+  Zeitachse     – sechs gemeinsam zoombare Diagramme mit Markierungen; eigenes Formelband
+  Kalender      – Kalender-Heatmap nach Jahr oder Monat, Gartentagebuch
+  Trockenheit   – Bodenwasserbilanz, Gießempfehlung, Bewässerungsprogramme, Feuergefahr (FWI), VPD, Wärmesumme;
+                  Unterreiter „Wasser“: Wasserverbrauch und Wasserbedarf mit Kosten
+  Regen         – Liste der Regenereignisse und Monatsniederschlag
+  Wind          – Heatmap Stunde × Monat, Windrose, windige Nachmittage
+  Statistik     – Zeitraumauswahl, Rekorde, Monatsvergleich, Heatmap Stunde × Tag, Durchschnittstag,
+                  Zeiträume übereinander, Datenqualität
+  Laufen        – Komfortindex und lernender Laufkleidungs-Berater
+  Bericht       – monatlicher Wetterbericht und Jahrbuch (Druck / PDF)
+  Einstellungen – Darstellung, Sprache, Schriftgröße, Einheiten, Warnungen, automatischer Download,
+                  Sicherung, Regenmesser-Kalibrierung, verdächtige Messungen, Excel-Export, Ordner, Änderungsprotokoll
+
+Mit dem Mond-Symbol in der Kopfzeile wechselst du schnell zwischen hellem und dunklem Design. Der gewählte
+Reiter, das Design und alle Ansichtseinstellungen bleiben erhalten (appdata_megjelenítő\felulet.json).
+
+
+SPRACHE, EINHEITEN, SCHRIFTGRÖSSE
+---------------------------------
+
+Einstellungen › Sprache: Ungarisch, Englisch, Deutsch oder Spanisch (alle Texte, die Diagramme, die
+Meldungen und Warnungen des Downloaders). Eine neue Sprache lässt sich mit einer einzigen Datei
+hinzufügen – siehe FORDITAS.md im Quellcode.
+
+Einheiten: Temperatur °C/°F, Niederschlag mm/inch, Wind km/h – m/s – Knoten – mph – Beaufort,
+Luftdruck hPa/inHg. Intern rechnet das Programm metrisch; nur Anzeige, Diagramme, Bericht und Export
+wechseln. Beaufort ist ein Dezimalwert (WMO-Formel: B = (v / 0,836)^(2/3), v in m/s); im Reiter Wind
+mit 1 Nachkommastelle, der Mittelwind mit 2.
+
+Kleinste Schriftgröße: Normal, 14, 16 oder 18 px (Zwischenwerte mit dem Schieberegler); kleine und
+mittlere Texte wachsen, große Überschriften kaum. Tastenkürzel: Strg + Plus / Strg + Minus (Strg + 0: Standard).
+
+
+ÜBERSICHT: WAS HAT SICH GEÄNDERT, BEOBACHTER, HIMMEL
+----------------------------------------------------
+
+Ganz oben die Leiste „Was hat sich geändert“: wurde das Programm in den letzten 24 Stunden geöffnet,
+„Seit gestern“, sonst „Seit dem letzten Öffnen (Datum)“ – Regen, Fronten, Gewitter, Frost, starke Böen,
+Entwicklung der Austrocknung und was zu tun ist, neue Rekorde, Datenlücken. Nach längerer Pause auch
+tageweise aufklappbar. Ein Klick springt zur Stelle auf der Zeitachse. × schließt bis zum nächsten Öffnen.
+
+Unter den Karten für heute die Beobachterleiste: Frostgefahr, Hitze, schneller Druckabfall, starker
+Wind, Starkregen, Schwüle, Wassermangel des Rasens, hohe Feuergefahr, Zambretti-Vorhersage. Daneben
+Sonnenauf- und -untergang, Tageslänge, Mondphase; „Die Extreme des Monats“ (bei mehreren Jahren „An diesem Tag“).
+
+
+ƒx – FORMELN UND EINSTELLBARE ZAHLEN
+------------------------------------
+
+Neben berechneten Werten (gefühlte Temperatur, Komfort, Beaufort, Sonnenschein, Zambretti, Regenereignisse,
+Front- und Gewitterdetektor, statistische Schwellen, windige Nachmittage, Schätzung zum Monatsende,
+Laufmodell, verdächtige Messungen, Verdunstung, Feuergefahr, VPD, Wärmesumme) öffnet ein ƒx-Symbol ein
+Fenster: Formel, Erklärung, Parameter mit Formelsymbol und Standardwert, Zurücksetzen und benannte Vorlagen.
+Ungültige Werte lassen sich nicht speichern (das Feld wird rot, der Fehler steht darunter).
+
+
+ZEITACHSE
+---------
+
+Sechs Diagramme: Temperatur und Taupunkt, Luftfeuchte, Luftdruck, Wind und Böen, Niederschlag,
+Sonnenstrahlung und UV. Zeitraum: 24 Stunden · 3 Tage · 7 Tage · 30 Tage · Dieses Jahr · Alle.
+Zoomen mit dem oberen Schieberegler oder Strg + Mausrad; verschieben durch Ziehen.
+- Orange Punkte: verdächtige Messungen. Graue Bänder: Datenlücken.
+- Gestrichelte senkrechte Linien: Frontdurchgang (❄) und Gewitter (⚡); blaue Bänder: große Regenfälle;
+  grüne gepunktete Linie: Eintrag im Gartentagebuch.
+
+EIGENE FORMEL: unten auf der Zeitachse lässt sich ein eigener Index zeichnen, z. B.:
+  eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)
+Variablen- und Funktionsnamen sind ungarisch (die Liste steht neben dem Editor): hom (Temperatur),
+para (Feuchte), légnyomás (Luftdruck), szél (Wind), lökés (Böe), eső (Regenrate), eső_összeg (Regen),
+napsütés (Strahlung), uv, vpd, et0, fwi…; Zeitverschiebung x(t-30perc), x(t-2óra), x(t-1nap);
+Funktionen összeg (Summe), átlag (Mittel), min, max, abs, gyök (Wurzel), ln, log, exp, kerekít (runden), ha (wenn).
+
+
+KALENDER UND GARTENTAGEBUCH
+---------------------------
+
+Jahres- oder Monatsansicht; die Größe ist wählbar, die Farbskala passt sich an. Schraffierte Tage haben
+unvollständige Daten. Ein Klick auf einen Tag springt zur Zeitachse.
+Gartentagebuch: Datum, Kategorie (Schnitt, Düngung, Spritzen, Blüte, Ernte, Bewässerung, Pflanzung,
+Sonstiges) und Notiz. Bewässerung fließt in die Bodenwasserbilanz ein; Blühtermine verfeinern die
+Wärmesummen-Meilensteine.
+
+
+TROCKENHEIT, GIESSEN, WASSER
+----------------------------
+
+Aus dem gemessenen Wetter berechnet das Programm die Verdunstung (FAO-56 Penman–Monteith, ET₀) und führt
+täglich eine Bodenwasserbilanz. Die ?-Schaltfläche neben der Austrocknung in % erklärt die Zahl: die
+Wurzelzone ist ein Eimer, 0 % = voll, 100 % = leer (Welkepunkt); Bereiche aus der eigenen Stressgrenze des
+Profils, Ks, Eimergröße, aktuelles Defizit und wie viele Tage ohne Regen bis zur Stressgrenze.
+
+- Profile: Bodenoberfläche, Rasen, Sträucher, Töpfe, Bäume; ein-/ausschaltbar, neue hinzufügbar.
+- Feuergefahr (kanadischer FWI) mit Schritt-für-Schritt-Erklärung und Tabelle „Heutige Berechnung“
+  (Eingaben → Zwischenwerte → Ergebnisse). Im Feuerdiagramm sind Regentage blaue Punkte (Größe nach Regen).
+- Gießempfehlung für Rasen, Sträucher, Töpfe und Bäume.
+- Bewässerungsprogramme: ein Programm wird mit Namen gespeichert (Zone, Wochentage oder alle x Tage,
+  Menge pro Gang in Minuten, mm oder Litern). Für einen neuen Zeitraum wählst du es aus und gibst Von–Bis
+  an (oder „jedes Jahr“ als MM-TT). Einmaliges Gießen erfasst du auf den Karten unter „Gegossen…“.
+  Die Bilanz berücksichtigt alle erfassten und programmierten Bewässerungen.
+- Unterreiter Wasser: aus den Flächen (Rasen m², Sträucher, Krone) die tatsächliche Bewässerung in m³ und
+  Geld sowie der Wasserbedarf: wie viel Wasser nötig gewesen wäre, um die Pflanzen im gewählten Zielzustand
+  zu halten (Ziel = höchstens so viel % Austrocknung, je Pflanze mit Schieberegler). Wasserpreis: ein Preis
+  oder Wasser- + Abwassergebühr. Kachelkalender, Monatsbalken (Bedarf, Bewässerung, Regen), Übersichtskarten
+  und Zielvergleich. Der Zeitraum kommt aus der Zeitraumauswahl des Reiters Statistik.
+
+
+REGEN, WIND, STATISTIK
+----------------------
+
+Regen: Beginn, Dauer, Summe und max. Intensität jedes Schauers, Monatsniederschlag, Filter.
+Wind: Mittelwind nach Tageszeit und Monat, Windrose, Liste der Nachmittage über 3 Bft.
+Statistik: oben die Zeitraumauswahl – Zeilen „Jahr. Monat. Tag. – Jahr. Monat. Tag.“, beliebig viele mit +;
+leeres „von“ = erster Messtag, leeres „bis“ = heute. Schnellauswahl (jedes Jahr, letzte 365 Tage, gesamter
+Zeitraum; Strg + Klick fügt hinzu), Favoriten mit Namen. Bei mehreren Zeiträumen „Gemeinsame Menge“ oder
+„Nebeneinander“ (eine Spalte / Linie je Zeitraum). Die Wahl gilt für den ganzen Reiter.
+„Zeiträume übereinander“: beliebig viele Starttage, Länge 1 Tag / 1 Woche / 1 Monat / eigene,
+mehrere Datentypen (unterschiedliche Einheiten in eigenen kleinen Diagrammen).
+
+
+LAUFEN, BERICHT
+---------------
+
+Laufen: Komfortindex und Laufkleidungs-Berater; lernt aus 5 Angaben nach dem Lauf (wann, Intensität,
+Schichten, Gefühl, wer). Bericht: monatlicher Wetterbericht und Jahrbuch, druckbar / PDF.
+
+
+EINSTELLUNGEN
+-------------
+
+- Automatischer Download: alle 15/30/60/180 Minuten, eigenes Intervall (X Minuten/Stunden/Tage), täglich
+  zu einer festen Zeit oder wöchentlich an bestimmten Tagen (Windows-Aufgabenplanung).
+- Sicherung: Häufigkeit, Anzahl, „Jetzt sichern“; die Anzeige prüft auch beim Start.
+- Regenmesser-Kalibrierung: beliebig viele Zeilen „von – bis – Handmessung“; das Programm berechnet die
+  Stationsmessung für denselben Zeitraum und den Faktor (Σ Hand / Σ Station). Es meldet einen Fehler, wenn
+  Hand- oder Stationsmessung 0 ist („ist der Regenmesser verstopft?“), und warnt bei Überschneidungen und
+  Datenlücken. Globaler oder zeitabhängiger Faktor, manuell überschreibbar; kalibrierter Niederschlag gilt
+  überall, ausgeschaltet wird der Rohwert gezeigt.
+- Verdächtige Messungen: WU-Markierungen (qcStatus 0 und −1) und eigene Regeln des Programms (unmöglicher
+  Wert, Spitze, Überhitzung durch Sonne, erste Messung nach Ausfall) getrennt schaltbar, mit Parametern;
+  die Zahl der markierten Messungen erscheint sofort.
+- Änderungsprotokoll: wann, was und worauf du geändert hast; ein Klick stellt den alten Wert wieder her.
+- Update: liegt im Programmordner oder daneben ein neueres Idojaras_telepito_v*.exe, bietet eine Leiste es an.
+- Excel-Export: die Tagesübersicht als CSV, in den gewählten Einheiten.
+
+Sicherheit: die Programme schreiben nur in ihren eigenen Ordner (Ausnahmen: Verknüpfung und geplante
+Aufgabe vom Installationsprogramm sowie der Excel-Export, dessen Ort du wählst).
+
+Weitere Schwellen: appdata_megjelenítő\megjelenito.ini (die meisten auch in den ƒx-Fenstern einstellbar).
+Die Unterordner cache, lib und WebView2 von appdata_megjelenítő können gelöscht werden.
+
+
+WENN ETWAS NICHT FUNKTIONIERT
+-----------------------------
+
+- „Noch keine Wetterdaten“: auf Daten laden klicken oder zuerst einmal den Downloader starten und den
+  API-Schlüssel eingeben.
+- Das Programm öffnet sich im Browser statt im Fenster: Microsoft Edge WebView2 fehlt (bei Windows 11
+  vorhanden). Es funktioniert trotzdem, solange das kleine Fenster „das Programm läuft“ offen ist.
+- Fehlerprotokoll: appdata_megjelenítő\megjelenito_hiba.log

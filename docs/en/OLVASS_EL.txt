@@ -1,0 +1,74 @@
+BUDAÖRS WEATHER
+===============
+
+Downloads and displays the data of a home weather station (Weather Underground PWS).
+
+
+WHAT IS IN THIS FOLDER?
+-----------------------
+
+  Megjelenítő.exe            ← START THIS ONE (the Viewer): charts, today, statistics
+  Letöltő.exe                ← the Downloader: fetches new data (the Viewer also runs it)
+  README.txt                 ← this description
+  Downloader – guide.txt     ← details about the Downloader
+  Viewer – guide.txt         ← details about the Viewer
+  Changes.txt                ← what is new in each version
+
+  data\                      ← the measurements (CSV files, can also be opened in Excel)
+  appdata_letöltő\           ← the Downloader's settings (API key) and log
+  appdata_megjelenítő\       ← the Viewer's settings, cache and log
+
+You do not need to do anything in the appdata folders; the programs manage them.
+
+
+FIRST START
+-----------
+
+1. Start Letöltő.exe with a double-click.
+   It asks for the Weather Underground API key and the station ID.
+   API key: https://www.wunderground.com/member/api-keys
+   Then it downloads the data; the first time this can take a few minutes.
+
+   (If the installer took over earlier data and the API key, you can skip this step.)
+
+2. Start Megjelenítő.exe (or the "Budaörsi időjárás" desktop shortcut).
+
+
+EVERYDAY USE
+------------
+
+Start the Viewer. Tabs: Overview ("What changed", today, watch, weekly summary) · Timeline ·
+Calendar (+ garden diary) · Drought (watering, irrigation programs, water, fire danger) · Rain · Wind ·
+Statistics · Running · Report (monthly / yearly, printable) · Settings (language: Hungarian, English,
+German, Spanish; units; font size).
+
+Click Refresh in the top right corner.
+This runs the Downloader, fetches the latest measurements and updates the charts.
+
+If you enabled automatic download during installation, the Downloader also runs in the background
+(hourly by default, without a window), even when the Viewer is closed. You can change or turn this
+off on the Viewer's Settings tab.
+
+On first start Windows may warn you ("Windows protected your PC") because the program is not
+digitally signed. In that case: More info → Run anyway.
+
+
+UPDATING TO A NEWER VERSION
+---------------------------
+
+Put the new installer into the Időjárás folder (or next to it) and start it – or simply start the
+Viewer, which offers the update. It recognises the older version and replaces the programs; data and
+settings are kept (a backup of the settings is made first).
+
+
+BACKUP, MOVING
+--------------
+
+The Downloader (and the Viewer at startup) makes backups automatically: appdata_letöltő\mentesek
+(zip; weekly by default, the latest 8 kept). Frequency and "Back up now": Viewer › Settings.
+
+The whole Időjárás folder can be copied or backed up in one piece (e.g. to a USB stick).
+The most important part is the data folder: it holds the measurements.
+
+Removal: first turn off automatic download on the Viewer's Settings tab (this deletes the scheduled
+task), then delete the Időjárás folder and the desktop shortcut. The program writes nothing else.

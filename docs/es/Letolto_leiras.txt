@@ -1,0 +1,87 @@
+DESCARGADOR – GUÍA
+==================
+
+Letöltő.exe descarga los datos de la estación desde la API PWS de Weather Underground y los guarda en
+archivos CSV en la carpeta data. El botón Actualizar del Visor ejecuta este programa, pero también se
+puede abrir a mano.
+
+
+ARCHIVOS
+--------
+
+  data\idojaras_adatok.csv           Base principal: mediciones cada 5 minutos aprox. (temperatura, punto de rocío,
+                                     humedad, viento, rachas, presión, lluvia, radiación solar, UV...)
+  data\napi_osszesito.csv            Resúmenes diarios de los últimos 7 días (cálculo de WU)
+  data\pillanatnyi_allapot.csv       Una fila del estado actual en cada ejecución
+
+  appdata_letöltő\beallitasok.ini    Ajustes: clave API, estación, alertas, copias, idioma, etc.
+  appdata_letöltő\lekerdezes_naplo.log      Registro legible: qué se consultó y con qué resultado
+  appdata_letöltő\lekerdezes_allapot.json   La «memoria» del programa: qué días ya están descargados
+  appdata_letöltő\riasztasok.json           Cuándo se envió la última alerta (protección contra repeticiones)
+  appdata_letöltő\mentesek\                 Copias de seguridad (zip)
+
+Los CSV tienen formato para Excel en húngaro (separador ; coma decimal).
+
+
+¿CÓMO DECIDE QUÉ DESCARGAR?
+---------------------------
+
+- Estado actual y mediciones de hoy: como mucho cada 5 minutos (no hay datos más nuevos).
+- Resumen diario: como mucho cada hora.
+- Días que faltan: del periodo configurado (BackfillDays o StartDate) descarga los días que aún no tiene,
+  empezando por el más reciente, con la máxima resolución (5 minutos).
+- Respeta los límites de WU (1500 llamadas/día, 30/minuto). Si faltan muchos días, la siguiente ejecución
+  completa el resto.
+
+
+EJECUCIÓN AUTOMÁTICA
+--------------------
+
+El instalador (o la pestaña Ajustes del Visor) crea la tarea «Budaörsi időjárás – letöltés» en el
+Programador de tareas de Windows: cada 15 / 30 / 60 minutos, cada 3 horas, con un intervalo propio, a
+diario a una hora fija o semanalmente en días elegidos. Programado, el Descargador no abre ventana. Si ya
+hay una descarga en curso (p. ej. desde Actualizar), la siguiente espera.
+
+También se puede configurar a mano: Programador de tareas → Iniciar un programa: Letöltő.exe, argumento: --nowait
+
+
+ALERTAS (NOTIFICACIONES DE WINDOWS)
+-----------------------------------
+
+En cada ejecución (también programada) revisa las últimas mediciones y avisa si hay riesgo de helada, la
+presión baja rápido, hay rachas fuertes, un aguacero o mucho calor. Sobre el mismo suceso avisa como mucho
+cada pocas horas, y no en las horas de silencio (por defecto 22–7).
+Ajuste: en la pestaña Ajustes del Visor (con notificación de prueba) o en las líneas Riasztas… de
+beallitasok.ini. Los avisos de sequía y de incendio aparecen en la barra de vigía del Visor.
+
+
+COPIA DE SEGURIDAD
+------------------
+
+Por defecto, una vez por semana se crea un zip de la carpeta data y de los ajustes (con ajustes guardados,
+diario del jardín y diario de carreras): appdata_letöltő\mentesek\mentes_<fecha>.zip. Se guardan los 8
+últimos. Ajuste: en la pestaña Ajustes del Visor (frecuencia, número, «Copiar ahora») o en las líneas
+MentesNaponta y MentesekSzama de appdata_letöltő\beallitasok.ini.
+
+
+IDIOMA
+------
+
+Los mensajes del Descargador (al abrirlo a mano) y las alertas usan el idioma elegido en el Visor
+(beallitasok.ini: Nyelv=hu / en / de / es). El registro (lekerdezes_naplo.log) queda en húngaro.
+
+
+ERRORES QUE GESTIONA
+--------------------
+
+CSV ausente o dañado, filas o días borrados a mano, archivo de estado dañado, CSV abierto en Excel, clave
+API errónea, corte de internet, dos instancias a la vez. El programa siempre da un mensaje comprensible y
+la siguiente ejecución completa los datos que falten. Tras actualizar, los ajustes nuevos se añaden solos
+a beallitasok.ini y los antiguos se conservan.
+
+
+CÓDIGOS DE SALIDA
+-----------------
+
+0 correcto · 1 error de ajustes (p. ej. sin clave API) · 2 error de clave API · 3 error de lectura/escritura ·
+4 ya hay una instancia en marcha · 5 sin permiso de escritura · 9 error inesperado

@@ -1,0 +1,54 @@
+WETTER BUDAÖRS – ÄNDERUNGEN
+===========================
+
+== 2.1 (2026-10-19) ==
+- Mehrsprachig: Ungarisch, Englisch, Deutsch, Spanisch – Oberfläche, ?- und ƒx-Fenster, Diagramme, Meldungen
+  und Warnungen des Downloaders, Installationsprogramm und Anleitungen. Neue Sprache mit einer Datei hinzufügbar.
+- Einheiten in den Einstellungen: °C/°F, mm/inch, km/h – m/s – Knoten – mph – Beaufort, hPa/inHg. Beaufort als
+  Dezimalwert (WMO-Formel); im Reiter Wind 1, beim Mittelwind 2 Nachkommastellen.
+- Einstellung „Kleinste Schriftgröße“ (Normal / 14 / 16 / 18 px, Schieberegler, Strg + / Strg −), auch für Diagramme.
+- Statistik: beliebig viele Von–Bis-Zeiträume, Schnellauswahl (Jahre, letzte 365 Tage, gesamter Zeitraum),
+  Favoriten; gemeinsam oder nebeneinander. „Zeiträume übereinander“ mit mehreren Zeiträumen und Datentypen,
+  Tag/Woche/Monat/eigene Länge.
+- ƒx-Symbol bei berechneten Werten: Formel, Erklärung, Parameter mit Symbol und Standardwert, Zurücksetzen,
+  benannte Vorlagen. Die ?-Fenster lehnen ungültige Werte ab und bleiben beim Speichern einer Vorlage offen.
+- Kanadischer FWI Schritt für Schritt mit Tabelle „Heutige Berechnung“; Regen als blaue Punkte im Feuerdiagramm.
+- Austrocknung in %: eigenes Erklärfenster (Eimer-Vergleich, Bereiche, Ks, Werte des Profils).
+- Karte Verdächtige Messungen: WU-Markierungen und eigene Regeln getrennt schaltbar, mit Parametern und Live-Zähler.
+- Regenmesser-Kalibrierung mit Handmessungen (beliebig viele Zeiträume, Σ Hand / Σ Station, globaler oder
+  zeitabhängiger Faktor, Fehlermeldungen wie „ist der Regenmesser verstopft?“); kalibrierter Niederschlag überall.
+- Bewässerung: gespeicherte Programme (Zone, Tage, Menge) und ihre Zeiträume; die automatische Bewässerung ist hierher gezogen.
+- Neuer Unterreiter „Wasser“: Verbrauch und Bedarf (Ziel in % Austrocknung), Kosten mit einem Preis oder
+  Wasser- + Abwassergebühr, Kachelkalender, Monatsbalken, Vergleich.
+- Leiste „Was hat sich geändert“ in der Übersicht (seit gestern / seit dem letzten Öffnen, tageweise).
+- Einstellungen: eigener Download-Zeitplan (Minuten/Stunden/täglich zu fester Zeit/wöchentlich an Tagen),
+  Sicherungshäufigkeit und „Jetzt sichern“, Änderungsprotokoll mit Wiederherstellen, Update-Prüfung.
+- Sicherheit: die Programme schreiben nur in ihren eigenen Ordner (außer Verknüpfung, geplanter Aufgabe und
+  einem an einem gewählten Ort gespeicherten Excel-Export).
+
+== 2.0 (2026-10-19) ==
+- Reiter Trockenheit: kanadischer Feuerwetterindex (FFMC, DMC, DC, ISI, BUI) mit Gefahrenklassen,
+  Dampfdruckdefizit (VPD), Wärmesumme (GDD) mit Meilensteinen.
+- Neue Reiter Regen, Wind, Statistik, Laufen und Bericht.
+- Übersicht: Beobachterleiste, Sonnenauf- und -untergang, Tageslänge, Mondphase, „Die Extreme des Monats“.
+- Zeitachse: eigenes Formelband, Front- und Gewittermarkierungen, große Regenfälle, Gartentagebuch.
+- Kalender: Gartentagebuch; Bewässerung fließt in die Bodenwasserbilanz ein.
+- Downloader: Windows-Warnungen (Frost, Druckabfall, starker Wind, Wolkenbruch, Hitze) mit Ruhezeiten.
+
+== 1.4 (2026-10-19) ==
+- Neuer Reiter Trockenheit: FAO-56-Verdunstung (ET₀) und Bodenwasserbilanz je Vegetationstyp.
+- ?-Schaltfläche bei jedem Wert: Formel, Koeffizienten mit Standardwerten, hier einstellbar.
+- Bodentypen, eigene Vorlagen, Abfluss nach SCS; Strahlungskorrektur; Bäume; Gießempfehlung.
+
+== 1.3 (2026-10-19) ==
+- Neuer Reiter Kalender mit Heatmap; Wochenübersicht in der Übersicht.
+
+== 1.2 (2026-10-18) ==
+- Installationsprogramm für alle Fälle; automatischer Download mit der Aufgabenplanung; wöchentliche
+  Sicherung; Reiter, helles / dunkles Design; Excel-Export.
+
+== 1.1 (2026-10-17) ==
+- Neue Ordnerstruktur (data, appdata_letöltő, appdata_megjelenítő), Installationsprogramm.
+
+== 1.0 (2026-10-17) ==
+- Erste Version: Zeitachse mit sechs Diagrammen, Karten für heute, Qualitätsmarkierungen, Selbsttest.

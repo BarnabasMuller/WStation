@@ -1,0 +1,87 @@
+﻿LETÖLTŐ – LEÍRÁS
+================
+
+A Letöltő.exe a Weather Underground PWS API-ból letölti az állomás adatait, és CSV fájlokba menti
+őket a data mappába. A Megjelenítő Frissítés gombja ezt a programot futtatja, de kézzel is indítható.
+
+
+FÁJLOK
+------
+
+  data\idojaras_adatok.csv           Fő adatbázis: kb. 5 percenkénti mérések (hőmérséklet, harmatpont,
+                                     páratartalom, szél, széllökés, légnyomás, csapadék, napsugárzás, UV...)
+  data\napi_osszesito.csv            Napi összesítők az utolsó 7 napra (a WU saját számítása)
+  data\pillanatnyi_allapot.csv       Minden futáskor egy sor a pillanatnyi állapotról
+
+  appdata_letöltő\beallitasok.ini    Beállítások: API kulcs, állomás, riasztások, mentés stb.
+  appdata_letöltő\lekerdezes_naplo.log      Olvasható napló: mit kérdezett le, és mi lett az eredmény
+  appdata_letöltő\lekerdezes_allapot.json   A program „memóriája”: melyik nap van már letöltve
+  appdata_letöltő\riasztasok.json           Mikor küldött utoljára riasztást (ismétlésvédelem)
+  appdata_letöltő\mentesek\                 Heti biztonsági mentések (zip)
+
+A CSV fájlok magyar Excelhez vannak formázva (elválasztó: ; tizedesjel: ,).
+
+
+HOGYAN DÖNTI EL, MIT TÖLTSÖN LE?
+--------------------------------
+
+- Pillanatnyi állapot és a mai nap mérései: legfeljebb 5 percenként (gyakrabban nincs új adat).
+- Napi összesítő: legfeljebb óránként.
+- Hiányzó napok: a beállított időszakból (BackfillDays vagy StartDate) azokat a napokat tölti le,
+  amelyek még nincsenek meg, a legfrissebbel kezdve, a legrészletesebb (5 perces) felbontásban.
+- Figyel a WU limitjeire (1500 hívás/nap, 30/perc). Ha sok nap hiányzik, a többit a következő futás pótolja.
+
+
+AUTOMATIKUS FUTTATÁS
+--------------------
+
+A telepítő (vagy a Megjelenítő Beállítások füle) a Windows Feladatütemezőjében beállítja
+a „Budaörsi időjárás – letöltés” feladatot: 15 / 30 / 60 percenként, 3 óránként, egyedi gyakorisággal,
+naponta adott időpontban vagy hetente kiválasztott napokon.
+Ütemezve a Letöltő nem nyit ablakot. Ha épp fut egy letöltés (pl. a Frissítés gombtól),
+a következő megvárja.
+
+Kézzel is beállítható: Feladatütemező → Program indítása: Letöltő.exe, argumentum: --nowait
+
+
+RIASZTÁSOK (WINDOWS-ÉRTESÍTÉS)
+------------------------------
+
+Minden futáskor (ütemezve is) ellenőrzi a legfrissebb méréseket, és értesítést küld, ha:
+fagyveszély van, gyorsan esik a légnyomás, erős a széllökés, felhőszakadás van, vagy nagy a hőség.
+Ugyanarra az eseményre legfeljebb néhány óránként szól, a csendes órákban (alapból 22–7) nem.
+Beállítás: a Megjelenítő Beállítások fülén (próba-értesítéssel), vagy a beallitasok.ini Riasztas… soraiban.
+A szárazsági és tűzveszélyi figyelmeztetés a Megjelenítő figyelő sávjában jelenik meg.
+
+
+BIZTONSÁGI MENTÉS
+-----------------
+
+Alapból hetente egyszer egy zip készül a data mappáról és a beállításokról (a presetekkel, a kerti naplóval
+és a futónaplóval együtt): appdata_letöltő\mentesek\mentes_<dátum>.zip. A legutóbbi 8 marad meg.
+Beállítás: a Megjelenítő Beállítások fülén (gyakoriság, megtartott darabszám, „Mentés most”), vagy a
+MentesNaponta, MentesekSzama sorokban az appdata_letöltő\beallitasok.ini-ben.
+
+
+NYELV
+-----
+
+A Letöltő üzenetei (ha kézzel indítod) és a riasztások a Megjelenítőben választott nyelven jelennek meg
+(beallitasok.ini: Nyelv=hu / en / de / es). A napló (lekerdezes_naplo.log) magyar marad.
+
+
+KEZELT HIBÁK
+------------
+
+Hiányzó vagy sérült CSV, kézzel törölt sorok vagy napok, sérült állapotfájl, Excelben nyitva hagyott
+CSV, hibás API kulcs, internetkimaradás, két példány egyszerre. A program mindig érthető üzenetet
+ad, és a következő futás pótolja a kimaradt adatot. A régi (egy mappás) elrendezésből induláskor
+magától áthelyezi a fájlokat a data és az appdata_letöltő mappába. Frissítés után az új beállítások
+magától bekerülnek a beallitasok.ini-be, a régiek megmaradnak.
+
+
+KILÉPÉSI KÓDOK
+--------------
+
+0 rendben · 1 beállítási hiba (pl. nincs API kulcs) · 2 API kulcs hiba · 3 fájl olvasási/mentési hiba ·
+4 már fut egy példány · 5 nincs írási jog · 9 váratlan hiba

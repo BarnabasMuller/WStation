@@ -1,0 +1,72 @@
+﻿BUDAÖRSI IDŐJÁRÁS
+=================
+
+A házi meteorológiai állomás (Weather Underground PWS) adatainak letöltése és megjelenítése.
+
+
+MI VAN EBBEN A MAPPÁBAN?
+------------------------
+
+  Megjelenítő.exe            ← EZT KELL ELINDÍTANI: grafikonok, mai nap, statisztikák
+  Letöltő.exe                ← letölti az új adatokat (a Megjelenítő magától is futtatja)
+  OLVASS_EL.txt              ← ez a leírás
+  Letöltő – leírás.txt       ← részletek a Letöltőről
+  Megjelenítő – leírás.txt   ← részletek a Megjelenítőről
+  Változások.txt             ← mi újult meg az egyes verziókban
+
+  data\                      ← a mért adatok (CSV fájlok, Excellel is megnyithatók)
+  appdata_letöltő\           ← a Letöltő beállításai (API kulcs), naplója
+  appdata_megjelenítő\       ← a Megjelenítő beállításai, gyorsítótára, naplója
+
+Az appdata mappákban nem kell semmit csinálni, a programok maguk kezelik őket.
+
+
+ELSŐ INDÍTÁS
+------------
+
+1. Indítsd el a Letöltő.exe-t dupla kattintással.
+   Megkérdezi a Weather Underground API kulcsot és az állomás azonosítóját (pl. IBUDAP123).
+   API kulcs: https://www.wunderground.com/member/api-keys
+   Ezután letölti az adatokat, ez az első alkalommal pár percig tarthat.
+
+   (Ha a telepítő átvette a korábbi adatokat és az API kulcsot, ez a lépés kimaradhat.)
+
+2. Indítsd el a Megjelenítő.exe-t (vagy az asztali „Budaörsi időjárás” parancsikont).
+
+
+MINDENNAPI HASZNÁLAT
+--------------------
+
+Indítsd el a Megjelenítőt. Fülek: Áttekintés („Mi változott”, mai nap, figyelő, heti összesítő) · Idővonal ·
+Naptár (+ kerti napló) · Szárazság (locsolás, öntözési programok, víz, tűzveszély) · Eső · Szél · Statisztika ·
+Futás · Jelentés (havi / éves, nyomtatható) · Beállítások (nyelv: magyar, angol, német, spanyol;
+mértékegységek; betűméret).
+
+Kattints a jobb felső sarokban a Frissítés gombra.
+Ez lefuttatja a Letöltőt, letölti a legújabb méréseket, és frissíti a grafikonokat.
+
+Ha a telepítéskor bekapcsoltad az automatikus letöltést, a Letöltő a háttérben magától is fut
+(alapból óránként, ablak nélkül), akkor is, ha a Megjelenítő nincs megnyitva. Ez a Megjelenítő
+Beállítások fülén átállítható vagy kikapcsolható.
+
+Első indításkor a Windows figyelmeztethet („A Windows megvédte a számítógépet”), mert a program
+nincs digitálisan aláírva. Ilyenkor: További információ → Futtatás mindenképp.
+
+
+FRISSÍTÉS ÚJABB VERZIÓRA
+------------------------
+
+Az új telepítőt tedd az Időjárás mappába (vagy mellé), és indítsd el. Felismeri a régebbi verziót,
+kicseréli a programokat, az adatok és a beállítások megmaradnak (a beállításokról előtte mentést készít).
+
+MENTÉS, ÁTKÖLTÖZÉS
+------------------
+
+A Letöltő (és induláskor a Megjelenítő) automatikusan biztonsági mentést készít: appdata_letöltő\mentesek
+(zip; alapból hetente, a legutóbbi 8). Gyakoriság és „Mentés most”: Megjelenítő › Beállítások.
+
+Az egész Időjárás mappa egyben másolható vagy menthető (pl. pendrive-ra).
+A legfontosabb a data mappa: ebben vannak a mérések.
+
+Eltávolítás: előbb a Megjelenítő Beállítások fülén kapcsold ki az automatikus letöltést (ez törli az
+ütemezett feladatot), majd töröld az Időjárás mappát és az asztali parancsikont. A program mást nem ír a gépre.

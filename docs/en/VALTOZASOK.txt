@@ -1,0 +1,74 @@
+BUDAÖRS WEATHER – CHANGES
+=========================
+
+== 2.1 (2026-10-19) ==
+- Multilingual: Hungarian, English, German, Spanish – the interface, the ? and ƒx windows, the charts, the
+  Downloader's messages and alerts, the installer and the guides. A new language can be added with one file.
+- Units in Settings: °C/°F, mm/inch, km/h – m/s – knots – mph – Beaufort, hPa/inHg. Fractional Beaufort
+  (WMO formula); 1 decimal on the Wind tab, 2 for the average wind.
+- "Minimum font size" setting (Normal / 14 / 16 / 18 px, slider, Ctrl + / Ctrl −), charts included.
+- Statistics: any number of from–to periods, quick buttons (years, previous 365 days, whole period),
+  favourites; combined or side by side. "Periods overlaid" with several periods and data types,
+  day/week/month/custom.
+- ƒx icon next to computed values: formula, explanation, parameters with symbols and standard values,
+  reset, named presets. The ? windows reject invalid values and stay open when saving a preset.
+- Canadian FWI explained step by step with a "Today's calculation" table; rain as blue dots on the fire chart.
+- Depletion %: its own explanation window (bucket analogy, bands, Ks, the profile's own numbers).
+- Suspicious measurements card: WU flags and own rules switchable separately, with parameters and a live count.
+- Rain gauge calibration with manual readings (any number of from–to periods, Σ manual / Σ station, global
+  or per-period factor, error messages such as "is the rain gauge clogged?"); calibrated rain is used everywhere.
+- Watering: saved programs (zone, days, amount) and their periods; automatic watering moved here.
+- New "Water" sub-tab: water use and demand (target % depletion), cost with one price or water + sewer fee,
+  tile calendar, monthly bars, comparison.
+- "What changed" bar on the Overview (since yesterday / since the last opening, day by day).
+- Settings: custom download schedule (minutes/hours/daily at a time/weekly on days), backup frequency and
+  "Back up now", change log with restore, update check (newer installer in or next to the folder).
+- Security: the programs only write into their own folder (except the shortcut, the scheduled task and an
+  Excel export saved to a chosen place).
+
+== 2.0 (2026-10-19) ==
+- Drought tab: Canadian Fire Weather Index (FFMC, DMC, DC, ISI, BUI) with danger classes, vapour pressure
+  deficit (VPD), heat sum (GDD) with milestones; water-demand stages can follow the heat sum.
+- New Rain tab: rain events (start, length, total, max. intensity), monthly rain, filters.
+- New Wind tab: hour × month heatmap, wind rose by knot classes, afternoons above 3 Bft.
+- New Statistics tab: clickable records, months compared (with a month-end estimate), hour × day heatmap,
+  average daily course by month, two days / weeks overlaid, data quality page.
+- New Running tab: comfort index and a learning running-clothing advisor per runner.
+- New Report tab: monthly weather report and yearbook, printable / PDF.
+- Overview: watch bar (frost, heat, pressure drop, wind, rain, comfort, drought, fire danger, Zambretti
+  forecast), sunrise, sunset, day length, moon phase, "The month's extremes" / "On this day".
+- Timeline: custom formula band, front and thunderstorm markers, big rains, garden diary entries;
+  km/h – knots – Beaufort switch everywhere.
+- Calendar: garden diary; watering is included in the soil water balance.
+- Downloader: Windows alerts (frost, pressure drop, strong wind, cloudburst, heat) with repeat protection
+  and quiet hours; adjustable on the Settings tab with a test notification.
+
+== 1.4 (2026-10-19) ==
+- New Drought tab: FAO-56 evaporation (ET₀) and soil water balance per vegetation type, profiles on/off.
+- ? button next to every indicator: formula, coefficients with standard values, adjustable here.
+- Soil types and own presets; runoff with the SCS method depending on prior saturation.
+- Solar radiation correction (suggested from the measured data, also monthly calibration).
+- Trees: daily water demand in litres from canopy, trunk and age; lasting water shortage; reserve.
+- Watering advice for lawn, drip-watered shrubs and pots; automatic program and "I watered" log.
+- Evaporation and depletion can be shown in the calendar.
+
+== 1.3 (2026-10-19) ==
+- New Calendar tab: calendar heatmap with year and month view and 15 quantities.
+- Colour scale follows the quantity; incomplete days are striped; clicking a day opens the timeline.
+- Weekly summary on the Overview: 7 day cards and a weekly total; previous week / last 7 days / current week.
+
+== 1.2 (2026-10-18) ==
+- The installer handles every case: empty folder, older version, old single-folder layout, old CSV.
+- Automatic download with Task Scheduler, adjustable interval (at installation and on the Settings tab).
+- When scheduled the Downloader opens no window; if another download is running it waits.
+- Weekly automatic backup (appdata_letöltő\mentesek).
+- On update new settings are added to the settings files, old ones are kept.
+- Viewer: tabs, dark / light theme switch, Settings tab.
+- Excel export: daily summary table with one click.
+
+== 1.1 (2026-10-17) ==
+- New folder structure (data, appdata_letöltő, appdata_megjelenítő), installer.
+- The Viewer's Refresh button downloads new data.
+
+== 1.0 (2026-10-17) ==
+- First version: timeline with six charts, "Today" cards, quality flags, self-test.

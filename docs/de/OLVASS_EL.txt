@@ -1,0 +1,75 @@
+WETTER BUDAÖRS
+==============
+
+Herunterladen und Anzeigen der Daten einer Wetterstation zu Hause (Weather Underground PWS).
+
+
+WAS IST IN DIESEM ORDNER?
+-------------------------
+
+  Megjelenítő.exe              ← DIESES PROGRAMM STARTEN (die Anzeige): Diagramme, heute, Statistiken
+  Letöltő.exe                  ← der Downloader: lädt neue Daten (die Anzeige startet ihn auch selbst)
+  LIESMICH.txt                 ← diese Beschreibung
+  Downloader – Anleitung.txt   ← Details zum Downloader
+  Anzeige – Anleitung.txt      ← Details zur Anzeige
+  Änderungen.txt               ← was in jeder Version neu ist
+
+  data\                        ← die Messdaten (CSV-Dateien, auch mit Excel zu öffnen)
+  appdata_letöltő\             ← Einstellungen (API-Schlüssel) und Protokoll des Downloaders
+  appdata_megjelenítő\         ← Einstellungen, Cache und Protokoll der Anzeige
+
+In den appdata-Ordnern musst du nichts tun; die Programme verwalten sie selbst.
+
+
+ERSTER START
+------------
+
+1. Starte Letöltő.exe per Doppelklick.
+   Es fragt nach dem Weather-Underground-API-Schlüssel und der Stations-ID.
+   API-Schlüssel: https://www.wunderground.com/member/api-keys
+   Danach lädt es die Daten; beim ersten Mal kann das einige Minuten dauern.
+
+   (Wenn das Installationsprogramm frühere Daten und den API-Schlüssel übernommen hat, entfällt dieser Schritt.)
+
+2. Starte Megjelenítő.exe (oder die Desktop-Verknüpfung „Budaörsi időjárás“).
+
+
+TÄGLICHE NUTZUNG
+----------------
+
+Starte die Anzeige. Reiter: Übersicht („Was hat sich geändert“, heute, Beobachter, Wochenübersicht) ·
+Zeitachse · Kalender (+ Gartentagebuch) · Trockenheit (Gießen, Bewässerungsprogramme, Wasser, Feuergefahr) ·
+Regen · Wind · Statistik · Laufen · Bericht (Monat / Jahr, druckbar) · Einstellungen (Sprache: Ungarisch,
+Englisch, Deutsch, Spanisch; Einheiten; Schriftgröße).
+
+Klicke oben rechts auf Aktualisieren. Das startet den Downloader, lädt die neuesten Messungen und
+aktualisiert die Diagramme.
+
+Wenn du bei der Installation den automatischen Download eingeschaltet hast, läuft der Downloader auch im
+Hintergrund (standardmäßig stündlich, ohne Fenster), auch wenn die Anzeige geschlossen ist. Das lässt
+sich im Reiter Einstellungen der Anzeige ändern oder abschalten.
+
+Beim ersten Start kann Windows warnen („Der Computer wurde durch Windows geschützt“), weil das Programm
+nicht digital signiert ist. Dann: Weitere Informationen → Trotzdem ausführen.
+
+
+AKTUALISIEREN AUF EINE NEUERE VERSION
+-------------------------------------
+
+Lege das neue Installationsprogramm in den Ordner Időjárás (oder daneben) und starte es – oder starte
+einfach die Anzeige, die das Update anbietet. Es erkennt die ältere Version und ersetzt die Programme;
+Daten und Einstellungen bleiben erhalten (vorher wird eine Sicherung der Einstellungen erstellt).
+
+
+SICHERUNG, UMZUG
+----------------
+
+Der Downloader (und die Anzeige beim Start) sichert automatisch: appdata_letöltő\mentesek
+(Zip; standardmäßig wöchentlich, die letzten 8). Häufigkeit und „Jetzt sichern“: Anzeige › Einstellungen.
+
+Der ganze Ordner Időjárás kann in einem Stück kopiert oder gesichert werden (z. B. auf einen USB-Stick).
+Am wichtigsten ist der Ordner data: darin liegen die Messungen.
+
+Entfernen: zuerst im Reiter Einstellungen der Anzeige den automatischen Download abschalten (das löscht
+die geplante Aufgabe), dann den Ordner Időjárás und die Desktop-Verknüpfung löschen. Sonst schreibt das
+Programm nichts auf den Rechner.

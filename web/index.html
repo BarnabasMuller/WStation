@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Budaörsi időjárás</title>
+<link rel="stylesheet" href="app.css">
+<script>
+  // a téma azonnal (villanás nélkül); a mentett beállítás betöltés után felülírhatja
+  document.documentElement.dataset.theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+</script>
+</head>
+<body>
+
+<div id="overlay" class="overlay">
+  <div class="overlay-card">
+    <div id="ovSpinner" class="spinner"></div>
+    <h2 id="ovTitle">Adatok betöltése…</h2>
+    <p id="ovText"></p>
+    <div id="ovActions" class="ov-actions"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3884f4"/><stop offset="1" stop-color="#1c54c4"/></linearGradient></defs>
+      <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#lg)"/>
+      <circle cx="41" cy="22" r="11" fill="#ffc83d"/>
+      <g fill="#fff"><ellipse cx="21" cy="39" rx="10" ry="9"/><circle cx="33" cy="35" r="12"/><ellipse cx="44" cy="39" rx="9" ry="8"/><rect x="20" y="38" width="26" height="10"/></g>
+    </svg>
+    <div>
+      <h1>Budaörsi időjárás</h1>
+      <div class="sub" id="sub">&nbsp;</div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="attekintes" class="on"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Áttekintés</button>
+    <button data-tab="idovonal"><svg viewBox="0 0 24 24"><path d="M3.5 18.5l6-6 4 4L22 6.9 20.6 5.5l-7.1 8-4-4L2 17z"/></svg>Idővonal</button>
+    <button data-tab="naptar"><svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V9h14v11zM7 11h4v4H7z"/></svg>Naptár</button>
+    <button data-tab="szarazsag"><svg viewBox="0 0 24 24"><path d="M12 2.7s-6.5 7.3-6.5 11.8a6.5 6.5 0 0 0 13 0C18.5 10 12 2.7 12 2.7zm0 16.8a5 5 0 0 1-5-5h2a3 3 0 0 0 3 3v2z"/></svg>Szárazság</button>
+    <button data-tab="eso"><svg viewBox="0 0 24 24"><path d="M6 14a4 4 0 0 1 .5-8A5.5 5.5 0 0 1 17 7a3.5 3.5 0 0 1 .5 7H6zm1 2l-1.5 4M11 16l-1.5 4M15 16l-1.5 4" stroke="currentColor" stroke-width="1.8" fill="currentColor"/></svg>Eső</button>
+    <button data-tab="szel"><svg viewBox="0 0 24 24"><path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>Szél</button>
+    <button data-tab="stat"><svg viewBox="0 0 24 24"><path d="M4 20V10h3v10H4zm6 0V4h3v16h-3zm6 0v-7h3v7h-3z"/></svg>Statisztika</button>
+    <button data-tab="futas"><svg viewBox="0 0 24 24"><path d="M13.5 5.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3A7.3 7.3 0 0 0 19 13v-2a5 5 0 0 1-4.3-2.4l-1-1.6a2 2 0 0 0-2.7-.7L6 8.3V13h2V9.6l1.8-.7z"/></svg>Futás</button>
+    <button data-tab="jelentes"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>Jelentés</button>
+    <button data-tab="beallitasok"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>Beállítások</button>
+  </nav>
+  <div class="actions">
+    <button id="btnTheme" class="icon-btn" title="Világos / sötét téma"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8A9.3 9.3 0 0 0 12 3z"/></svg></button>
+    <div id="busy" class="busy hidden"><div class="mini-spin"></div><span id="busyText"></span></div>
+    <button id="btnRefresh" class="btn primary" title="Új adatok letöltése a Weather Undergroundról, majd megjelenítése">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      <span>Frissítés</span>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div id="updateBanner" class="banner update hidden"></div>
+  <div id="staleBanner" class="banner hidden"></div>
+
+  <section class="page" data-page="attekintes">
+    <div id="changeBar" class="banner chg hidden"></div>
+    <div class="today" id="today"></div>
+
+    <div class="panel" id="week">
+      <div class="panel-head">
+        <h2>Heti összesítő</h2>
+        <div class="seg" id="weekMode">
+          <button data-v="prev">Előző hét (H–V)</button>
+          <button data-v="last7">Utolsó 7 nap</button>
+          <button data-v="cur">Aktuális hét</button>
+        </div>
+        <div class="cal-nav">
+          <button class="icon-btn" id="weekPrev" title="Előző hét">‹</button>
+          <span id="weekTitle"></span>
+          <button class="icon-btn" id="weekNext" title="Következő hét">›</button>
+        </div>
+        <div class="pop-wrap">
+          <button class="icon-btn" id="weekGear" title="Mi látsszon a kártyákon?"><svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5L19.4 13zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg></button>
+          <div class="pop hidden" id="weekPop">
+            <div class="pop-title">Mi látsszon a kártyákon?</div>
+            <div id="weekRows" class="pop-list"></div>
+            <div class="pop-title">Szél mértékegysége</div>
+            <div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+            <div class="pop-note">Ez a közös szél-mértékegység (Beállítások › Mértékegységek); a választás mentődik.</div>
+          </div>
+        </div>
+      </div>
+      <div class="wk-grid" id="weekCards"></div>
+      <div class="wk-sum" id="weekSum"></div>
+    </div>
+  </section>
+
+  <section class="page panel hidden" data-page="naptar">
+    <div class="panel-head">
+      <h2>Naptár</h2>
+      <div class="seg" id="calView"><button data-v="year">Év</button><button data-v="month">Hónap</button></div>
+      <select id="calMetric" class="sel"></select>
+      <div class="cal-nav hidden" id="calNav">
+        <button class="icon-btn" id="calPrev" title="Előző hónap (←)">‹</button>
+        <span id="calTitle"></span>
+        <button class="icon-btn" id="calNext" title="Következő hónap (→)">›</button>
+      </div>
+      <label class="switch" title="A gyanús (minőségjelzős) mérések kihagyása a napi értékekből">
+        <input type="checkbox" id="calClean"><span class="slider"></span><span>Gyanús értékek kizárása</span>
+      </label>
+    </div>
+    <div class="hint">Kattints egy napra: az idővonal arra a napra ugrik. A csíkozott napok hiányos adatúak (az állomás nem küldött egész nap).</div>
+    <div id="cal"></div>
+    <div class="diary">
+      <div class="panel-head"><h2 style="font-size:15px">📝 Kerti napló</h2></div>
+      <div class="row2 dform">
+        <input type="date" class="inp" id="dDate">
+        <select class="sel" id="dTag"></select>
+        <input class="inp" id="dText" placeholder="megjegyzés, pl. „virágzik a barack”" style="flex:1;min-width:220px">
+        <span id="dWater" class="hidden"><input class="inp" id="dAmount" type="number" step="0.5" placeholder="mennyiség" style="width:100px">
+          <select class="sel" id="dUnit"><option value="perc">perc</option><option value="mm">mm</option><option value="l">liter</option></select>
+          <select class="sel" id="dZone"></select></span>
+        <button class="btn primary" id="dAdd">Hozzáadás</button>
+      </div>
+      <div class="hint">A bejegyzések az idővonalon 📝 jelölőként látszanak. Az öntözés a talajvíz-mérlegbe is bekerül, a virágzás napjaiból pedig a hőösszeg-mérföldkövek pontosíthatók (Szárazság fül).</div>
+      <div id="dList" class="dlist"></div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="eso">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Eső</h2>
+        <select class="sel" id="rainYear"></select>
+        <select class="sel" id="rainMonth"><option value="">Minden hónap</option><option value="01">január</option><option value="02">február</option><option value="03">március</option><option value="04">április</option><option value="05">május</option><option value="06">június</option><option value="07">július</option><option value="08">augusztus</option><option value="09">szeptember</option><option value="10">október</option><option value="11">november</option><option value="12">december</option></select>
+        <label class="muted">legalább <input class="inp" id="rainMin" type="number" step="0.5" min="0" style="width:70px"> <span id="rainMinU">mm</span></label>
+        <label class="switch"><input type="checkbox" id="rainBurst"><span class="slider"></span><span>csak felhőszakadás</span></label>
+      </div>
+      <div class="dr-grid" id="rainCards"></div>
+      <div id="rainChart" style="height:470px;margin-top:10px"></div>
+      <div id="rainTable" class="tablewrap"></div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="szel">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Szél</h2>
+        <select class="sel" id="windPeriod"></select>
+        <div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+      </div>
+      <div class="dr-grid" id="windCards"></div>
+      <div class="two-col">
+        <div id="windHm" style="height:420px"></div>
+        <div id="windRose" style="height:420px"></div>
+      </div>
+      <h3 class="sub-h">3 Bft fölötti délutánok</h3>
+      <div class="chips" id="windDays"></div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="stat">
+    <div class="panel" id="stRangePanel">
+      <div class="panel-head">
+        <h2>Időszak</h2>
+        <div class="seg" id="stRangeMode" title="Több időszaknál: együtt számolja őket, vagy egymás mellett hasonlítja össze"><button data-v="union">Közös halmaz</button><button data-v="side">Egymás mellett</button></div>
+        <label class="switch"><input type="checkbox" id="stClean"><span class="slider"></span><span>Gyanús adatok kizárása</span></label>
+      </div>
+      <div class="hint">Év. hónap. nap. – az üres „tól” az első mért nap, az üres „ig” a mai nap; elég az évet (vagy évet és hónapot) megadni. A <b>+</b> újabb időszakot ad. A választás a fül minden részére érvényes.</div>
+      <div id="stRanges"></div>
+      <div class="row2" id="stQuick"></div>
+      <div class="row2">
+        <select class="sel" id="stFavSel"></select>
+        <input class="inp" id="stFavName" placeholder="név, pl. Nyarak" maxlength="40" style="width:170px">
+        <button class="btn" id="stFavSave">★ Mentés kedvencként</button>
+        <button class="btn" id="stFavDel">Kedvenc törlése</button>
+      </div>
+      <div class="hint" id="stRangeSum"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head">
+        <h2>Rekordok</h2>
+      </div>
+      <div class="hint">Kattints egy rekordra: az idővonal oda ugrik, és kiemeli az időpontot.</div>
+      <div class="rec-grid" id="stRecords"></div>
+      <div class="wk-sum" id="stCounts"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h2>Ez a hónap a többihez képest</h2>
+        <select class="sel" id="stMetric"><option value="tavg">átlaghőmérséklet</option><option value="rain">csapadék</option><option value="sun">napsütéses órák</option></select></div>
+      <div id="stMonths" style="height:300px"></div>
+      <div class="hint" id="stMonthNote"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h2>Óra × nap hőtérkép</h2>
+        <select class="sel" id="stHmMetric"><option value="temp">hőmérséklet</option><option value="hum">páratartalom</option><option value="dew">harmatpont</option><option value="wind">szél</option><option value="sun">napsugárzás</option><option value="pres">légnyomás</option><option value="vpd">VPD</option></select></div>
+      <div id="stHm" style="height:420px"></div>
+      <h3 class="sub-h" id="stCycleTitle">Átlagos nap hónaponként</h3>
+      <div class="hint" id="stCycleSub" style="margin-top:-4px">Minden vonal egy hónap átlagos napja: óránként az adott hónap összes napjának átlaga. Így látszik, mikor a legmelegebb a nap, mikor fúj leginkább a szél, és hogyan tolódik ez évszakonként.</div>
+      <div id="stCycle" style="height:330px"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h2>Időszakok egymásra rajzolva</h2>
+        <label class="muted">hossz</label>
+        <select class="sel" id="cmpMode"><option value="day">1 nap</option><option value="week">1 hét</option><option value="month">1 hónap (31 nap)</option><option value="n">egyedi…</option></select>
+        <span id="cmpNWrap" class="hidden"><input class="inp num" id="cmpN" inputmode="numeric" style="width:60px"> nap <span class="perr" id="cmpNErr"></span></span>
+      </div>
+      <div class="hint">Minden időszak a saját kezdőnapjától indul, így egymásra kerülnek – pl. ugyanaz a hét három különböző évben. A <b>+</b> újabb időszakot ad (legfeljebb 8).</div>
+      <div class="row2" id="cmpStarts"></div>
+      <div class="row2"><span class="muted">Mit mutasson:</span> <span class="daypick" id="cmpVars"></span></div>
+      <div id="stCmp" style="height:340px"></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-head"><h2>Adatminőség</h2></div>
+      <div class="hint" id="stQualitySum"></div>
+      <div class="two-col">
+        <div><h3 class="sub-h">Adathiányok</h3><div id="stGaps" class="tablewrap short"></div></div>
+        <div><h3 class="sub-h">Gyanús mérések</h3><div id="stFlags"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="futas">
+    <div class="dr-grid run-grid">
+      <div class="card" id="runComfort"></div>
+      <div class="card wide2">
+        <h3>Mit vegyek fel futáshoz?</h3>
+        <div class="row2">
+          <input class="inp" id="advWho" list="runNames" placeholder="ki fut? (pl. Peti)" style="width:160px">
+          <input type="datetime-local" class="inp" id="advWhen"> <button class="btn" id="advNow">most</button>
+          <label class="muted">intenzitás <input type="range" id="advInt" min="1" max="10" value="5"> <b id="advIntVal">5</b></label>
+        </div>
+        <div id="advOut" class="adv"></div>
+      </div>
+      <div class="card wide2">
+        <h3>Futás után: tanítsd a tanácsadót</h3>
+        <div class="row2">
+          <input class="inp" id="logWho" list="runNames" placeholder="ki futott?" style="width:160px">
+          <input type="datetime-local" class="inp" id="logWhen">
+          <label class="muted">intenzitás <input type="range" id="logInt" min="1" max="10" value="5"> <b id="logIntVal">5</b></label>
+          <label class="muted">rétegek <input class="inp" id="logLayers" type="number" min="1" max="8" value="2" style="width:60px"></label>
+        </div>
+        <div class="row2"><label class="muted">milyen volt? <input type="range" id="logFeel" min="-5" max="5" value="0" style="width:220px"> <b id="logFeelVal">0 (tökéletes)</b></label>
+          <button class="btn primary" id="logSave">Rögzítés</button></div>
+        <div class="hint">−5 = nagyon fáztam · 0 = tökéletes · +5 = nagyon melegem volt. Az időjárást a program a mérésekből keresi ki.</div>
+        <datalist id="runNames"></datalist>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px"><div class="panel-head"><h2>Futónapló</h2></div><div id="runTable" class="tablewrap"></div></div>
+  </section>
+
+  <section class="page hidden" data-page="jelentes">
+    <div class="panel no-print">
+      <div class="panel-head">
+        <h2>Jelentés</h2>
+        <div class="seg" id="repMode"><button data-v="month">Havi időjárás-jelentés</button><button data-v="year">Éves évkönyv</button></div>
+        <select class="sel" id="repPick"></select>
+        <button class="btn primary" id="repPrint">🖨 Nyomtatás / PDF</button>
+      </div>
+      <div class="hint">A nyomtatási ablakban a „Mentés PDF-ként” nyomtatót választva PDF készül.</div>
+    </div>
+    <div class="report" id="repBody"></div>
+  </section>
+
+  <section class="page panel hidden" data-page="idovonal">
+    <div class="panel-head">
+      <h2>Idővonal</h2>
+      <div class="seg" id="ranges">
+        <button data-r="1d">24 óra</button>
+        <button data-r="3d">3 nap</button>
+        <button data-r="7d" class="on">7 nap</button>
+        <button data-r="30d">30 nap</button>
+        <button data-r="year">Idén</button>
+        <button data-r="all">Minden</button>
+      </div>
+      <div class="seg wunit" title="A szél mértékegysége (mindenhol)"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+      <label class="switch" title="A gyanús (minőségjelzős) mérések elrejtése a grafikonról">
+        <input type="checkbox" id="hideSuspect"><span class="slider"></span><span>Gyanús értékek elrejtése</span>
+      </label>
+    </div>
+    <div class="hint">Nagyítás: a felső csúszka széleinek húzásával vagy <b>Ctrl + görgővel</b>. Mozgatás: húzd a grafikont. Mind a hat grafikon együtt mozog. A <span class="dot-flag"></span> pontok gyanús mérések, a szürke sávok adathiányok.</div>
+    <div id="chart"></div>
+    <div class="formula-panel">
+      <div class="panel-head">
+        <h2 style="font-size:15px">Saját képlet</h2>
+        <div class="chips" id="fList" style="margin:0"></div>
+        <button class="btn" id="fAdd">+ Új képlet</button>
+      </div>
+      <div class="f-editor hidden" id="fEditor">
+        <div class="row2">
+          <input class="inp" id="fName" placeholder="név" style="width:200px">
+          <select class="sel" id="fRes"><option value="5perc">5 perc (legfeljebb 31 nap)</option><option value="hour">óra</option><option value="day">nap</option></select>
+          <input class="inp" id="fUnit" placeholder="mértékegység" style="width:120px">
+          <input type="color" id="fColor" value="#e11d48">
+        </div>
+        <textarea class="inp" id="fExpr" rows="2" spellcheck="false" placeholder="pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)"></textarea>
+        <div class="msg" id="fMsg"></div>
+        <div class="f-help">Változók: <span id="fVars"></span><br>
+          Időeltolás: <code>légnyomás(t-3nap)</code>, <code>hom(t-2óra)</code>, <code>szel(t-30perc)</code> · Függvények: <code>összeg(eső_összeg; 24óra)</code>, <code>átlag(hom; 3nap)</code>, <code>min</code>, <code>max</code>, <code>abs</code>, <code>gyök</code>, <code>ln</code>, <code>log</code>, <code>exp</code>, <code>kerekít(x; 1)</code>, <code>ha(feltétel; a; b)</code> · Műveletek: <code>+ − * / ^ &lt; &gt; &lt;= &gt;= == !=</code> · Tizedesjel: pont vagy vessző; a függvény-argumentumokat pontosvessző választja el. Nullával osztásnál üres pont lesz.</div>
+        <div class="row2"><button class="btn primary" id="fSave">Mentés</button><button class="btn" id="fCancel">Mégse</button><button class="btn danger" id="fDelete">Törlés</button></div>
+      </div>
+      <div id="fChartWrap" class="hidden"><div id="fChart"></div></div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="szarazsag">
+    <div class="seg dr-sub" id="drSub"><button data-v="merleg">🌱 Talajvíz-mérleg</button><button data-v="viz">💧 Víz – fogyasztás és igény</button></div>
+    <div class="panel dr-merleg">
+      <div class="panel-head">
+        <h2>Szárazság</h2>
+        <button class="btn" id="drEt0" title="A párolgás képlete és a közös beállítások (napsugárzás-korrekció, szélmérő-magasság…)">☀️ Párolgás ?</button>
+        <button class="btn" id="drSoil" title="Talajtípus és lefolyás">🟫 Talaj: <span id="drSoilName"></span> ?</button>
+        <button class="btn primary" id="drAdd">+ Új növény / cserép</button>
+      </div>
+      <div class="chips" id="drChips"></div>
+      <div class="hint">FAO-56 talajvíz-mérleg növényzettípusonként. A kiszáradás azt mutatja, a gyökérzóna felvehető vizéből mennyi fogyott el. Öntözést csak akkor számol, ha rögzíted (lent: „Locsoltam…”), vagy beállítod az automata programot a ? ablakban.</div>
+      <div class="dr-grid" id="drCards"></div>
+      <div class="panel-head" style="margin-top:14px">
+        <h2 style="font-size:15px">Alakulás</h2>
+        <div class="seg" id="drRange"><button data-r="30">30 nap</button><button data-r="90" class="on">90 nap</button><button data-r="year">Idén</button><button data-r="all">Minden</button></div>
+      </div>
+      <div id="drChart"></div>
+      <div id="fwiChart"></div>
+    </div>
+    <div class="panel dr-merleg" style="margin-top:16px">
+      <div class="panel-head"><h2>Locsolási javaslat</h2></div>
+      <div class="hint">A javaslat a talajvíz-mérlegből, az elmúlt napok párolgásából és esőjéből készül. Előrejelzést nem használ.</div>
+      <div class="dr-grid water" id="waterCards"></div>
+    </div>
+    <div class="panel dr-merleg" style="margin-top:16px">
+      <div class="panel-head"><h2>Öntözési programok</h2></div>
+      <div class="hint">Egy program névvel elmenthető (zóna, napok, mennyiség). Új időszakhoz csak kiválasztod, és megadod a tól–ig dátumot. Az egyszeri locsolást a fenti kártyákon rögzítheted („Locsoltam…”). A locsolórendszer vezérlése későbbi kör.</div>
+      <div id="irrBox"></div>
+    </div>
+    <div class="panel hidden" id="waterPanel">
+      <div class="panel-head"><h2>Víz – fogyasztás és igény</h2></div>
+      <div id="waterUse"></div>
+    </div>
+  </section>
+
+  <section class="page hidden" data-page="beallitasok">
+    <div class="settings">
+      <div class="card">
+        <h3>Megjelenés</h3>
+        <p>Téma</p>
+        <div class="seg" id="themeSeg">
+          <button data-v="auto">Rendszer szerint</button>
+          <button data-v="light">Világos</button>
+          <button data-v="dark">Sötét</button>
+        </div>
+        <p style="margin-top:14px">Nyelv</p>
+        <select class="sel" id="langSel">
+          <option value="hu">Magyar</option>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+        </select>
+        <p style="margin-top:14px">Legkisebb betűméret <span class="muted">(a kis és közepes szövegek nőnek, a nagy címek alig)</span></p>
+        <div class="row2" style="margin-top:4px">
+          <select class="sel" id="fontSel">
+            <option value="0">Normál (alap)</option>
+            <option value="14">Nagyobb (14 px)</option>
+            <option value="16">Nagy (16 px)</option>
+            <option value="18">Nagyon nagy (18 px)</option>
+          </select>
+          <input type="range" id="fontRange" min="0" max="22" step="1">
+          <b id="fontVal"></b>
+        </div>
+        <div class="hint">Gyorsbillentyű: Ctrl + plusz / Ctrl + mínusz.</div>
+      </div>
+
+      <div class="card">
+        <h3>Mértékegységek</h3>
+        <dl class="kv units">
+          <dt>Hőmérséklet</dt><dd><div class="seg useg" data-u="temp"><button data-v="C">°C</button><button data-v="F">°F</button></div></dd>
+          <dt>Csapadék</dt><dd><div class="seg useg" data-u="rain"><button data-v="mm">mm</button><button data-v="in">inch</button></div></dd>
+          <dt>Szél</dt><dd><div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="mph">mph</button><button data-w="bft">Beaufort</button></div></dd>
+          <dt>Légnyomás</dt><dd><div class="seg useg" data-u="pres"><button data-v="hPa">hPa</button><button data-v="inHg">inHg</button></div></dd>
+        </dl>
+        <div class="hint">A program belül metrikusan számol; csak a kijelzés, a grafikonok, a jelentések és az export vált. A Beaufort tört értékként jelenik meg (WMO-képlet: v = 0,836 · B<sup>1,5</sup> m/s).</div>
+      </div>
+
+      <div class="card">
+        <h3>Riasztások (Windows-értesítés)</h3>
+        <p>A Letöltő minden futáskor ellenőrzi – ütemezve akkor is szól, ha ez az ablak zárva van.</p>
+        <div id="alertBox"></div>
+        <div class="row2"><button class="btn primary" id="alertSave">Mentés</button><button class="btn" id="alertTest">Próba-értesítés</button></div>
+        <div class="msg" id="alertMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Automatikus letöltés</h3>
+        <p>A Letöltő a háttérben, a Windows Feladatütemezőjével fut (akkor is, ha ez az ablak zárva van), és nem nyit ablakot.</p>
+        <p>Jelenleg: <b id="schedNow">…</b></p>
+        <div class="row2">
+          <select class="sel" id="schedKind">
+            <option value="off">Kikapcsolva</option>
+            <option value="15">15 percenként</option>
+            <option value="30">30 percenként</option>
+            <option value="60">Óránként</option>
+            <option value="180">3 óránként</option>
+            <option value="interval">Egyedi gyakoriság…</option>
+            <option value="daily">Naponta, adott időpontban…</option>
+            <option value="weekly">Hetente, adott napokon…</option>
+          </select>
+        </div>
+        <div class="row2 hidden" id="schedInterval">
+          <label>minden <input class="inp num" id="schedN" inputmode="numeric" style="width:70px"></label>
+          <select class="sel" id="schedUnit"><option value="1">percben</option><option value="60">órában</option><option value="1440">napban</option></select>
+          <span class="perr" id="schedNErr"></span>
+        </div>
+        <div class="row2 hidden" id="schedDays">
+          <span class="daypick">
+            <label><input type="checkbox" value="MON">H</label><label><input type="checkbox" value="TUE">K</label><label><input type="checkbox" value="WED">Sze</label><label><input type="checkbox" value="THU">Cs</label><label><input type="checkbox" value="FRI">P</label><label><input type="checkbox" value="SAT">Szo</label><label><input type="checkbox" value="SUN">V</label>
+          </span>
+        </div>
+        <div class="row2 hidden" id="schedTimeRow"><label>időpont <input type="time" class="inp" id="schedTime" value="06:00"></label></div>
+        <div class="row2"><button class="btn primary" id="schedApply">Alkalmaz</button></div>
+        <div class="msg" id="schedMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Biztonsági mentés</h3>
+        <p>Zip a mérésekről és az összes beállításról (presetek, kerti napló, futónapló is) az <code>appdata_letöltő\mentesek</code> mappába. A Letöltő minden futáskor, a Megjelenítő pedig induláskor ellenőrzi, esedékes-e – így ütemezett letöltés nélkül is működik.</p>
+        <div class="row2">
+          <label>Gyakoriság
+            <select class="sel" id="bkDays"><option value="0">ki</option><option value="1">naponta</option><option value="7">hetente</option><option value="14">kéthetente</option><option value="30">havonta</option></select></label>
+          <label>Megtartott mentések <input class="inp num" id="bkKeep" inputmode="numeric" style="width:70px"></label>
+          <span class="perr" id="bkErr"></span>
+        </div>
+        <p>Legutóbbi: <b id="bkLast">–</b></p>
+        <div class="row2"><button class="btn primary" id="bkSave">Mentés</button><button class="btn" id="bkNow">Mentés most</button><button class="btn" data-open="backup">Mentések mappa</button></div>
+        <div class="msg" id="bkMsg"></div>
+      </div>
+
+      <div class="card wide">
+        <h3>Csapadékmérő-kalibráció</h3>
+        <div id="calCard"></div>
+      </div>
+
+      <div class="card wide">
+        <h3>Gyanús mérések <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">– mit jelöljön a WU és mit a program</span></h3>
+        <div id="suCard"></div>
+      </div>
+
+      <div class="card">
+        <h3>Excel-export</h3>
+        <p>A napi összesítő tábla (egy sor = egy nap: hőmérséklet, pára, nyomás, szél, csapadék, napsütés…) CSV-fájlba, magyar Excel-formátumban, a választott mértékegységekkel.</p>
+        <div class="row2"><button class="btn primary" id="btnExport">Napi összesítő exportálása</button></div>
+        <div class="msg" id="exportMsg"></div>
+      </div>
+
+      <div class="card">
+        <h3>Mappák</h3>
+        <dl class="kv" id="folders"></dl>
+        <div class="row2">
+          <button class="btn" data-open="data">Adatok mappa</button>
+          <button class="btn" data-open="base">Programmappa</button>
+          <button class="btn" data-open="backup">Biztonsági mentések</button>
+        </div>
+        <div class="hint">Biztonság: a program csak ebbe a mappába ír (kivétel: az asztali parancsikon és az ütemezett feladat, amit a telepítő hoz létre, valamint az Excel-export, amelynek helyét te választod).</div>
+      </div>
+
+      <div class="card wide">
+        <h3>Változásnapló <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">– mikor mit állítottál át</span></h3>
+        <div class="row2"><input class="inp" id="clFilter" placeholder="szűrés (pl. gyep, Kc, nyelv)" style="flex:1;min-width:220px"></div>
+        <div id="clList" class="tablewrap short"></div>
+      </div>
+
+      <div class="card wide">
+        <h3>Névjegy és adatok</h3>
+        <dl class="kv" id="about"></dl>
+      </div>
+    </div>
+  </section>
+</main>
+<div id="modal" class="modal hidden"><div class="modal-card"><button class="modal-x" id="modalClose" title="Bezárás (Esc)">✕</button><div id="modalBody"></div></div></div>
+
+<footer id="foot"></footer>
+<div id="toast" class="toast"></div>
+
+<script src="echarts.min.js"></script>
+<script src="app.js"></script>
+<script src="i18n.js"></script>
+<script src="calendar.js"></script>
+<script src="week.js"></script>
+<script src="params.js"></script>
+<script src="drought.js"></script>
+<script src="explain.js"></script>
+<script src="fx.js"></script>
+<script src="calib.js"></script>
+<script src="irrigation.js"></script>
+<script src="water.js"></script>
+<script src="changes.js"></script>
+<script src="insights.js"></script>
+<script src="rain.js"></script>
+<script src="wind.js"></script>
+<script src="ranges.js"></script>
+<script src="stats.js"></script>
+<script src="run.js"></script>
+<script src="formula.js"></script>
+<script src="diary.js"></script>
+<script src="report.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>

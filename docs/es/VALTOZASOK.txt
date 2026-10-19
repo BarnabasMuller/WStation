@@ -1,0 +1,54 @@
+TIEMPO EN BUDAÖRS – CAMBIOS
+===========================
+
+== 2.1 (2026-10-19) ==
+- Multilingüe: húngaro, inglés, alemán, español – la interfaz, las ventanas ? y ƒx, los gráficos, los mensajes
+  y alertas del Descargador, el instalador y las guías. Un idioma nuevo se añade con un archivo.
+- Unidades en Ajustes: °C/°F, mm/pulgadas, km/h – m/s – nudos – mph – Beaufort, hPa/inHg. Beaufort con decimales
+  (fórmula OMM); 1 decimal en la pestaña Viento, 2 en el viento medio.
+- Ajuste «Tamaño mínimo de letra» (Normal / 14 / 16 / 18 px, control deslizante, Ctrl + / Ctrl −), también en gráficos.
+- Estadísticas: cualquier número de periodos desde–hasta, botones rápidos (años, últimos 365 días, periodo
+  completo), favoritos; combinados o lado a lado. «Periodos superpuestos» con varios periodos y tipos de datos,
+  día/semana/mes/propio.
+- Icono ƒx junto a los valores calculados: fórmula, explicación, parámetros con símbolo y valor estándar,
+  restablecer, ajustes guardados con nombre. Las ventanas ? rechazan valores no válidos y siguen abiertas al guardar.
+- FWI canadiense explicado paso a paso con la tabla «Cálculo de hoy»; la lluvia como puntos azules en el gráfico de incendio.
+- Agotamiento %: ventana explicativa propia (analogía del cubo, bandas, Ks, valores del perfil).
+- Tarjeta Mediciones sospechosas: marcas de WU y reglas propias por separado, con parámetros y recuento en vivo.
+- Calibración del pluviómetro con mediciones manuales (cualquier número de periodos, Σ manual / Σ estación,
+  factor global o por periodos, mensajes como «¿está atascado el pluviómetro?»); la lluvia calibrada se usa en todo.
+- Riego: programas guardados (zona, días, cantidad) y sus periodos; el riego automático pasa aquí.
+- Nueva subpestaña «Agua»: consumo y demanda (objetivo en % de agotamiento), coste con un precio o agua +
+  alcantarillado, calendario de mosaicos, barras mensuales, comparación.
+- Barra «Qué ha cambiado» en el Resumen (desde ayer / desde la última apertura, día a día).
+- Ajustes: programación de descarga propia (minutos/horas/diaria a una hora/semanal en días), frecuencia de
+  copias y «Copiar ahora», registro de cambios con restauración, comprobación de actualizaciones.
+- Seguridad: los programas solo escriben en su carpeta (salvo el acceso directo, la tarea programada y una
+  exportación a Excel guardada donde elijas).
+
+== 2.0 (2026-10-19) ==
+- Pestaña Sequía: índice canadiense de peligro de incendio (FFMC, DMC, DC, ISI, BUI) con clases, déficit de
+  presión de vapor (VPD), grados-día (GDD) con hitos.
+- Nuevas pestañas Lluvia, Viento, Estadísticas, Correr e Informe.
+- Resumen: barra de vigía, amanecer, puesta de sol, duración del día, fase lunar, «Los extremos del mes».
+- Línea de tiempo: banda de fórmula propia, marcadores de frentes y tormentas, grandes lluvias, diario del jardín.
+- Calendario: diario del jardín; el riego entra en el balance hídrico.
+- Descargador: alertas de Windows (helada, bajada de presión, viento fuerte, aguacero, calor) con horas de silencio.
+
+== 1.4 (2026-10-19) ==
+- Nueva pestaña Sequía: evaporación FAO-56 (ET₀) y balance hídrico por tipo de vegetación.
+- Botón ? en cada indicador: fórmula, coeficientes con valores estándar, ajustables.
+- Tipos de suelo, ajustes propios, escorrentía SCS; corrección solar; árboles; recomendación de riego.
+
+== 1.3 (2026-10-19) ==
+- Nueva pestaña Calendario con mapa de calor; resumen semanal en el Resumen.
+
+== 1.2 (2026-10-18) ==
+- Instalador para todos los casos; descarga automática con el Programador de tareas; copia semanal;
+  pestañas, tema claro / oscuro; exportación a Excel.
+
+== 1.1 (2026-10-17) ==
+- Nueva estructura de carpetas (data, appdata_letöltő, appdata_megjelenítő), instalador.
+
+== 1.0 (2026-10-17) ==
+- Primera versión: línea de tiempo con seis gráficos, tarjetas de hoy, marcas de calidad, autotest.

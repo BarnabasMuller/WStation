@@ -1,0 +1,176 @@
+﻿MEGJELENÍTŐ – LEÍRÁS
+====================
+
+A Megjelenítő.exe a data mappában lévő mérésekből grafikonokat és statisztikákat készít.
+Internet csak a Frissítés gombhoz kell (az új adatok letöltéséhez), a megjelenítéshez nem.
+
+
+FRISSÍTÉS GOMB
+--------------
+
+Lefuttatja a Letöltőt (új adatok a Weather Undergroundról), utána újraolvassa a data mappát.
+Közben a fejlécben látszik, mit csinál éppen. Ha nincs internet vagy hiányzik az API kulcs,
+a program szól, és a meglévő adatokkal dolgozik tovább.
+
+
+FÜLEK
+-----
+
+  Áttekintés    – „Mi változott” sáv, a mai nap kártyái, figyelő sáv, égbolt (nap, hold), heti összesítő
+  Idővonal      – hat grafikon, együtt nagyítható, jelölőkkel; saját képlet sáv
+  Naptár        – naptár-hőtérkép év- vagy hónapnézetben, kerti napló
+  Szárazság     – talajvíz-mérleg, locsolási javaslat, öntözési programok, tűzveszély (FWI), VPD, hőösszeg;
+                  „Víz” al-fül: vízfogyasztás és vízigény költséggel
+  Eső           – esőesemények listája és havi csapadék
+  Szél          – óra × hónap hőtérkép, szélrózsa, szeles délutánok
+  Statisztika   – időszak-választó, rekordok, hónapok összevetése, óra × nap hőtérkép, átlagos nap,
+                  időszakok egymásra rajzolva, adatminőség
+  Futás         – komfortindex és tanuló futóruházat-tanácsadó
+  Jelentés      – havi időjárás-jelentés és éves évkönyv (nyomtatás / PDF)
+  Beállítások   – megjelenés, nyelv, betűméret, mértékegységek, riasztások, automatikus letöltés,
+                  biztonsági mentés, csapadékmérő-kalibráció, gyanús mérések, Excel-export, mappák, változásnapló
+
+A fejléc hold ikonjával gyorsan válthatsz világos és sötét téma között. A választott fül, téma és
+minden nézetbeállítás megmarad (appdata_megjelenítő\felulet.json).
+
+
+NYELV, MÉRTÉKEGYSÉGEK, BETŰMÉRET
+--------------------------------
+
+Beállítások › Nyelv: magyar, angol, német vagy spanyol (minden szöveg, a grafikonok, a Letöltő üzenetei és
+riasztásai is). Új nyelv egyetlen fájllal adható hozzá – lásd a FORDITAS.md leírást a forráskódban.
+
+Mértékegységek: hőmérséklet °C/°F, csapadék mm/inch, szél km/h – m/s – csomó – mph – Beaufort,
+légnyomás hPa/inHg. A program belül metrikusan számol, csak a kijelzés, a grafikonok, a jelentés és az
+export vált. A Beaufort tört érték (WMO-képlet: B = (v / 0,836)^(2/3), v m/s-ban); a Szél fülön 1,
+az átlagszélnél 2 tizedessel.
+
+Legkisebb betűméret: Normál, 14, 16 vagy 18 px (csúszkával a köztes értékek is); a kis és közepes
+szövegek nőnek, a nagy címek alig. Gyorsbillentyű: Ctrl + plusz / Ctrl + mínusz (Ctrl + 0: alap).
+
+
+ÁTTEKINTÉS: MI VÁLTOZOTT, FIGYELŐ, ÉGBOLT
+-----------------------------------------
+
+Legfelül a „Mi változott” sáv: ha az elmúlt 24 órában nyitottad meg a programot, „Tegnap óta”, különben
+„Az előző megnyitás óta (dátum)” – eső, front, zivatar, fagy, erős lökés, a kiszáradás alakulása és a
+teendő, új rekordok, adathiányok. Hosszabb kimaradásnál napokra bontva is lenyitható. Egy elemre
+kattintva az idővonal oda ugrik. A × bezárja a következő megnyitásig.
+
+A „Ma” kártyák alatt a figyelő sáv: fagyveszély, hőség, gyors nyomásesés, erős szél, heves eső,
+fülledtség, a gyep vízhiánya, magas tűzveszély, Zambretti-előrejelzés. Mellette napkelte, napnyugta,
+nappalhossz, holdfázis; „A hónap legjei” (több év adatánál „Ezen a napon”).
+
+
+ƒx – KÉPLETEK ÉS BEÁLLÍTHATÓ SZÁMOK
+-----------------------------------
+
+A számolt értékek mellett (hőérzet, komfort, Beaufort, napsütés, Zambretti, esőesemény, front- és
+zivatardetektor, statisztikai küszöbök, szeles délután, hónap végi becslés, futómodell, gyanús mérések,
+párolgás, tűzveszély, VPD, hőösszeg) egy ƒx ikon nyit ablakot: a képlet, szöveges magyarázat, a
+paraméterek a képletbeli szimbólumukkal és a szabványos értékkel, visszaállítás gomb és elnevezett
+presetek. Érvénytelen érték nem menthető (a mező piros, a hiba alatta olvasható).
+
+
+IDŐVONAL
+--------
+
+Hat grafikon: hőmérséklet és harmatpont, páratartalom, légnyomás, szél és széllökés, csapadék,
+napsugárzás és UV. Időszak-gombok: 24 óra · 3 nap · 7 nap · 30 nap · Idén · Minden.
+Nagyítás: a felső csúszkával vagy Ctrl + egérgörgővel; mozgatás: húzással.
+- Narancs pontok: gyanús mérések. Szürke sávok: adathiány.
+- Szaggatott függőleges vonalak: frontátvonulás (❄) és zivatar (⚡); kék sávok: nagy esők;
+  zöld pöttyözött vonal: kerti napló bejegyzés.
+
+SAJÁT KÉPLET: az Idővonal alján saját mutató rajzolható, pl.:
+  eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)
+Változók: hom, hom_max, hom_min, harmatpont, para, légnyomás, szél, lökés, szélirány, eső (mm/h),
+eső_összeg (mm), napsütés (W/m²), uv, vpd, et0, fwi, szaraz_gyep, szaraz_barack… (profilonként).
+Időeltolás: x(t-30perc), x(t-2óra), x(t-1nap). Függvények: összeg(x; 24óra), átlag(x; 3nap), min, max,
+abs, gyök, ln, log, exp, kerekít(x; 1), ha(feltétel; a; b). Felbontás: 5 perc / óra / nap.
+
+
+NAPTÁR-HŐTÉRKÉP ÉS KERTI NAPLÓ
+------------------------------
+
+Évnézet vagy hónapnézet; a mennyiség választható, a színskála hozzá igazodik. A csíkozott napok
+hiányos adatúak. Egy napra kattintva az idővonal arra a napra ugrik.
+Kerti napló: dátum, címke (metszés, trágyázás, permetezés, virágzás, termés, öntözés, ültetés, egyéb)
+és megjegyzés. Az öntözés a talajvíz-mérlegbe is bekerül; a virágzásból a hőösszeg-mérföldkövek pontosíthatók.
+
+
+SZÁRAZSÁG, LOCSOLÁS, VÍZ
+------------------------
+
+A program a mért időjárásból kiszámolja a párolgást (FAO-56 Penman–Monteith, ET₀), és naponta vezeti a
+talaj vízmérlegét. A kiszáradás % melletti ? gomb elmagyarázza a számot: a gyökérzóna egy vödör,
+0% = tele, 100% = üres (hervadáspont); sávok a profil saját stresszhatárából, Ks, a vödör mérete,
+a mostani hiány és hogy eső nélkül hány nap múlva éri el a stresszhatárt.
+
+- Profilok: talajfelszín, gyep, bokrok, cserepek, fák; ki/be kapcsolhatók, újak felvehetők.
+- Tűzveszély (kanadai FWI) lépésenkénti magyarázattal és „Mai számítás” táblázattal (bemenet → köztes
+  értékek → eredmény). A tűzveszély-grafikonon az esős napok kék pöttyök (méretük az esővel nő).
+- Locsolási javaslat gyepre, bokrokra, cserepekre, fákra.
+- Öntözési programok: egy program névvel menthető (zóna, a hét napjai vagy x naponta, menetenkénti
+  mennyiség percben, mm-ben vagy literben). Új időszakhoz csak kiválasztod, és megadod a tól–ig dátumot
+  (vagy „minden évben” HH-NN formában). Az egyszeri locsolást a kártyákon a „Locsoltam…” résznél rögzítsd.
+  A mérleg minden rögzített és programozott öntözést beszámít.
+- Víz al-fül: a területekből (gyep m², bokrok, lombkorona) a tényleges öntözés m³-ben és forintban, valamint
+  a vízigény: mennyi víz kellett volna, hogy a növények a megadott célállapotban maradjanak (célállapot =
+  legfeljebb hány % kiszáradás, növényenként csúszkával). Vízdíj: egy ár, vagy vízdíj + csatornadíj bontásban.
+  Csempés naptár, havi oszlopok (vízigény, öntözés, eső), összesítő kártyák és célállapot-összevetés.
+  Az időszakot a Statisztika fül időszak-választója adja.
+
+
+ESŐ, SZÉL, STATISZTIKA
+----------------------
+
+Eső: minden zápor kezdete, hossza, összege és max. intenzitása, havi csapadék, szűrés.
+Szél: átlagszél napszak és hónap szerint, szélrózsa, a 3 Bft fölötti délutánok listája.
+Statisztika: fent az időszak-választó – sorok „év. hónap. nap. – év. hónap. nap.” formában, + gombbal
+tetszőleges számban; az üres „tól” az első mért nap, az üres „ig” a mai nap. Gyorsgombok (minden év,
+előző 365 nap, teljes időszak; Ctrl + kattintás: hozzáadás), kedvencek névvel. Több időszaknál „Közös halmaz”
+vagy „Egymás mellett” (időszakonként külön oszlop / vonal). A választás a fül minden részére érvényes.
+„Időszakok egymásra rajzolva”: akárhány kezdőnap, hossz 1 nap / 1 hét / 1 hónap / egyedi, több adattípus
+pipálható (az eltérő mértékegységek külön kis grafikonra kerülnek).
+
+
+FUTÁS, JELENTÉS
+---------------
+
+Futás: komfortindex és futóruházat-tanácsadó; futás után 5 adatból tanul (mikor, intenzitás, rétegek,
+érzet, ki futott). Jelentés: havi időjárás-jelentés és éves évkönyv, nyomtatható / PDF.
+
+
+BEÁLLÍTÁSOK
+-----------
+
+- Automatikus letöltés: 15/30/60/180 percenként, egyedi gyakoriság (X perc/óra/nap), naponta adott
+  időpontban, vagy hetente kiválasztott napokon (Windows Feladatütemező).
+- Biztonsági mentés: gyakoriság, megtartott darabszám, „Mentés most”; a Megjelenítő induláskor is ellenőrzi.
+- Csapadékmérő-kalibráció: tetszőleges számú „tól – ig – kézi mérés” sor; a program kiszámolja az állomás
+  mérését ugyanarra az időszakra és a szorzót (Σ kézi / Σ állomás). Hibát jelez, ha a kézi vagy az állomás
+  mérése 0 („eldugult a csapadékmérő?”), figyelmeztet átfedésre és adathiányra. Globális vagy időszakos
+  szorzó, kézzel felülírható; a kalibrált csapadék mindenhol érvényes, kikapcsolva a nyers érték látszik.
+- Gyanús mérések: a WU-jelölések (qcStatus 0 és −1) és a program saját szabályai (lehetetlen érték,
+  tüske, napsütés miatti túlmelegedés, kiesés utáni első mérés) külön kapcsolhatók, paraméterekkel;
+  azonnal látszik, hány mérés lesz jelölve.
+- Változásnapló: mikor, mit, mire állítottál át; egy kattintással visszaállítható.
+- Frissítés: ha a programmappában vagy mellette újabb Idojaras_telepito_v*.exe van, egy sáv felajánlja.
+- Excel-export: a napi összesítő CSV-ben, a választott mértékegységekkel.
+
+Biztonság: a programok csak a saját mappájukba írnak (kivétel: a parancsikon és az ütemezett feladat,
+amit a telepítő hoz létre, valamint az Excel-export, amelynek helyét te választod).
+
+További küszöbök: appdata_megjelenítő\megjelenito.ini (a legtöbb az ƒx ablakokban is állítható).
+Az appdata_megjelenítő mappa cache, lib és WebView2 almappája törölhető, a program újra létrehozza.
+
+
+HA VALAMI NEM MŰKÖDIK
+---------------------
+
+- „Még nincs időjárás-adat”: kattints az Adatok letöltése gombra, vagy előbb indítsd el egyszer
+  a Letöltőt, és add meg az API kulcsot.
+- A program böngészőben nyílik meg ablak helyett: hiányzik a Microsoft Edge WebView2
+  (Windows 11-en alapból megvan). Így is működik, amíg a kis „A program fut” ablak nyitva van.
+- Hibanapló: appdata_megjelenítő\megjelenito_hiba.log

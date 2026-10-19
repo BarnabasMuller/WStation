@@ -1,0 +1,74 @@
+TIEMPO EN BUDAÖRS
+=================
+
+Descarga y muestra los datos de una estación meteorológica doméstica (Weather Underground PWS).
+
+
+¿QUÉ HAY EN ESTA CARPETA?
+-------------------------
+
+  Megjelenítő.exe            ← ABRE ESTE (el Visor): gráficos, hoy, estadísticas
+  Letöltő.exe                ← el Descargador: obtiene datos nuevos (el Visor también lo ejecuta)
+  LEEME.txt                  ← esta descripción
+  Descargador – guía.txt     ← detalles del Descargador
+  Visor – guía.txt           ← detalles del Visor
+  Cambios.txt                ← novedades de cada versión
+
+  data\                      ← las mediciones (archivos CSV, también se abren con Excel)
+  appdata_letöltő\           ← ajustes (clave API) y registro del Descargador
+  appdata_megjelenítő\       ← ajustes, caché y registro del Visor
+
+No hace falta tocar nada en las carpetas appdata; los programas las gestionan.
+
+
+PRIMER INICIO
+-------------
+
+1. Abre Letöltő.exe con doble clic.
+   Pide la clave API de Weather Underground y el ID de la estación.
+   Clave API: https://www.wunderground.com/member/api-keys
+   Después descarga los datos; la primera vez puede tardar unos minutos.
+
+   (Si el instalador importó los datos anteriores y la clave API, puedes saltar este paso.)
+
+2. Abre Megjelenítő.exe (o el acceso directo «Budaörsi időjárás» del escritorio).
+
+
+USO DIARIO
+----------
+
+Abre el Visor. Pestañas: Resumen («Qué ha cambiado», hoy, vigía, resumen semanal) · Línea de tiempo ·
+Calendario (+ diario del jardín) · Sequía (riego, programas de riego, agua, peligro de incendio) · Lluvia ·
+Viento · Estadísticas · Correr · Informe (mensual / anual, imprimible) · Ajustes (idioma: húngaro, inglés,
+alemán, español; unidades; tamaño de letra).
+
+Pulsa Actualizar arriba a la derecha. Ejecuta el Descargador, obtiene las últimas mediciones y actualiza
+los gráficos.
+
+Si activaste la descarga automática al instalar, el Descargador también se ejecuta en segundo plano (por
+defecto cada hora, sin ventana), aunque el Visor esté cerrado. Se puede cambiar o desactivar en la pestaña
+Ajustes del Visor.
+
+En el primer inicio Windows puede avisar («Windows protegió su PC») porque el programa no está firmado
+digitalmente. En ese caso: Más información → Ejecutar de todas formas.
+
+
+ACTUALIZAR A UNA VERSIÓN NUEVA
+------------------------------
+
+Pon el nuevo instalador en la carpeta Időjárás (o junto a ella) y ábrelo – o simplemente abre el Visor,
+que ofrece la actualización. Reconoce la versión anterior y sustituye los programas; los datos y ajustes se
+conservan (antes se hace una copia de los ajustes).
+
+
+COPIAS DE SEGURIDAD, TRASLADO
+-----------------------------
+
+El Descargador (y el Visor al iniciarse) hace copias automáticamente: appdata_letöltő\mentesek
+(zip; por defecto semanal, se guardan las 8 últimas). Frecuencia y «Copiar ahora»: Visor › Ajustes.
+
+Toda la carpeta Időjárás se puede copiar o respaldar de una vez (p. ej. en un pendrive).
+Lo más importante es la carpeta data: contiene las mediciones.
+
+Desinstalar: primero desactiva la descarga automática en la pestaña Ajustes del Visor (borra la tarea
+programada), luego borra la carpeta Időjárás y el acceso directo. El programa no escribe nada más.

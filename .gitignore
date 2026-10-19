@@ -1,0 +1,24 @@
+# build eredmények
+dist/
+build/
+
+# személyes adatok, mérések, tervezési jegyzetek – nem kerülnek a tárolóba
+minta_adat/
+TERV*.md
+*.log
+beallitasok.ini
+appdata_*/
+data/
+
+# szerkesztők, rendszer
+.vs/
+.vscode/
+*.user
+Thumbs.db
+desktop.ini
+
+# a legelső (1.0 előtti) letöltő régi fájljai – nem részei a projektnek
+OLVASS_EL.md
+WU_Letolto.exe
+build.cmd
+src/WU_Letolto.cs

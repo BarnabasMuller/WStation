@@ -1,0 +1,79 @@
+﻿BUDAÖRSI IDŐJÁRÁS – VÁLTOZÁSOK
+==============================
+
+== 2.1 (2026-10-19) ==
+- Többnyelvű: magyar, angol, német, spanyol – a felület, a ? és ƒx ablakok, a grafikonok, a Letöltő üzenetei és
+  riasztásai, a telepítő és a leírások is. Új nyelv egy fájllal hozzáadható (docs\FORDITAS.md).
+- Mértékegységek a Beállításokban: °C/°F, mm/inch, km/h – m/s – csomó – mph – Beaufort, hPa/inHg. Tört Beaufort
+  (WMO-képlet); a Szél fülön 1, az átlagszélnél 2 tizedes.
+- „Legkisebb betűméret” beállítás (Normál / 14 / 16 / 18 px, csúszka, Ctrl + / Ctrl −), a grafikonokra is.
+- Statisztika: tetszőleges számú tól–ig időszak, gyorsgombok (évek, előző 365 nap, teljes időszak), kedvencek;
+  közös halmaz vagy egymás mellett. Az „Időszakok egymásra” több időszakkal és több adattípussal, nap/hét/hónap/egyedi.
+- ƒx ikon a számolt értékeknél: képlet, magyarázat, paraméterek szimbólummal és szabványos értékkel,
+  visszaállítás, elnevezett presetek. A ? ablakok nem fogadnak el érvénytelen értéket, mentéskor nyitva maradnak.
+- Kanadai FWI lépésenkénti magyarázat „Mai számítás” táblázattal; a tűzveszély-grafikonon az eső kék pöttyökkel.
+- Kiszáradás %: saját magyarázó ablak (vödör-hasonlat, sávok, Ks, a profil saját számai).
+- Gyanús mérések kártya: a WU-jelölések és a saját szabályok külön kapcsolhatók, paraméterekkel, élő darabszámmal.
+- Csapadékmérő-kalibráció kézi mérésekkel (tetszőleges számú tól–ig időszak, Σ kézi / Σ állomás, globális vagy
+  időszakos szorzó, hibajelzés pl. „eldugult a csapadékmérő?”); a kalibrált csapadék mindenhol érvényes.
+- Öntözés: mentett programok (zóna, napok, mennyiség) és érvényességi időszakaik; az automata öntözés átkerült ide.
+- Új „Víz” al-fül: vízfogyasztás és vízigény (célállapot % kiszáradásban), költség egy árral vagy vízdíj +
+  csatornadíj bontásban, csempés naptár, havi oszlopok, összevetés.
+- „Mi változott” sáv az Áttekintésen (tegnap óta / az előző megnyitás óta, napokra bontva).
+- Beállítások: egyedi letöltési ütemezés (percenként/óránként/naponta adott időben/hetente adott napokon),
+  biztonsági mentés gyakorisága és „Mentés most”, változásnapló visszaállítással, frissítés-ellenőrzés
+  (újabb telepítő a mappában vagy mellette).
+- Biztonság: a programok csak a saját mappájukba írnak (kivétel a parancsikon, az ütemezett feladat és a
+  választott helyre mentett Excel-export).
+
+== 2.0 (2026-10-19) ==
+- Szárazság fül: kanadai erdőtűz-veszélyességi index (FWI: FFMC, DMC, DC, ISI, BUI) tűzveszély-kategóriákkal,
+  páranyomás-hiány (VPD), hőösszeg (GDD) mérföldkövekkel; a vízigény-szakaszok a hőösszegből is léptethetők.
+- Új Eső fül: esőesemények listája (kezdet, hossz, összeg, max. intenzitás), havi csapadék, szűrők.
+- Új Szél fül: óra × hónap hőtérkép, szélrózsa csomókategóriákkal, 3 Bft fölötti délutánok.
+- Új Statisztika fül: kattintható rekordok, hónapok összevetése (előrejelzéssel a hónap végére),
+  óra × nap hőtérkép, havi átlagos napi menet, két nap / hét egymásra rajzolva, adatminőség-oldal.
+- Új Futás fül: komfortindex és tanuló futóruházat-tanácsadó futónként.
+- Új Jelentés fül: havi időjárás-jelentés és éves évkönyv, nyomtatható / PDF-be menthető.
+- Áttekintés: figyelő sáv (fagy, hőség, nyomásesés, szél, eső, komfort, szárazság, tűzveszély, Zambretti-előrejelzés),
+  napkelte, napnyugta, nappalhossz, holdfázis, „A hónap legjei” / „Ezen a napon”.
+- Idővonal: saját képlet sáv (pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)), front- és
+  zivatarjelölők, nagy esők, kerti napló bejegyzései; km/h – csomó – Beaufort váltó mindenhol.
+- Naptár: kerti napló (metszés, trágyázás, virágzás…), az öntözés a talajvíz-mérlegbe is bekerül.
+- Letöltő: Windows-riasztások (fagy, nyomásesés, erős szél, felhőszakadás, hőség) ismétlésvédelemmel és
+  csendes órákkal; a Beállítások fülön állíthatók, próba-értesítéssel.
+
+== 1.4 (2026-10-19) ==
+- Új Szárazság fül: FAO-56 párolgás (ET₀) és talajvíz-mérleg növényzettípusonként (talajfelszín, gyep,
+  bokrok, cserepek, barackfa, meggyfa, egyéb fák; újak is felvehetők), be/ki kapcsolható profilokkal.
+- Minden mutató mellett ? gomb: a képlet, a használt arányszámok szabványos értékkel szövegesen, és itt állíthatók.
+- Talajtípusok (homokos, vályogos, agyagos, saját kert) és saját presetek; lefolyás az SCS-módszerrel,
+  a talaj előzetes telítettségétől függően.
+- Napsugárzás-korrekció globálisan (javaslat a mért adatból, havi kalibrálással is).
+- Fák: lombkorona, törzs, életkor alapján napi vízigény literben, tartós vízhiány (30/90 nap), tartalék.
+- Locsolási javaslat a gyepre (szórófej, perc), a csepegtetett bokrokra (liter, perc) és a cserepekre;
+  automata öntözési program és „Locsoltam” napló, amit a mérleg beszámít.
+- A naptárban a párolgás és a kiszáradás is megjeleníthető.
+
+== 1.3 (2026-10-19) ==
+- Új Naptár fül: naptár-hőtérkép év- és hónapnézettel, 15 választható mennyiséggel
+  (hőmérséklet, hőingás, harmatpont, csapadék, intenzitás, napsütés, napenergia, szél, pára, légnyomás, UV).
+- A színskála a mennyiséghez igazodik; a hiányos napok csíkozottak; egy napra kattintva az idővonal oda ugrik.
+- Heti összesítő az Áttekintés fülön: 7 napi kártya és heti összegzés; előző hét / utolsó 7 nap / aktuális hét,
+  lapozható; a fogaskerékkel választható, mi látsszon (a választás megmarad).
+
+== 1.2 (2026-10-18) ==
+- A telepítő minden esetet kezel: üres mappa, régebbi verzió, régi egy mappás elrendezés, régi CSV.
+- Automatikus letöltés a Feladatütemezővel, állítható gyakorisággal (telepítéskor és a Beállítások fülön).
+- A Letöltő ütemezett futáskor nem nyit ablakot; ha épp fut egy másik letöltés, megvárja.
+- Heti automatikus biztonsági mentés (appdata_letöltő\mentesek).
+- Frissítéskor a beállításfájlokba bekerülnek az új beállítások, a régiek megmaradnak.
+- Megjelenítő: fülek, sötét / világos téma kapcsoló, Beállítások fül.
+- Excel-export: napi összesítő tábla egy gombnyomásra.
+
+== 1.1 (2026-10-17) ==
+- Új mappaszerkezet (data, appdata_letöltő, appdata_megjelenítő), telepítő.
+- A Megjelenítő Frissítés gombja letölti az új adatokat.
+
+== 1.0 (2026-10-17) ==
+- Első verzió: idővonal hat grafikonnal, „Ma” kártyák, minőségjelzők, önteszt.

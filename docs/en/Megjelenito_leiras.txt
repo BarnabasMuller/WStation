@@ -1,0 +1,177 @@
+VIEWER – GUIDE
+==============
+
+Megjelenítő.exe makes charts and statistics from the measurements in the data folder.
+Internet is only needed for the Refresh button (to download new data), not for viewing.
+
+
+REFRESH BUTTON
+--------------
+
+Runs the Downloader (new data from Weather Underground), then re-reads the data folder. The header
+shows what it is doing. If there is no internet or the API key is missing, the program tells you and
+keeps working with the existing data.
+
+
+TABS
+----
+
+  Overview     – "What changed" bar, today's cards, watch bar, sky (sun, moon), weekly summary
+  Timeline     – six charts zoomed together, with markers; custom formula band
+  Calendar     – calendar heatmap by year or month, garden diary
+  Drought      – soil water balance, watering advice, irrigation programs, fire danger (FWI), VPD, heat sum;
+                 "Water" sub-tab: water use and water demand with costs
+  Rain         – list of rain events and monthly rain
+  Wind         – hour × month heatmap, wind rose, windy afternoons
+  Statistics   – period selector, records, months compared, hour × day heatmap, average day,
+                 periods overlaid, data quality
+  Running      – comfort index and a learning running-clothing advisor
+  Report       – monthly weather report and yearbook (print / PDF)
+  Settings     – appearance, language, font size, units, alerts, automatic download, backup,
+                 rain gauge calibration, suspicious measurements, Excel export, folders, change log
+
+The moon icon in the header switches quickly between light and dark theme. The chosen tab, theme and
+all view settings are kept (appdata_megjelenítő\felulet.json).
+
+
+LANGUAGE, UNITS, FONT SIZE
+--------------------------
+
+Settings › Language: Hungarian, English, German or Spanish (all text, the charts, the Downloader's
+messages and alerts too). A new language can be added with a single file – see FORDITAS.md in the
+source code.
+
+Units: temperature °C/°F, rain mm/inch, wind km/h – m/s – knots – mph – Beaufort, pressure hPa/inHg.
+Internally the program calculates in metric units; only the display, charts, report and export change.
+Beaufort is fractional (WMO formula: B = (v / 0.836)^(2/3), v in m/s); on the Wind tab with 1 decimal,
+the average wind with 2.
+
+Minimum font size: Normal, 14, 16 or 18 px (values in between with the slider); small and medium text
+grows, large headings hardly. Shortcut: Ctrl + plus / Ctrl + minus (Ctrl + 0: default).
+
+
+OVERVIEW: WHAT CHANGED, WATCH, SKY
+----------------------------------
+
+At the top the "What changed" bar: if you opened the program in the last 24 hours, "Since yesterday",
+otherwise "Since the last opening (date)" – rain, fronts, thunderstorms, frost, strong gusts, how
+depletion changed and what to do, new records, data gaps. After a longer break it can be expanded
+day by day. Clicking an item jumps to it on the timeline. × closes it until the next opening.
+
+Below the "Today" cards the watch bar: frost risk, heat, fast pressure drop, strong wind, heavy rain,
+mugginess, lawn water shortage, high fire danger, Zambretti forecast. Next to it sunrise, sunset, day
+length, moon phase; "The month's extremes" (with several years of data "On this day").
+
+
+ƒx – FORMULAS AND ADJUSTABLE NUMBERS
+------------------------------------
+
+Next to computed values (feels like, comfort, Beaufort, sunshine, Zambretti, rain events, front and
+thunderstorm detector, statistical thresholds, windy afternoons, month-end estimate, running model,
+suspicious measurements, evaporation, fire danger, VPD, heat sum) an ƒx icon opens a window: the formula,
+an explanation, the parameters with their formula symbols and standard values, a reset button and named
+presets. Invalid values cannot be saved (the field turns red and the error is shown below it).
+
+
+TIMELINE
+--------
+
+Six charts: temperature and dew point, humidity, pressure, wind and gusts, rain, solar radiation and
+UV. Period buttons: 24 hours · 3 days · 7 days · 30 days · This year · All.
+Zoom with the top slider or Ctrl + mouse wheel; pan by dragging.
+- Orange dots: suspicious measurements. Grey bands: data gaps.
+- Dashed vertical lines: front passage (❄) and thunderstorm (⚡); blue bands: big rains;
+  green dotted line: garden diary entry.
+
+CUSTOM FORMULA: at the bottom of the Timeline you can plot your own index, e.g.:
+  eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)
+Variable and function names are Hungarian (the list is shown next to the editor): hom (temperature),
+para (humidity), légnyomás (pressure), szél (wind), lökés (gust), eső (rain rate), eső_összeg (rain),
+napsütés (solar), uv, vpd, et0, fwi…; time shifts x(t-30perc), x(t-2óra), x(t-1nap); functions
+összeg (sum), átlag (average), min, max, abs, gyök (sqrt), ln, log, exp, kerekít (round), ha (if).
+
+
+CALENDAR AND GARDEN DIARY
+-------------------------
+
+Year or month view; the quantity can be chosen and the colour scale follows it. Striped days have
+incomplete data. Clicking a day jumps to it on the timeline.
+Garden diary: date, tag (pruning, fertilising, spraying, flowering, harvest, watering, planting, other)
+and a note. Watering also goes into the soil water balance; flowering dates refine the heat-sum milestones.
+
+
+DROUGHT, WATERING, WATER
+------------------------
+
+From the measured weather the program computes evaporation (FAO-56 Penman–Monteith, ET₀) and keeps a
+daily soil water balance. The ? button next to the depletion % explains the number: the root zone is a
+bucket, 0% = full, 100% = empty (wilting point); bands from the profile's own stress threshold, Ks, the
+bucket size, the current deficit and how many days without rain until the stress threshold.
+
+- Profiles: soil surface, lawn, shrubs, pots, trees; can be turned on/off, new ones added.
+- Fire danger (Canadian FWI) with a step-by-step explanation and a "Today's calculation" table (inputs →
+  intermediate values → results). On the fire-danger chart rainy days are blue dots (sized by the rain).
+- Watering advice for lawn, shrubs, pots and trees.
+- Irrigation programs: a program can be saved by name (zone, weekdays or every x days, amount per run in
+  minutes, mm or litres). For a new period just choose it and give the from–to dates (or "every year"
+  as MM-DD). Record one-off watering on the cards under "I watered…". The balance includes all recorded
+  and programmed watering.
+- Water sub-tab: from the areas (lawn m², shrubs, canopy) the actual watering in m³ and money, and the
+  water demand: how much water would have been needed to keep the plants at the chosen target (target =
+  at most this % depletion, per plant with a slider). Water price: one price, or water + sewer fee.
+  Tile calendar, monthly bars (demand, watering, rain), summary cards and target comparison.
+  The period comes from the Statistics tab's period selector.
+
+
+RAIN, WIND, STATISTICS
+----------------------
+
+Rain: start, length, total and max. intensity of every shower, monthly rain, filters.
+Wind: average wind by time of day and month, wind rose, list of afternoons above 3 Bft.
+Statistics: at the top the period selector – rows "year. month. day. – year. month. day.", as many as
+you like with +; an empty "from" is the first measured day, an empty "to" is today. Quick buttons (each
+year, previous 365 days, whole period; Ctrl + click adds), favourites by name. With several periods
+"Combined set" or "Side by side" (a column / line per period). The choice applies to the whole tab.
+"Periods overlaid": any number of start days, length 1 day / 1 week / 1 month / custom, several data types
+(different units go to separate small charts).
+
+
+RUNNING, REPORT
+---------------
+
+Running: comfort index and running-clothing advisor; it learns from 5 values after a run (when,
+intensity, layers, feeling, who). Report: monthly weather report and yearbook, printable / PDF.
+
+
+SETTINGS
+--------
+
+- Automatic download: every 15/30/60/180 minutes, custom interval (X minutes/hours/days), daily at a
+  set time, or weekly on chosen days (Windows Task Scheduler).
+- Backup: frequency, number kept, "Back up now"; the Viewer also checks at startup.
+- Rain gauge calibration: any number of "from – to – manual reading" rows; the program computes the
+  station's reading for the same period and the factor (Σ manual / Σ station). It reports an error if
+  the manual or the station reading is 0 ("is the rain gauge clogged?"), and warns about overlaps and
+  data gaps. Global or per-period factor, can be overridden; calibrated rain is used everywhere, when
+  turned off the raw value is shown.
+- Suspicious measurements: WU flags (qcStatus 0 and −1) and the program's own rules (impossible value,
+  spike, overheating due to sunshine, first measurement after an outage) can be switched separately,
+  with parameters; the number of flagged measurements is shown immediately.
+- Change log: when, what and to what you changed; one click restores the old value.
+- Update: if a newer Idojaras_telepito_v*.exe is in the program folder or next to it, a bar offers it.
+- Excel export: the daily summary as CSV, in the chosen units.
+
+Security: the programs only write into their own folder (exceptions: the shortcut and the scheduled
+task created by the installer, and the Excel export, whose location you choose).
+
+More thresholds: appdata_megjelenítő\megjelenito.ini (most are also adjustable in the ƒx windows).
+The cache, lib and WebView2 subfolders of appdata_megjelenítő can be deleted; the program recreates them.
+
+
+IF SOMETHING DOES NOT WORK
+--------------------------
+
+- "No weather data yet": click Download data, or first start the Downloader once and enter the API key.
+- The program opens in a browser instead of a window: Microsoft Edge WebView2 is missing (Windows 11
+  has it by default). It still works as long as the small "the program is running" window is open.
+- Error log: appdata_megjelenítő\megjelenito_hiba.log

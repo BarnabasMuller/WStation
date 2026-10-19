@@ -1,0 +1,87 @@
+DOWNLOADER – ANLEITUNG
+======================
+
+Letöltő.exe lädt die Daten der Station aus der Weather Underground PWS API und speichert sie in
+CSV-Dateien im Ordner data. Die Schaltfläche Aktualisieren der Anzeige startet dieses Programm, es kann
+aber auch von Hand gestartet werden.
+
+
+DATEIEN
+-------
+
+  data\idojaras_adatok.csv           Hauptdatenbank: Messungen etwa alle 5 Minuten (Temperatur, Taupunkt,
+                                     Luftfeuchte, Wind, Böen, Luftdruck, Niederschlag, Strahlung, UV...)
+  data\napi_osszesito.csv            Tagesübersichten der letzten 7 Tage (Berechnung von WU)
+  data\pillanatnyi_allapot.csv       Pro Lauf eine Zeile mit dem aktuellen Zustand
+
+  appdata_letöltő\beallitasok.ini    Einstellungen: API-Schlüssel, Station, Warnungen, Sicherung, Sprache usw.
+  appdata_letöltő\lekerdezes_naplo.log      Lesbares Protokoll: was abgefragt wurde und mit welchem Ergebnis
+  appdata_letöltő\lekerdezes_allapot.json   Das „Gedächtnis“ des Programms: welche Tage schon geladen sind
+  appdata_letöltő\riasztasok.json           Wann zuletzt gewarnt wurde (Wiederholungsschutz)
+  appdata_letöltő\mentesek\                 Sicherungen (Zip)
+
+Die CSV-Dateien sind für ungarisches Excel formatiert (Trennzeichen ; Dezimalkomma).
+
+
+WIE ENTSCHEIDET ES, WAS GELADEN WIRD?
+-------------------------------------
+
+- Aktueller Zustand und heutige Messungen: höchstens alle 5 Minuten (öfter gibt es keine neuen Daten).
+- Tagesübersicht: höchstens stündlich.
+- Fehlende Tage: aus dem eingestellten Zeitraum (BackfillDays oder StartDate) werden die noch fehlenden
+  Tage geladen, die neuesten zuerst, in der detailliertesten (5-Minuten-)Auflösung.
+- Die Limits von WU werden beachtet (1500 Aufrufe/Tag, 30/Minute). Fehlen viele Tage, ergänzt der nächste
+  Lauf den Rest.
+
+
+AUTOMATISCHE LÄUFE
+------------------
+
+Das Installationsprogramm (oder der Reiter Einstellungen der Anzeige) legt in der Windows-Aufgabenplanung
+die Aufgabe „Budaörsi időjárás – letöltés“ an: alle 15 / 30 / 60 Minuten, alle 3 Stunden, eigenes
+Intervall, täglich zu einer festen Zeit oder wöchentlich an bestimmten Tagen. Geplant öffnet der
+Downloader kein Fenster. Läuft gerade ein Download (z. B. über Aktualisieren), wartet der nächste.
+
+Auch von Hand einrichtbar: Aufgabenplanung → Programm starten: Letöltő.exe, Argument: --nowait
+
+
+WARNUNGEN (WINDOWS-BENACHRICHTIGUNG)
+------------------------------------
+
+Bei jedem Lauf (auch geplant) prüft es die neuesten Messungen und benachrichtigt bei Frostgefahr,
+schnell fallendem Luftdruck, starken Böen, Wolkenbruch oder großer Hitze. Für dasselbe Ereignis höchstens
+alle paar Stunden, nicht in den Ruhezeiten (standardmäßig 22–7 Uhr).
+Einstellung: im Reiter Einstellungen der Anzeige (mit Testbenachrichtigung) oder in den Zeilen Riasztas…
+von beallitasok.ini. Trockenheits- und Feuerwarnungen erscheinen in der Beobachterleiste der Anzeige.
+
+
+SICHERUNG
+---------
+
+Standardmäßig wird einmal pro Woche ein Zip des Ordners data und der Einstellungen (mit Vorlagen,
+Gartentagebuch und Lauftagebuch) erstellt: appdata_letöltő\mentesek\mentes_<Datum>.zip. Die letzten 8
+bleiben erhalten. Einstellung: im Reiter Einstellungen der Anzeige (Häufigkeit, Anzahl, „Jetzt sichern“)
+oder in den Zeilen MentesNaponta und MentesekSzama von appdata_letöltő\beallitasok.ini.
+
+
+SPRACHE
+-------
+
+Die Meldungen des Downloaders (bei manuellem Start) und die Warnungen erscheinen in der in der Anzeige
+gewählten Sprache (beallitasok.ini: Nyelv=hu / en / de / es). Das Protokoll bleibt ungarisch.
+
+
+BEHANDELTE FEHLER
+-----------------
+
+Fehlende oder beschädigte CSV, von Hand gelöschte Zeilen oder Tage, beschädigte Statusdatei, in Excel
+geöffnete CSV, falscher API-Schlüssel, Internetausfall, zwei Instanzen gleichzeitig. Das Programm gibt
+immer eine verständliche Meldung, und der nächste Lauf ergänzt die fehlenden Daten. Nach einem Update
+werden neue Einstellungen automatisch in beallitasok.ini aufgenommen, die alten bleiben.
+
+
+EXIT-CODES
+----------
+
+0 in Ordnung · 1 Einstellungsfehler (z. B. kein API-Schlüssel) · 2 API-Schlüssel-Fehler · 3 Lese-/
+Schreibfehler · 4 eine Instanz läuft bereits · 5 keine Schreibrechte · 9 unerwarteter Fehler
