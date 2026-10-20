@@ -37,7 +37,9 @@ async function renderDiary() {
   $('dList').querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', async e => {
     e.preventDefault();
     const x = DIARY[+a.dataset.del];
-    const linked = x && x.id && typeof DR !== 'undefined' && DR ? DR.config.log.filter(l => l.diaryId === x.id).length : 0;
+    // a talajvíz-mérleg akkor is kell, ha a Szárazság fület még nem nyitották meg (különben árva locsolás maradna)
+    const dr = x && x.id && x.amount ? await getDrought().catch(() => null) : null;
+    const linked = dr ? dr.config.log.filter(l => l.diaryId === x.id).length : 0;
     if (!(await askConfirm('Törlöd a bejegyzést?', { sub: (linked ? 'A talajvíz-mérlegből is kikerül ez a locsolás. ' : '') + 'Ez nem vonható vissza.', ok: 'Bejegyzés törlése', cancel: 'Megtartom', danger: true }))) return;
     DIARY.splice(+a.dataset.del, 1); await saveDiary();
     if (linked) { DR.config.log = DR.config.log.filter(l => l.diaryId !== x.id); await saveDroughtConfig(); }
@@ -56,7 +58,8 @@ $('dAdd').addEventListener('click', async () => {
     if (amount > 0) {
       entry.amount = amount; entry.unit = $('dUnit').value; entry.zone = $('dZone').value;
       // a locsolás a talajvíz-mérlegbe is bekerül
-      if (typeof DR !== 'undefined' && DR) { DR.config.log.push({ date, zone: entry.zone, unit: entry.unit, amount, note: 'kerti napló', diaryId: entry.id }); await saveDroughtConfig(); }
+      const dr = await getDrought().catch(() => null);
+      if (dr) { dr.config.log.push({ date, zone: entry.zone, unit: entry.unit, amount, note: 'kerti napló', diaryId: entry.id }); await saveDroughtConfig(); }
     }
   }
   DIARY.push(entry);

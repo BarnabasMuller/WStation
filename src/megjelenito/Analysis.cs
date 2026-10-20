@@ -548,16 +548,32 @@ namespace Idojaras
             {
                 if (method == "POST")
                 {
-                    try { new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? ""); }
-                    catch { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
+                    // a felület mindkét tárolót listaként kezeli: más (pl. "x" vagy {}) ne kerülhessen a fájlba
+                    bool list;
+                    try { list = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") is object[]; }
+                    catch { list = false; }
+                    if (!list) { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = path + ".tmp";
                     Guard.WriteAllText(tmp, body, new UTF8Encoding(false));
                     if (File.Exists(path)) Guard.Replace(tmp, path, null); else Guard.Move(tmp, path);
                     return "{\"ok\":true}";
                 }
-                try { if (File.Exists(path)) return File.ReadAllText(path, Encoding.UTF8); }
-                catch { }
+                try
+                {
+                    if (File.Exists(path))
+                    {
+                        string t = File.ReadAllText(path, Encoding.UTF8);
+                        if (new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(t) is object[]) return t;
+                        throw new Exception("nem lista");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // sérült fájl (pl. kézi szerkesztés): a felület üres listával induljon, a régi tartalom egy másolatban megmarad
+                    Program.Log("A " + name + ".json sérült, üres listával indulok: " + ex.Message);
+                    try { string bak = Path.Combine(AppState.L.App, name + "_serult.json"); if (!File.Exists(bak)) Guard.Copy(path, bak); } catch { }
+                }
                 return "[]";
             }
         }

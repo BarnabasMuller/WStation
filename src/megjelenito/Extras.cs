@@ -248,10 +248,15 @@ namespace Idojaras
                     if (d.ShowDialog(win) == DialogResult.OK) src = d.FileName;
             }));
             if (src == null) return "{\"cancelled\":true}";
+            // munkapéldányból dolgozunk: a visszaállítás előtti mentés a mentesek mappa legrégebbi zipjét törölheti,
+            // ami épp a kiválasztott fájl is lehet
+            string work = Path.Combine(AppState.L.App, "visszaallitas_munka.zip");
             try
             {
                 int n = 0;
-                using (var zfs = File.OpenRead(src))
+                Guard.CreateDirectory(AppState.L.App);
+                Guard.Copy(src, work, true);
+                using (var zfs = File.OpenRead(work))
                 using (var zip = new System.IO.Compression.ZipArchive(zfs, System.IO.Compression.ZipArchiveMode.Read))
                 {
                     var items = zip.Entries.Where(en => en.Length > 0).Select(en => new { en, t = Target(en.FullName) }).Where(x => x.t != null).ToList();
@@ -277,6 +282,7 @@ namespace Idojaras
                 return new JW().Obj().P("restored", n).P("file", Path.GetFileName(src)).End().ToString();
             }
             catch (Exception ex) { return new JW().Obj().P("error", "A visszaállítás nem sikerült: " + ex.Message).End().ToString(); }
+            finally { try { if (File.Exists(work)) Guard.Delete(work); } catch { } }
         }
     }
 }

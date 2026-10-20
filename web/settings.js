@@ -96,7 +96,7 @@ $('langSel').addEventListener('change', async e => {
   UI.lang = e.target.value; saveUi();
   logUi('lang', old, UI.lang);
   // a Letöltő üzenetei és riasztásai is ezen a nyelven szóljanak
-  post('/api/dlsettings', { Nyelv: UI.lang }).catch(() => { });
+  api('/api/dlsettings').then(d => { if (d.hasIni) post('/api/dlsettings', { Nyelv: UI.lang }).catch(() => { }); }).catch(() => { });
   await applyLang(); refreshView();
 });
 

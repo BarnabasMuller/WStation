@@ -226,6 +226,11 @@ namespace Telepito
             return null;
         }
 
+        static Exception InUse(string name)
+        {
+            return new Exception("A(z) " + name + " most használatban van, ezért nem cserélhető. Zárd be a Megjelenítőt és a Letöltőt, majd próbáld újra.");
+        }
+
         public static Result Install(string target, string importFrom, bool shortcut, int scheduleMinutes, Action<string, int> progress)
         {
             var r = new Result { Target = target };
@@ -263,6 +268,8 @@ namespace Telepito
                 var asm = Assembly.GetExecutingAssembly();
                 var plan = new List<string[]>();   // [cél, .uj, név]
                 int i = 0;
+                try
+                {
                 foreach (var f in Names.Files)
                 {
                     // a leírások a választott nyelven (docs/<kód>/…), ha van ilyen; különben magyarul
@@ -276,6 +283,13 @@ namespace Telepito
                         using (var fs = Guard.OpenWrite(tmp, FileMode.Create, FileAccess.Write, FileShare.None)) s.CopyTo(fs);
                     }
                     plan.Add(new[] { dest, tmp, f[1] });
+                }
+                }
+                catch
+                {
+                    // pl. megtelt a lemez: a már kiírt .uj fájlok ne maradjanak a mappában
+                    foreach (var x in plan) try { if (File.Exists(x[1])) Guard.Delete(x[1]); } catch { }
+                    throw;
                 }
                 progress("A programfájlok cseréje...", 62);
                 bool paused = Kozos.Utemezes.Pause(true);   // közben ne induljon el az ütemezett Letöltő
@@ -293,10 +307,8 @@ namespace Telepito
                             if (File.Exists(x[0])) Guard.Replace(x[1], x[0], bak); else Guard.Move(x[1], x[0]);
                             done.Add(new[] { x[0], File.Exists(bak) ? bak : null });
                         }
-                        catch (IOException)
-                        {
-                            throw new Exception("A(z) " + x[2] + " most használatban van, ezért nem cserélhető. Zárd be a Megjelenítőt és a Letöltőt, majd próbáld újra.");
-                        }
+                        catch (IOException) { throw InUse(x[2]); }
+                        catch (UnauthorizedAccessException) { throw InUse(x[2]); }   // zárolt exe-nél ez is jöhet
                     }
                 }
                 catch

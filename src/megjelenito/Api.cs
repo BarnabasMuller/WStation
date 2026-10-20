@@ -248,7 +248,13 @@ namespace Idojaras
                 case "/api/at": return Analysis.AtJson(ds, QLong(q, "t", ds.T[ds.N - 1] * 1000));
                 case "/api/drought/config":
                     if (method != "POST") { status = 405; return "{}"; }
-                    try { DroughtStore.Save(DroughtStore.Parse(body)); }
+                    try
+                    {
+                        // csonka / üres kérés (pl. "{}") ne állítsa vissza csendben az összes profilt és programot
+                        var o = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") as Dictionary<string, object>;
+                        if (o == null || !o.ContainsKey("version") || !o.ContainsKey("programs")) throw new Exception("hiányos adat");
+                        DroughtStore.Save(DroughtStore.Parse(body));
+                    }
                     catch (Exception ex) { status = 400; return new JW().Obj().P("error", "Érvénytelen beállítás: " + ex.Message).End().ToString(); }
                     return DroughtJson(ds);
                 case "/api/drought/reset":
