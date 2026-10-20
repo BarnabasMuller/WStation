@@ -74,12 +74,12 @@ async function renderChanges() {
   if (gaps.length) items.push([3, '⚠ ' + tf('{n} hosszabb adathiány (összesen {d})', { n: gaps.length, d: fmtDuration(gaps.reduce((s, g) => s + g.to - g.from, 0) / 60000) }), { a: gaps[0].from, b: gaps[0].to }]);
 
   const top = items.filter(x => x[0] >= 3).sort((a, b) => b[0] - a[0]);
-  let html = '<b>' + title + ':</b> ' + (top.length ? top.slice(0, within24 ? 8 : 6).map((x, k) => '<span class="chg-i' + (x[2] ? ' link' : '') + '" data-k="' + items.indexOf(x) + '">' + x[1] + '</span>').join(' · ') : 'nyugodt időszak, nincs teendő.');
+  let html = '<b>' + title + ':</b> ' + (top.length ? top.slice(0, within24 ? 8 : 6).map((x, k) => '<span class="chg-i' + (x[2] ? ' link" role="button" tabindex="0' : '') + '" data-k="' + items.indexOf(x) + '">' + x[1] + '</span>').join(' · ') : 'nyugodt időszak, nincs teendő.');
   // hosszabb kimaradásnál napokra bontva (lenyitható)
   if (!within24 && dayIdx.length > 1) {
     html += '<details class="chg-days"><summary>napokra bontva (' + dayIdx.length + ' nap)</summary><table class="dtable"><tbody>' + dayIdx.slice().reverse().map(i => {
       const evd = (ev.events || []).filter(e => F.ymd.format(e.t) === d.date[i]);
-      return '<tr class="link" data-day="' + d.date[i] + '"><td>' + DS.fmt(d.date[i], { month: 'short', day: 'numeric', weekday: 'short' }) + '</td><td>' + num(tconv(d.tmin[i]), 0) + ' / ' + ttext(d.tmax[i], 0) + '</td><td>' + (d.rain[i] > 0 ? rtext(d.rain[i], 1) : '–') + '</td><td>lökés ' + wtext(d.gust[i]) + '</td><td>' + evd.map(e => esc(e.title)).join(', ') + '</td></tr>';
+      return '<tr class="link" role="button" tabindex="0" data-day="' + d.date[i] + '"><td>' + DS.fmt(d.date[i], { month: 'short', day: 'numeric', weekday: 'short' }) + '</td><td>' + num(tconv(d.tmin[i]), 0) + ' / ' + ttext(d.tmax[i], 0) + '</td><td>' + (d.rain[i] > 0 ? rtext(d.rain[i], 1) : '–') + '</td><td>lökés ' + wtext(d.gust[i]) + '</td><td>' + evd.map(e => esc(e.title)).join(', ') + '</td></tr>';
     }).join('') + '</tbody></table></details>';
   }
   box.innerHTML = html + ' <button class="chg-x" title="Bezárás (a következő megnyitásig)">×</button>';

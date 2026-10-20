@@ -21,6 +21,7 @@
   </div>
 </div>
 
+<a class="skip-link" href="#main">Ugrás a tartalomra</a>
 <header class="topbar">
   <div class="brand">
     <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
@@ -56,7 +57,7 @@
   </div>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
   <div id="updateBanner" class="banner update hidden"></div>
   <div id="staleBanner" class="banner hidden"></div>
 
@@ -83,7 +84,7 @@
             <div class="pop-title">Mi látsszon a kártyákon?</div>
             <div id="weekRows" class="pop-list"></div>
             <div class="pop-title">Szél mértékegysége</div>
-            <div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+            <div class="seg wunit" role="group" aria-label="A szél mértékegysége" title="A szél mértékegysége – ugyanaz a beállítás, mint a Beállítások › Mértékegységek: mindenhol egyszerre vált"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
             <div class="pop-note">Ez a közös szél-mértékegység (Beállítások › Mértékegységek); a választás mentődik.</div>
           </div>
         </div>
@@ -148,7 +149,7 @@
       <div class="panel-head">
         <h2>Szél</h2>
         <select class="sel" id="windPeriod"></select>
-        <div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+        <div class="seg wunit" role="group" aria-label="A szél mértékegysége" title="A szél mértékegysége – ugyanaz a beállítás, mint a Beállítások › Mértékegységek: mindenhol egyszerre vált"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
       </div>
       <div class="dr-grid" id="windCards"></div>
       <div class="two-col">
@@ -164,7 +165,7 @@
     <div class="panel" id="stRangePanel">
       <div class="panel-head">
         <h2>Időszak</h2>
-        <div class="seg" id="stRangeMode" title="Több időszaknál: együtt számolja őket, vagy egymás mellett hasonlítja össze"><button data-v="union">Közös halmaz</button><button data-v="side">Egymás mellett</button></div>
+        <div class="seg" id="stRangeMode" title="Több időszaknál: együtt számolja őket, vagy egymás mellett hasonlítja össze"><button data-v="union">Együtt számolva</button><button data-v="side">Összehasonlítva</button></div>
         <label class="switch"><input type="checkbox" id="stClean"><span class="slider"></span><span>Gyanús adatok kizárása</span></label>
       </div>
       <div class="hint">Év. hónap. nap. – az üres „tól” az első mért nap, az üres „ig” a mai nap; elég az évet (vagy évet és hónapot) megadni. A <b>+</b> újabb időszakot ad. A választás a fül minden részére érvényes.</div>
@@ -274,7 +275,7 @@
         <button data-r="year">Idén</button>
         <button data-r="all">Minden</button>
       </div>
-      <div class="seg wunit" title="A szél mértékegysége (mindenhol)"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
+      <div class="seg wunit" role="group" aria-label="A szél mértékegysége" title="A szél mértékegysége – ugyanaz a beállítás, mint a Beállítások › Mértékegységek: mindenhol egyszerre vált"><button data-w="kmh">km/h</button><button data-w="kn">csomó</button><button data-w="bft">Bft</button></div>
       <label class="switch" title="A gyanús (minőségjelzős) mérések elrejtése a grafikonról">
         <input type="checkbox" id="hideSuspect"><span class="slider"></span><span>Gyanús értékek elrejtése</span>
       </label>
@@ -306,7 +307,14 @@
 
   <section class="page hidden" data-page="szarazsag">
     <div class="seg dr-sub" id="drSub"><button data-v="merleg">🌱 Talajvíz-mérleg</button><button data-v="viz">💧 Víz – fogyasztás és igény</button></div>
+    <!-- a felhasználó kérdése („kell-e ma locsolni?”) elöl, a szakmai részletek lenyitva (7.14) -->
+    <div class="dr-summary dr-merleg" id="drSummary" role="status"></div>
     <div class="panel dr-merleg">
+      <div class="panel-head"><h2>Locsolási javaslat</h2></div>
+      <div class="hint">A javaslat a talajvíz-mérlegből, az elmúlt napok párolgásából és esőjéből készül. Előrejelzést nem használ.</div>
+      <div class="dr-grid water" id="waterCards"></div>
+    </div>
+    <div class="panel dr-merleg" style="margin-top:16px">
       <div class="panel-head">
         <h2>Szárazság</h2>
         <button class="btn" id="drEt0" title="A párolgás képlete és a közös beállítások (napsugárzás-korrekció, szélmérő-magasság…)">☀️ Párolgás <span class="fx" aria-hidden="true">ƒx</span></button>
@@ -314,19 +322,15 @@
         <button class="btn primary" id="drAdd">+ Új növény / cserép</button>
       </div>
       <div class="chips" id="drChips"></div>
-      <div class="hint">FAO-56 talajvíz-mérleg növényzettípusonként. A kiszáradás azt mutatja, a gyökérzóna felvehető vizéből mennyi fogyott el. Öntözést csak akkor számol, ha rögzíted (lent: „Locsoltam…”), vagy ha egy öntözési programnak van érvényes időszaka (lent: Öntözési programok).</div>
+      <div class="hint">FAO-56 talajvíz-mérleg növényzettípusonként. A kiszáradás azt mutatja, a gyökérzóna felvehető vizéből mennyi fogyott el. Öntözést csak akkor számol, ha rögzíted (fent, a Locsolási javaslat kártyáin: „Locsoltam…”), vagy ha egy öntözési programnak van érvényes időszaka (lent: Öntözési programok).</div>
       <div class="dr-grid" id="drCards"></div>
+      <details class="dr-tech" id="drTechWrap"><summary>Szakmai részletek: párolgás (ET₀), tűzveszély (FWI), páranyomás-hiány (VPD), hőösszeg (GDD)</summary><div class="dr-grid" id="drTech"></div></details>
       <div class="panel-head" style="margin-top:14px">
         <h2 style="font-size:15px">Alakulás</h2>
         <div class="seg" id="drRange"><button data-r="30">30 nap</button><button data-r="90" class="on">90 nap</button><button data-r="year">Idén</button><button data-r="all">Minden</button></div>
       </div>
       <div id="drChart"></div>
       <div id="fwiChart"></div>
-    </div>
-    <div class="panel dr-merleg" style="margin-top:16px">
-      <div class="panel-head"><h2>Locsolási javaslat</h2></div>
-      <div class="hint">A javaslat a talajvíz-mérlegből, az elmúlt napok párolgásából és esőjéből készül. Előrejelzést nem használ.</div>
-      <div class="dr-grid water" id="waterCards"></div>
     </div>
     <div class="panel dr-merleg" style="margin-top:16px">
       <div class="panel-head"><h2>Öntözési programok</h2></div>
@@ -364,9 +368,11 @@
             <option value="16">Nagy (16 px)</option>
             <option value="18">Nagyon nagy (18 px)</option>
           </select>
-          <input type="range" id="fontRange" min="0" max="22" step="1">
-          <b id="fontVal"></b>
         </div>
+        <!-- a négy fokozat az elsődleges; a csúszka csak finomhangolás, lenyitva (7.20) -->
+        <details class="font-fine"><summary>Finomhangolás</summary>
+          <div class="row2"><input type="range" id="fontRange" min="0" max="22" step="1" aria-label="Legkisebb betűméret, pixelben"> <b id="fontVal"></b></div>
+        </details>
         <div class="hint">Gyorsbillentyű: Ctrl + plusz / Ctrl + mínusz.</div>
       </div>
 
@@ -375,7 +381,7 @@
         <dl class="kv units">
           <dt>Hőmérséklet</dt><dd><div class="seg useg" data-u="temp"><button data-v="C">°C</button><button data-v="F">°F</button></div></dd>
           <dt>Csapadék</dt><dd><div class="seg useg" data-u="rain"><button data-v="mm">mm</button><button data-v="in">inch</button></div></dd>
-          <dt>Szél</dt><dd><div class="seg wunit"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="mph">mph</button><button data-w="bft">Beaufort</button></div></dd>
+          <dt>Szél</dt><dd><div class="seg wunit" role="group" aria-label="A szél mértékegysége" title="A szél mértékegysége – ugyanaz a beállítás, mint a Beállítások › Mértékegységek: mindenhol egyszerre vált"><button data-w="kmh">km/h</button><button data-w="ms">m/s</button><button data-w="kn">csomó</button><button data-w="mph">mph</button><button data-w="bft">Beaufort</button></div></dd>
           <dt>Légnyomás</dt><dd><div class="seg useg" data-u="pres"><button data-v="hPa">hPa</button><button data-v="inHg">inHg</button></div></dd>
         </dl>
         <div class="hint">A program belül metrikusan számol; csak a kijelzés, a grafikonok, a jelentések és az export vált. A Beaufort tört értékként jelenik meg (WMO-képlet: v = 0,836 · B<sup>1,5</sup> m/s).</div>
@@ -424,7 +430,7 @@
           </span>
         </div>
         <div class="row2 hidden" id="schedTimeRow"><label>időpont <input type="time" class="inp" id="schedTime" value="06:00"></label></div>
-        <div class="row2"><button class="btn primary" id="schedApply">Alkalmaz</button></div>
+        <div class="row2"><button class="btn primary" id="schedApply">Mentés</button></div>
         <div class="msg" id="schedMsg"></div>
       </div>
 

@@ -101,7 +101,8 @@ async function openFx(key) {
   const fx = FX[key];
   if (!fx) return;
   if (fx.custom) return openSuspect();
-  let html = '<h2>' + fx.title + '</h2><div class="formula">' + fx.f + '</div><p>' + fx.text + '</p>';
+  // előbb közérthetően, a képlet utána (7.34)
+  let html = '<h2>' + fx.title + '</h2><p>' + fx.text + '</p><details class="fx-f" open><summary>Képlet</summary><div class="formula">' + fx.f + '</div></details>';
   if (!fx.params) { openModal(html); return; }
   const ini = await getIni(true);
   await getPresets();
@@ -110,14 +111,14 @@ async function openFx(key) {
   Object.keys(defs).forEach(k => { obj[k] = iniVal(ini, k); std[k] = iniVal(ini, k, 'defaults'); });
   html += '<h3>Paraméterek</h3><div id="fxTable">' + paramTable(defs, obj, std) + '</div>' +
     presetBar('fx_' + key) +
-    '<div class="row2"><button class="btn primary" id="mapply">Alkalmaz</button><button class="btn" id="fxReset">Visszaállítás a szabványos értékekre</button><span class="pmsg" id="fxMsg"></span></div>' +
-    '<p class="hint">Az Alkalmaz után a program újraszámolja a statisztikákat (pár másodperc). A változás a Beállítások › Változásnapló-ban visszaállítható.</p>';
+    '<div class="row2"><button class="btn primary" id="mapply">Mentés</button><button class="btn" id="fxReset">Visszaállítás a szabványos értékekre</button><span class="pmsg" id="fxMsg"></span></div>' +
+    '<p class="hint">A Mentés után a program újraszámolja a statisztikákat (pár másodperc). A változás a Beállítások › Változásnapló-ban visszaállítható.</p>';
   openModal(html);
   const root = () => $('fxTable');
   liveValidate(() => [[root(), defs]]);
   const setData = d => { $('fxTable').innerHTML = paramTable(defs, Object.assign({}, obj, d), std); validateTables([[root(), defs]]); };
   wirePresets('fx_' + key, () => { const o = {}; return readTable(root(), defs, o) ? o : false; }, setData);
-  $('fxReset').addEventListener('click', () => { setData(std); $('fxMsg').textContent = 'A szabványos értékek betöltve – az Alkalmaz gombbal mentheted.'; });
+  $('fxReset').addEventListener('click', () => { setData(std); $('fxMsg').textContent = 'A szabványos értékek betöltve – a Mentés gombbal mentheted.'; });
   $('mapply').addEventListener('click', async () => {
     const o = {};
     if (!readTable(root(), defs, o)) { $('fxMsg').textContent = '⚠ Javítsd a pirossal jelölt mezőket.'; return; }
@@ -172,7 +173,7 @@ async function renderSuspect(box) {
       '<span class="tag ' + (who === 'WU' ? 'mild' : 'ok') + '">' + (who === 'WU' ? 'WU jelöli' : 'a program jelöli') + '</span> ' + esc(text) + ' <b class="su-n" data-codes="' + codes.join(',') + '"></b>' +
       (ps ? '<div class="su-params" data-j="' + j + '">' + paramTable(Object.fromEntries(ps.map(p => [p[0], defs[p[0]]])), Object.fromEntries(ps.map(p => [p[0], iniVal(ini, p[0])])), Object.fromEntries(ps.map(p => [p[0], iniVal(ini, p[0], 'defaults')]))) + '</div>' : '') + '</div>').join('') +
     '<div class="su-sum" id="suSum"></div>' +
-    '<div class="row2"><button class="btn primary" id="suSave">Alkalmaz</button><button class="btn" id="suReset">Szabványos értékek</button><span class="pmsg" id="suMsg"></span></div>';
+    '<div class="row2"><button class="btn primary" id="suSave">Mentés</button><button class="btn" id="suReset">Szabványos értékek</button><span class="pmsg" id="suMsg"></span></div>';
   const collect = () => {
     const o = {};
     box.querySelectorAll('[data-su]').forEach(c => o[c.dataset.su] = c.checked);

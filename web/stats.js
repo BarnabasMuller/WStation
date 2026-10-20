@@ -52,7 +52,7 @@ async function renderStats() {
     if (token !== stToken) return;
     $('stRecords').className = 'rec-grid';
     $('stRecords').innerHTML = rec.records.map(r =>
-      '<div class="rec" data-t="' + r.t + '" title="Kattints: megnyitás az idővonalon"><div class="rec-t">' + esc(recTitle(r)) + '</div>' +
+      '<div class="rec" role="button" tabindex="0" data-t="' + r.t + '" title="Kattints: megnyitás az idővonalon"><div class="rec-t">' + esc(recTitle(r)) + '</div>' +
       '<div class="rec-v">' + recValue(r) + recWarn(r) + '</div>' +
       '<div class="rec-d">' + (r.t ? (r.dateOnly ? F.dayY.format(r.t) : F.full.format(r.t)) : '') + (r.detail ? ' · ' + esc(recDetail(r)) : '') + '</div></div>').join('') || '<span class="muted">Ebben az időszakban nincs adat.</span>';
     $('stRecords').querySelectorAll('.rec').forEach(el => el.addEventListener('click', () => { const r = rec.records.find(x => String(x.t) === el.dataset.t); highlightTime(+el.dataset.t, r ? r.title : ''); }));
@@ -67,7 +67,7 @@ async function renderStats() {
     $('stRecords').className = 'tablewrap';
     $('stRecords').innerHTML = '<table class="dtable rec-cmp">' + head + '<tbody>' + keys.map(k => '<tr><td>' + esc(k.title) + '</td>' + recs.map(rc => {
       const r = rc.records.find(x => x.key === k.key);
-      return r ? '<td data-t="' + r.t + '" style="cursor:pointer" title="Kattints: megnyitás az idővonalon"><b>' + recValue(r) + '</b>' + recWarn(r) + '<small>' + (r.t ? F.dayY.format(r.t) : '') + '</small></td>' : '<td class="muted">–</td>';
+      return r ? '<td data-t="' + r.t + '" role="button" tabindex="0" style="cursor:pointer" title="Kattints: megnyitás az idővonalon"><b>' + recValue(r) + '</b>' + recWarn(r) + '<small>' + (r.t ? F.dayY.format(r.t) : '') + '</small></td>' : '<td class="muted">–</td>';
     }).join('') + '</tr>').join('') + '</tbody></table>';
     $('stRecords').querySelectorAll('td[data-t]').forEach(el => el.addEventListener('click', () => highlightTime(+el.dataset.t, '')));
     const cr = recs.map(countRows);

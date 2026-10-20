@@ -35,7 +35,7 @@ function drawCalib() {
     '<div class="row2"><label>Mód <select class="sel" id="calMode"><option value="global">egy szorzó mindenre</option><option value="period">időszakos (minden nap a hozzá legközelebbi kalibráció arányát kapja)</option></select></label></div>' +
     '<div class="row2"><label>Kézi szorzó <input class="inp num" id="calFactor" inputmode="decimal" style="width:80px" placeholder="' + (comp ? num(c.computed, 3) : '1') + '" value="' + (c.factor > 0 ? String(c.factor).replace('.', decSep()) : '') + '"></label> <button class="btn small" id="calFReset">visszaállítás a számoltra</button> <span class="perr" id="calFErr"></span></div>' +
     '<p class="hint">Most érvényes: <b>' + (c.active ? (c.mode === 'period' && !(c.factor > 0) ? 'időszakos szorzók' : '× ' + num(c.global, 3)) : 'nincs kalibrálás (nyers érték)') + '</b>. Üres kézi szorzó = a számolt érték.</p>' +
-    '<div class="row2"><button class="btn primary" id="calSave">Alkalmaz</button><span class="pmsg" id="calMsg"></span></div>';
+    '<div class="row2"><button class="btn primary" id="calSave">Mentés</button><span class="pmsg" id="calMsg"></span></div>';
   $('calMode').value = c.mode;
   box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { calCollect(); CAL.rows.splice(+b.dataset.del, 1); drawCalib(); }));
   $('calAdd').addEventListener('click', () => {

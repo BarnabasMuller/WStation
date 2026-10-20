@@ -74,7 +74,7 @@ function fwiExplainer() {
 <li><b>Bemenet minden nap délben</b> (12:00 téli idő): hőmérséklet <b>T</b> (°C), relatív páratartalom <b>RH</b> (%), szélsebesség <b>W</b> (km/h, 10 m-en), és az előző 24 óra csapadéka <b>r₀</b> (mm, déltől délig).</li>
 <li><b>FFMC – a fű és az avar szárazsága</b> (órák alatt reagál). A tegnapi FFMC-ből nedvességtartalom lesz: <b>m₀ = 147,2·(101 − FFMC₀)/(59,5 + FFMC₀)</b>. Ha esett (r₀ &gt; 0,5 mm), m₀ nő. Ezután a levegővel való egyensúly felé mozdul: az <b>Eᵈ</b> (száradási egyensúly) és <b>Eʷ</b> (nedvesedési egyensúly) a T-ből és RH-ból jön; a <b>k</b> sebesség a széltől és a melegtől nő. A végén: <b>FFMC = 59,5·(250 − m)/(147,2 + m)</b>. 0–101, a 85 felett már könnyen gyullad.</li>
 <li><b>DMC – a felső, laza talajréteg</b> (kb. 7 cm, napok–hetek). Naponta <b>K = 1,894·(T + 1,1)·(100 − RH)·Lₑ·10⁻⁴</b>-gyel nő, ahol <b>Lₑ</b> a hónap nappalhossz-szorzója. 1,5 mm feletti eső (<b>rₑ = 0,92·r₀ − 1,27</b>) visszanedvesíti.</li>
-<li><b>DC – a mély, tömör réteg és a fák alatti talaj</b> (hónapok). Naponta <b>V = (0,36·(T + 2,8) + L𝒻)/2</b>-vel nő; 2,8 mm feletti eső (<b>r𝒹 = 0,83·r₀ − 1,27</b>) csökkenti. A nyári aszály itt látszik.</li>
+<li><b>DC – a mély, tömör réteg és a fák alatti talaj</b> (hónapok). Naponta <b>V = (0,36·(T + 2,8) + L<sub>f</sub>)/2</b>-vel nő; 2,8 mm feletti eső (<b>r<sub>d</sub> = 0,83·r₀ − 1,27</b>) csökkenti. A nyári aszály itt látszik.</li>
 <li><b>ISI – terjedési sebesség</b> = 0,208 · f(W) · f(FFMC): a szél és a fű szárazsága. 10 km/h több szél ≈ 65%-kal nagyobb ISI.</li>
 <li><b>BUI – éghető anyag mennyisége</b> = a DMC és a DC kombinációja: mennyi anyag égne el, ha meggyullad.</li>
 <li><b>FWI</b> = f(ISI, BUI): a tűz várható intenzitása egy számban.</li>
@@ -118,8 +118,8 @@ function wireFwiExplainer() {
       (s.re != null ? row('rₑ', 'hatásos eső', n1(s.re, 1) + ' mm', 'visszanedvesítés után: ' + n1(s.Pr)) : row('rₑ', 'hatásos eső', '–', '1,5 mm alatt nem számít')) +
       row('K', 'napi száradás', '+' + n1(s.K, 2)) + row('DMC', '', n1(s.P), 'program: ' + n1(DR.dmc[i])) +
       sect('DC – mély talaj') +
-      row('L𝒻', 'nappalhossz-korrekció', n1(s.Lf, 1)) +
-      (s.rd != null ? row('r𝒹', 'hatásos eső', n1(s.rd, 1) + ' mm', 'visszanedvesítés után: ' + n1(s.Dr)) : row('r𝒹', 'hatásos eső', '–', '2,8 mm alatt nem számít')) +
+      row('L<sub>f</sub>', 'nappalhossz-korrekció', n1(s.Lf, 1)) +
+      (s.rd != null ? row('r<sub>d</sub>', 'hatásos eső', n1(s.rd, 1) + ' mm', 'visszanedvesítés után: ' + n1(s.Dr)) : row('r<sub>d</sub>', 'hatásos eső', '–', '2,8 mm alatt nem számít')) +
       row('V', 'napi száradás', '+' + n1(s.V, 2)) + row('DC', '', n1(s.D), 'program: ' + n1(DR.dc[i])) +
       sect('Eredmény') +
       row('f(W) · f(F)', 'szél- és fű-tényező', n1(s.fW, 2) + ' · ' + n1(s.fF, 2)) +

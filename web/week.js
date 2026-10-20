@@ -115,7 +115,7 @@ async function renderWeek() {
       if (rows.has('cloud')) { const ci = cd && cd.idx[s]; body += R('Felhőzet', ci != null && cd.pct[ci] != null ? num(cd.pct[ci], 0) + ' %' : '–'); }
       if (rows.has('energy')) body += R('Napenergia', num(d.energy[i], 2) + ' kWh/m²');
       if (rows.has('wind')) body += R('Szél', windText(d.wind[i], w.wind, w.wind === 'kmh' ? 1 : 0) + '<small> · lökés ' + windText(d.gust[i], w.wind) + '</small>');
-      if (rows.has('dir')) body += R('Irány', dirArrow(d.dir[i], 16) + ' ' + dirText(d.dir[i]));
+      if (rows.has('dir')) body += R('Irány', '<span title="' + esc(dirText(d.dir[i]) + ' (' + num(d.dir[i], 0) + '°)') + '">' + dirArrow(d.dir[i], 16) + ' ' + dirText8(d.dir[i]) + '</span>');
       if (rows.has('hum')) body += R('Pára', num(d.humMin[i], 0) + '–' + num(d.humMax[i], 0) + ' %');
       if (rows.has('pres')) body += R('Nyomás', ptext(d.pres[i], 0) + '<small> · ' + signed(pconv(d.presChg[i]), pdec(1)) + '</small>');
       if (rows.has('uv')) body += R('UV', num(d.uv[i], 0));
@@ -149,7 +149,7 @@ function weekSummary(d, dates, w) {
     ['Csapadék', rtext(sum('rain'), 1) + ' <small>(' + rainy + ' esős nap)</small>'],
     ['Napsütés', num(sum('sun'), 1) + ' h <small>· ' + num(sum('energy'), 1) + ' kWh/m²</small>'],
     ['Max. lökés', iGust != null ? windText(d.gust[iGust], w.wind) + day(iGust) : '–'],
-    ['Uralkodó szél', dom == null ? '–' : dirArrow(dom, 15) + ' ' + dirText(dom)]
+    ['Uralkodó szél', dom == null ? '–' : '<span title="' + esc(dirText(dom)) + '">' + dirArrow(dom, 15) + ' ' + dirText8(dom) + '</span>']
   ];
   return items.map(([k, v]) => '<div class="ws-item"><span>' + k + '</span><b>' + v + '</b></div>').join('');
 }

@@ -205,7 +205,9 @@ function renderDrCards() {
       '<div class="bar"><span style="width:' + Math.min(100, depl * 100) + '%;background:' + drColor(depl) + '"></span><i style="left:' + (raw / taw * 100) + '%" title="stresszhatár (RAW)"></i></div>' +
       '<div class="line"><span class="tag ' + cls + '">' + st + '</span> Ks = ' + num(ks, 2) + '</div>' + extra + '</div>');
   }
-  $('drCards').innerHTML = h.join('');
+  // az ET₀ kártya a „Szakmai részletek” közé kerül (7.14)
+  $('drTech').innerHTML = h[0]; $('drTech').querySelectorAll('.qbtn').forEach(b => b.addEventListener('click', () => openHelp(b.dataset.q)));
+  $('drCards').innerHTML = h.slice(1).join('');
   $('drCards').querySelectorAll('.qbtn').forEach(b => b.addEventListener('click', () => openHelp(b.dataset.q)));
   $('drCards').querySelectorAll('[data-depl]').forEach(b => b.addEventListener('click', () => openDeplHelp(b.dataset.depl)));
 }
@@ -323,8 +325,9 @@ function potAdvice(pots) {
 }
 
 function renderWater() {
-  const c = DR.config, cards = [];
+  const c = DR.config, cards = [], summ = [];
   const mk = (title, icon, ids, adv, zoneOpts) => {
+    summ.push('<span class="dr-s ' + adv.cls + '">' + icon + ' ' + title + ': <b>' + adv.status + '</b></span>');
     const logs = c.log.map((l, i) => Object.assign({ i }, l)).filter(l => ids.includes(l.zone)).slice(-4).reverse();
     return '<div class="card water-card"><h3>' + icon + ' ' + title + '</h3>' +
       '<div class="w-status ' + adv.cls + '">' + adv.status + '</div>' +
@@ -357,6 +360,8 @@ function renderWater() {
     cards.push(mk('Fák', '🌳', trees.map(p => p.id), { status: 'A fák mélyen gyökereznek: ritkán, de sokat.', cls: trees.some(p => last(resById(p.id).dr) > last(resById(p.id).raw)) ? 'mild' : 'ok', lines }, trees.map(p => [p.id, p.name, ['l', 'perc', 'mm']])));
   }
   $('waterCards').innerHTML = cards.join('') || '<div class="muted">Nincs bekapcsolt gyep, bokor, cserép vagy fa profil.</div>';
+  // összefoglaló a fül tetején: egy pillantásra, kell-e ma locsolni (7.14)
+  $('drSummary').innerHTML = summ.length ? '<b>' + (last(DR.date) === DS.today() ? 'Ma' : tf('Az utolsó adatnapon ({d})', { d: DS.fmt(last(DR.date), { month: 'short', day: 'numeric' }) })) + ':</b> ' + summ.join(' ') : '';
   $('waterCards').querySelectorAll('.water-card').forEach(card => {
     const zoneEl = card.querySelector('.w-zone');
     const unitSel = card.querySelector('.w-unit');
@@ -406,7 +411,7 @@ async function saveDroughtConfig(msg) {
 async function openHelp(q) {
   const c = DR.config;
   await getPresets();
-  const actions = (extra) => '<div class="modal-actions">' + (extra || '') + '<button class="btn" id="mreset">Szabványra visszaállít</button><button class="btn primary" id="mapply">Alkalmaz</button></div>';
+  const actions = (extra) => '<div class="modal-actions">' + (extra || '') + '<button class="btn" id="mreset">Szabványra visszaállít</button><button class="btn primary" id="mapply">Mentés</button></div>';
   if (q === 'et0') {
     const cal = DR.cal.filter(m => m.ratio != null).map(m => '<tr><td>' + MONTHS_FULL[m.month - 1] + '</td><td>' + num(m.ratio, 2) + '</td><td>' + num(m.factor, 2) + '</td></tr>').join('');
     openModal('<h2>Referencia-párolgás (ET₀) és közös beállítások</h2>' + F_ET0 +
@@ -560,7 +565,7 @@ async function renderDroughtExtras() {
     '<div class="line small">Terjedési index (ISI) ' + num(last(DR.isi), 1) + ' · éghető anyag (BUI) ' + num(last(DR.bui), 0) + '</div></div>');
   // VPD
   const v = c.vpd, nowV = TODAY && TODAY.now && TODAY.now.temp != null && TODAY.now.hum != null ? 0.6108 * Math.exp(17.27 * TODAY.now.temp / (TODAY.now.temp + 237.3)) * (1 - TODAY.now.hum / 100) : null;
-  const vband = x => x == null ? ['–', ''] : x < v.low ? ['túl nedves', 'mild'] : x < v.idealLo ? ['alacsony', 'ok'] : x <= v.idealHi ? ['ideális', 'ok'] : x <= v.high ? ['emelkedett', 'mild'] : x <= v.severe ? ['stressz', 'strong'] : ['erős stressz', 'severe'];
+  const vband = x => x == null ? ['–', ''] : x < v.low ? ['nagyon párás levegő', 'mild'] : x < v.idealLo ? ['alacsony', 'ok'] : x <= v.idealHi ? ['ideális', 'ok'] : x <= v.high ? ['emelkedett', 'mild'] : x <= v.severe ? ['stressz', 'strong'] : ['erős stressz', 'severe'];
   const vmax = d.vpd[d.vpd.length - 1], v7 = d.vpd.slice(-7).filter(x => x != null);
   cards.push('<div class="card dr-card"><button class="qbtn" data-q2="vpd" title="Képlet és beállítások" aria-label="Páranyomás-hiány – képlet és beállítások">ƒx</button><h3>🍃 Páranyomás-hiány (VPD)</h3>' +
     '<div class="big">' + num(nowV, 2) + '<small>kPa most</small></div>' +
@@ -579,10 +584,10 @@ async function renderDroughtExtras() {
   } catch (e) { }
   cards.push('<div class="card dr-card"><button class="qbtn" data-q2="gdd" title="Képlet és beállítások" aria-label="Hőösszeg – képlet és beállítások">ƒx</button><h3>🌡️ Hőösszeg (GDD)</h3>' +
     '<div class="big">' + num(tdconv(cum), 0) + '<small>' + tlabel() + '·nap (' + ttext(g.baseT, 0) + ' felett)</small></div>' +
-    '<div class="line">' + ttext(5, 0) + ' felett: <b>' + num(tdconv(pcum), 0) + '</b> ' + tlabel() + '·nap' + (ph ? ' · rügyfakadás: <b>' + ph[0].slice(5).replace('-', '.') + '.</b>, teljes lomb: <b>' + ph[1].slice(5).replace('-', '.') + '.</b>' : '') + '</div>' +
+    '<div class="line">' + ttext(5, 0) + ' felett: <b>' + num(tdconv(pcum), 0) + '</b> ' + tlabel() + '·nap' + (ph ? ' · rügyfakadás: <b>' + DS.fmt(ph[0], { month: 'short', day: 'numeric' }) + '</b>, teljes lomb: <b>' + DS.fmt(ph[1], { month: 'short', day: 'numeric' }) + '</b>' : '')   /* egy dátumformátum (7.24) */ + '</div>' +
     '<ul class="mini-list">' + reach + '</ul>' + diaryLine +
     '<div class="line small">' + (g.kcByGdd ? '✔ A vízigény-szakaszok (Kc) a hőösszegből lépnek.' : 'A vízigény-szakaszok most fix dátumokból lépnek (a ? ablakban átállítható).') + '</div></div>');
-  const box = $('drCards');
+  const box = $('drTech');
   const after = box.children[0];
   const tmp = document.createElement('div'); tmp.innerHTML = cards.join('');
   [...tmp.children].reverse().forEach(ch => box.insertBefore(ch, after ? after.nextSibling : null));
@@ -624,7 +629,7 @@ async function openHelp2(q) {
     : { title: '🌡️ Hőösszeg (GDD) és vegetációs szakaszok', f: F_GDD, defs: GDD_PARAMS, obj: c.gdd, std: DR.defaults.gdd, kind: 'gdd' };
   const ms = q === 'gdd' ? '<h3>Mérföldkövek (5 °C feletti hőösszeg)</h3><p>Soronként: név = fokcelsiusnap. A kerti naplóba írt virágzásokból pontosíthatod őket.</p><textarea class="inp" id="msText" rows="5" style="width:100%">' + esc(c.gdd.milestones.map(m => m.name + ' = ' + m.gdd).join('\n')) + '</textarea><div class="perr" id="msErr"></div>' : '';
   openModal('<h2>' + conf.title + '</h2>' + conf.f + '<h3>Arányszámok</h3><div id="ptab">' + paramTable(conf.defs, conf.obj, conf.std) + '</div>' + ms +
-    presetBar(conf.kind) + '<div class="modal-actions"><button class="btn" id="mreset">Szabványra visszaállít</button><button class="btn primary" id="mapply">Alkalmaz</button></div>');
+    presetBar(conf.kind) + '<div class="modal-actions"><button class="btn" id="mreset">Szabványra visszaállít</button><button class="btn primary" id="mapply">Mentés</button></div>');
   // mérföldkövek: minden nem üres sor „név = szám” legyen
   const parseMs = () => {
     const rows = $('msText').value.split('\n').map(l => l.trim()).filter(Boolean);

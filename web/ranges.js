@@ -84,14 +84,16 @@ function renderRangePicker() {
   const qb = [];
   for (let y = y0; y <= y1; y++) qb.push('<button class="chip" data-q="y' + y + '">' + y + '</button>');
   qb.push('<button class="chip" data-q="365">előző 365 nap</button>', '<button class="chip" data-q="all">teljes időszak</button>');
-  $('stQuick').innerHTML = '<span class="muted">Gyorsan:</span> ' + qb.join('') + ' <span class="muted small">(Ctrl + kattintás: hozzáadás a meglévőkhöz)</span>';
+  // a rejtett Ctrl + kattintás helyett látható kapcsoló (7.31); a Ctrl továbbra is működik
+  $('stQuick').innerHTML = '<span class="muted">Gyorsan:</span> ' + qb.join('') + ' <label class="muted small"><input type="checkbox" id="stQuickAdd"' + (S.quickAdd ? ' checked' : '') + '> hozzáadás a meglévőkhöz</label>';
+  $('stQuickAdd').addEventListener('change', e => { S.quickAdd = e.target.checked; saveUi(); });
   $('stQuick').querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', e => {
     const q = b.dataset.q;
     let r;
     if (q === 'all') r = { ay: '', am: '', ad: '', by: '', bm: '', bd: '' };
     else if (q === '365') { const a = DS.add(today, -364); r = { ay: a.slice(0, 4), am: String(+a.slice(5, 7)), ad: String(+a.slice(8, 10)), by: '', bm: '', bd: '' }; }
     else r = { ay: q.slice(1), am: '', ad: '', by: q.slice(1), bm: '', bd: '' };
-    if (e.ctrlKey) rows.push(r); else rows.splice(0, rows.length, r);
+    if (e.ctrlKey || S.quickAdd) rows.push(r); else rows.splice(0, rows.length, r);
     saveUi(); renderRangePicker(); renderStats();
   }));
 
@@ -113,8 +115,8 @@ function checkRows() {
   });
   const list = ok ? rows.map(resolveRow) : null;
   $('stRangeSum').textContent = !ok ? 'Javítsd a pirossal jelölt mezőket – addig a statisztika a legutóbbi érvényes időszakot mutatja.'
-    : UI.stat.rangeMode === 'side' && list.length > 1 ? 'Egymás mellett: a rekordok, a számlálók és az átlagos nap időszakonként külön oszlopban / vonalon.'
-      : list.length > 1 ? 'Közös halmaz: a ' + list.length + ' időszak napjait együtt számolja.' : '';
+    : UI.stat.rangeMode === 'side' && list.length > 1 ? 'Összehasonlítva: a rekordok, a számlálók és az átlagos nap időszakonként külön oszlopban / vonalon.'
+      : list.length > 1 ? tf('Együtt számolva: a(z) {n} időszak napjait együtt számolja.', { n: list.length }) : '';
   return ok;
 }
 

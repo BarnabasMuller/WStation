@@ -308,6 +308,11 @@ async function renderCalendar() {
   calChart = echarts.init(el);
   calChart.setOption(option);
   calChart.on('click', p => { if (p.data && p.data.value) gotoDay(p.data.value[0]); });
+  // a vászon nem érhető el billentyűzettel: a hónap napjai rejtett gombként is (7.3) – Tabbal bejárhatók, a képernyőolvasó felolvassa
+  let a11y = $('calA11y');
+  if (!a11y) { a11y = document.createElement('div'); a11y.id = 'calA11y'; a11y.className = 'sr-only'; el.after(a11y); }
+  a11y.innerHTML = c.view === 'month' ? '<ul>' + d.date.map((s, i) => s.startsWith(calMonth) ? '<li><button type="button" data-day="' + s + '">' + esc(DS.fmt(s, { month: 'long', day: 'numeric', weekday: 'long' }) + ': ' + (d[m.k][i] == null ? 'nincs adat' : num(qv(m.q, d[m.k][i]), qd(m.q, m.dec)) + ' ' + qu(m.q, m.unit))) + '</button></li>' : '').join('') + '</ul>' : '';
+  a11y.querySelectorAll('button').forEach(b => b.addEventListener('click', () => gotoDay(b.dataset.day)));
   if (typeof renderDiary === 'function') renderDiary();
 }
 

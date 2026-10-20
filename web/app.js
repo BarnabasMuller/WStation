@@ -168,7 +168,15 @@ document.addEventListener('wheel', e => { if (!e.ctrlKey && e.target.closest && 
     c.setOption = function (o) {
       if (o && typeof o === 'object' && UI && UI.minFont) o.textStyle = Object.assign({ fontSize: fs(12) }, o.textStyle || {});
       if (o && typeof o === 'object' && typeof trOption === 'function') trOption(o, 0);
-      return so.apply(this, arguments);
+      const r = so.apply(this, arguments);
+      // szöveges alternatíva a vásznon rajzolt grafikonnak (7.6): a címe, vagy a kártya / panel címe
+      try {
+        const dom = c.getDom(), ts = o && o.title ? (Array.isArray(o.title) ? o.title : [o.title]).map(t => String(t.text || '').replace(/\{\w+\|([^}]*)\}/g, '$1')).filter(Boolean) : [];
+        const box = dom.closest('.card, .panel, .page'), h = box && box.querySelector('h2, h3');
+        const name = ts.length ? ts.join(', ') : h ? h.textContent.replace(/ƒx|\?/g, '').trim() : '';
+        if (name) { dom.setAttribute('role', 'img'); dom.setAttribute('aria-label', tf('Grafikon: {name}. A fontos számok a kártyákon szövegesen is megvannak.', { name })); }
+      } catch (e) { }
+      return r;
     };
     return c;
   };
@@ -200,6 +208,8 @@ function wlabel() { return ({ kmh: 'km/h', kn: 'csomó', bft: 'Bft', ms: 'm/s', 
 function wdec(dec, kmh) { if (dec != null) return dec; const u = windUnit(); return u === 'kmh' || u === 'mph' ? (kmh >= 30 ? 0 : 1) : 1; }
 function wtext(kmh, dec) { const v = wconv(kmh); return v == null ? '–' : num(v, wdec(dec, kmh)) + ' ' + wlabel(); }
 const DIRS = ['É', 'ÉÉK', 'ÉK', 'KÉK', 'K', 'KDK', 'DK', 'DDK', 'D', 'DDNy', 'DNy', 'NyDNy', 'Ny', 'NyÉNy', 'ÉNy', 'ÉÉNy'];
+// 8 égtáj (a kártyákra: a „KÉK”, „NyÉNy” fejtörő volt – 7.25); a 16-os lista minden második eleme, így a fordítás is jó
+function dirText8(deg) { if (deg == null || isNaN(deg)) return '–'; return DIRS[(Math.round(((deg % 360) + 360) % 360 / 45) % 8) * 2]; }
 function dirText(deg) { if (deg == null || isNaN(deg)) return '–'; return DIRS[Math.round(((deg % 360) + 360) % 360 / 22.5) % 16]; }
 const MONTH_ADJ = ['januári', 'februári', 'márciusi', 'áprilisi', 'májusi', 'júniusi', 'júliusi', 'augusztusi', 'szeptemberi', 'októberi', 'novemberi', 'decemberi'];
 
@@ -342,7 +352,8 @@ async function reload(download) {
 let toastTimer = 0;
 function toast(msg, ms) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), ms || 3200);
+  // legalább 8 másodpercig látszik (7.11: 3 másodperc kevés volt), a képernyőolvasó felolvassa (role=status)
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), Math.max(ms || 0, 8000));
 }
 
 // ------------------------------------------------------------------ fejléc, lábléc
@@ -965,3 +976,64 @@ function recDetail(r) {
   if (r.key === 'gust') return windUnit() === 'kn' ? num(beaufortF(r.value), 1) + ' Bft' : d;
   return d;
 }
+
+// ------------------------------------------------------------------ akadálymentesség (7.3, 7.4)
+// A gombként viselkedő nem-gomb elemek (rekordkártya, rendezhető fejléc, kattintható sor): fókuszálhatók, Enter / Szóköz = kattintás
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'Enter' && e.key !== ' ') || e.repeat) return;
+  const el = e.target;
+  if (el && el.getAttribute && el.getAttribute('role') === 'button' && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) { e.preventDefault(); el.click(); }
+});
+// a szegmensgombok (24 óra / 7 nap, km/h / csomó, Év / Hónap…) és a fülsor állapota kiolvasható; az aktív állapotot nem csak a szín jelzi
+function syncAria(root) {
+  (root || document).querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.classList.contains('on') ? 'true' : 'false'));
+  document.querySelectorAll('#tabs button').forEach(b => { b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', b.classList.contains('on') ? 'true' : 'false'); });
+}
+$('tabs').setAttribute('role', 'tablist');
+new MutationObserver(muts => { if (muts.some(m => m.type === 'childList' || (m.target.matches && m.target.matches('.seg button, #tabs button')))) { clearTimeout(syncAria._t); syncAria._t = setTimeout(() => syncAria(), 50); } })
+  .observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+syncAria();
+
+// címke nélküli mezők neve (7.7): a fix mezőké kézzel, a táblázatban lévőké a sor első cellájából, máskor a helykitöltőből
+const FIELD_NAMES = {
+  windPeriod: 'Időszak', stMetric: 'Mennyiség', stHmMetric: 'Mennyiség a hőtérképen', stFavSel: 'Kedvenc időszakok', cmpMode: 'Hossz',
+  stFavName: 'A kedvenc időszak neve', dTag: 'Címke', calMetric: 'Mennyiség', dText: 'Megjegyzés', dDate: 'Dátum', dZone: 'Zóna', dAmount: 'Mennyiség',
+  repPick: 'Hónap vagy év', rainYear: 'Év', rainMonth: 'Hónap', rainMin: 'Legalább ennyi csapadék', schedKind: 'Gyakoriság', langSel: 'Nyelv',
+  fontSel: 'Legkisebb betűméret', fontRange: 'Legkisebb betűméret (csúszka)', plLon: 'Tartalék hosszúság', plH3: 'Hőség-figyelő, III. fokozat',
+  clFilter: 'Szűrés a változásnaplóban'
+};
+const RNUM_NAMES = { ay: 'tól: év', am: 'tól: hónap', ad: 'tól: nap', by: 'ig: év', bm: 'ig: hónap', bd: 'ig: nap' };
+function autoLabel() {
+  document.querySelectorAll('input:not([type=hidden]), select, textarea').forEach(e => {
+    if (e.getAttribute('aria-label') || e.getAttribute('aria-labelledby') || (e.id && document.querySelector('label[for="' + e.id + '"]'))) return;
+    const l = e.closest('label'); if (l && [...l.childNodes].some(n => n !== e && n.textContent.trim())) return;
+    let name = FIELD_NAMES[e.id] || (e.classList.contains('rnum') && RNUM_NAMES[e.dataset.k]);
+    if (!name) { const td = e.closest('td'); let c = td && td.previousElementSibling; while (c && !c.textContent.trim()) c = c.previousElementSibling; if (c) name = c.textContent.trim(); }
+    if (!name && l && l.classList.contains('switch')) { const sib = l.nextElementSibling || l.parentElement; name = sib ? sib.textContent.trim().slice(0, 80) : ''; }
+    if (!name && e.dataset.wt) { const w = e.closest('.w-t'); name = w && w.querySelector('span') ? w.querySelector('span').textContent.trim() + ' – célállapot' : ''; }
+    if (!name && e.dataset.ci != null) name = tf('{n}. időszak kezdőnapja', { n: +e.dataset.ci + 1 });
+    if (name && e.dataset.k === 'CsendesIg') name += ' (vége)';
+    if (!name && e.placeholder) name = e.placeholder;
+    if (name) e.setAttribute('aria-label', name.slice(0, 80));
+  });
+}
+new MutationObserver(() => { clearTimeout(autoLabel._t); autoLabel._t = setTimeout(autoLabel, 150); }).observe(document.body, { subtree: true, childList: true });
+autoLabel();
+
+// minden állapotüzenet-hely bejelentett (7.11)
+$('toast').setAttribute('role', 'status'); $('toast').setAttribute('aria-live', 'polite');
+document.querySelectorAll('.msg').forEach(m => { if (!m.getAttribute('role')) m.setAttribute('role', 'status'); });
+
+const SAVE_BTNS = '#placeSave, #alertSave, #schedApply, #bkSave, #calSave, #suSave, #metarSave';
+// nem mentett változás jelzése a Beállítások kártyáin (7.18): a kártya címe mellett „● nem mentett”, mentéskor eltűnik
+document.addEventListener('input', e => {
+  const card = e.target.closest && e.target.closest('.settings > .card');
+  // csak a mentés gombos kártyákon (a téma, nyelv, mértékegység azonnal érvényes)
+  if (!card || !card.querySelector(SAVE_BTNS)) return;
+  const h = card.querySelector('h3');
+  if (h && !h.querySelector('.unsaved')) h.insertAdjacentHTML('beforeend', ' <span class="unsaved" title="A kártyán nem mentett változás van">● nem mentett</span>');
+});
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest(SAVE_BTNS);
+  if (b) { const u = b.closest('.card').querySelector('h3 .unsaved'); if (u) setTimeout(() => u.remove(), 300); }
+});

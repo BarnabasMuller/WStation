@@ -272,7 +272,7 @@ function wirePresets(kind, getData, setData) {
   });
   $('pload').addEventListener('click', () => {
     const p = list().find(x => x.name === $('psel').value);
-    if (p) { setData(p.data); flash('✔ Betöltve – az Alkalmaz gombbal mentheted.'); }
+    if (p) { setData(p.data); flash('✔ Betöltve – a Mentés gombbal mentheted.'); }
   });
   $('pdel').addEventListener('click', async () => {
     const name = $('psel').value;
