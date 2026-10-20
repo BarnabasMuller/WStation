@@ -214,7 +214,7 @@ async function renderCalendar() {
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line'), card = cssVar('--card');
   const el = $('cal');
   const years = [...new Set(d.date.map(s => +s.slice(0, 4)))];
-  const W = el.clientWidth || 1000;
+  const W = (el.parentElement && el.parentElement.clientWidth) || el.clientWidth || 1000;   // a szülő szélessége (a naptár maga szélesebb is lehet)
   let option;
 
   const item = (i, label) => {
@@ -226,15 +226,19 @@ async function renderCalendar() {
   };
 
   if (c.view === 'year') {
-    const cs = Math.max(9, Math.min(26, Math.floor((W - 110) / 54)));
-    const h = cs * 7;
-    const top0 = 64;
-    el.style.height = (top0 + years.length * (h + 46) + 10) + 'px';
+    // a cellák és a feliratközök a betűmérettel nőnek (6.32: 18 px-nél egymásra csúsztak)
+    const left0 = 40 + fs(14) * 2 + fs(10) * 2;
+    const cs = Math.max(11, Math.min(26, Math.floor((W - left0 - 30) / 54)));
+    // ha így sem fér ki, a naptár a saját dobozában görgethető (az oldal nem)
+    el.style.minWidth = (left0 + cs * 54 + 30) + 'px'; el.parentElement.style.overflowX = 'auto';
+    const h = cs * 7, gap = fs(11) * 2 + 26;
+    const top0 = 40 + fs(14) + fs(11) * 2;
+    el.style.height = (top0 + years.length * (h + gap) + 10) + 'px';
     const calendars = years.map((y, k) => ({
-      range: String(y), top: top0 + k * (h + 46), left: 76, cellSize: [cs, cs], orient: 'horizontal',
+      range: String(y), top: top0 + k * (h + gap), left: left0, cellSize: [cs, cs], orient: 'horizontal',
       splitLine: { show: true, lineStyle: { color: muted, width: 1, opacity: .45 } },
       itemStyle: { color: cssVar('--empty'), borderColor: card, borderWidth: 2 },
-      yearLabel: { show: true, position: 'left', margin: 46, color: ink, fontSize: fs(14), fontWeight: 600 },
+      yearLabel: { show: true, position: 'left', margin: fs(10) * 2 + 16, color: ink, fontSize: fs(14), fontWeight: 600 },
       dayLabel: { firstDay: 1, nameMap: DAY_NAMES, color: muted, fontSize: fs(10), margin: 6 },
       monthLabel: { nameMap: MONTHS_HU, color: muted, fontSize: fs(11), margin: 6 }
     }));
@@ -244,6 +248,7 @@ async function renderCalendar() {
     }));
     option = { calendar: calendars, series };
   } else {
+    el.style.minWidth = '';
     // hónapnézet: sorok = hetek, oszlopok = a hét napjai; a cellában a nap és az érték
     const cw = Math.max(54, Math.min(150, Math.floor((W - 40) / 7)));
     const chh = Math.max(46, Math.min(84, Math.round(cw * 0.62)));

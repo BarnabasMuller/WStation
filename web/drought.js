@@ -276,7 +276,7 @@ function lawnAdvice(p, r) {
 }
 
 // csepegtetési idő: 90 perc alatt percben, 48 óráig órában (pl. „7,6 óra”), fölötte napban is
-function durText(min) { return min < 90 ? num(min, 0) + ' perc' : min < 48 * 60 ? num(min / 60, 1) + ' óra' : num(min / 1440, 1) + ' nap (' + num(min / 60, 0) + ' óra)'; }
+function durText(min) { return fmtDuration(Math.round(min / 5) * 5); }   // egységes időtartam-formátum (6.22), 5 percre kerekítve
 
 function shrubAdvice(p, r) {
   const dr = last(r.dr), raw = last(r.raw);

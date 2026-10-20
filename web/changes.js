@@ -71,7 +71,7 @@ async function renderChanges() {
   });
   // adathiány
   const gaps = (META.gaps || []).filter(g => g.to >= from && g.to - g.from >= 3 * H);
-  if (gaps.length) items.push([3, '⚠ ' + gaps.length + ' hosszabb adathiány (összesen ' + num(gaps.reduce((s, g) => s + g.to - g.from, 0) / H, 0) + ' óra)', { a: gaps[0].from, b: gaps[0].to }]);
+  if (gaps.length) items.push([3, '⚠ ' + tf('{n} hosszabb adathiány (összesen {d})', { n: gaps.length, d: fmtDuration(gaps.reduce((s, g) => s + g.to - g.from, 0) / 60000) }), { a: gaps[0].from, b: gaps[0].to }]);
 
   const top = items.filter(x => x[0] >= 3).sort((a, b) => b[0] - a[0]);
   let html = '<b>' + title + ':</b> ' + (top.length ? top.slice(0, within24 ? 8 : 6).map((x, k) => '<span class="chg-i' + (x[2] ? ' link' : '') + '" data-k="' + items.indexOf(x) + '">' + x[1] + '</span>').join(' · ') : 'nyugodt időszak, nincs teendő.');

@@ -73,10 +73,11 @@ async function renderRun() {
   if (!$('logWhen').value) $('logWhen').value = localInput(Date.now());
   if (!$('advWho').value && names.length) $('advWho').value = UI.runWho || names[0];
 
-  // komfort most
-  const n = TODAY && TODAY.now || {};
-  const cf = comfort(n.dew);
-  $('runComfort').innerHTML = '<h3>Komfort most</h3><div class="big">' + (cf ? cf[0] : '–') + '</div>' +
+  // komfort: ugyanabból a mérésből, mint a „Mit vegyek fel” (7.21), és ha nem friss, kiírja, mikori (6.25)
+  const n = await weatherAt(Date.now()).catch(() => ({}));
+  const cf = comfort(n.dew), fresh = n.t && Date.now() - n.t < 90 * 60000;
+  $('runComfort').innerHTML = '<h3>' + (fresh ? 'Komfort most' : 'Komfort') + '</h3><div class="big">' + (cf ? cf[0] : '–') + '</div>' +
+    (n.t && !fresh ? '<div class="line small warn">' + tf('a legutóbbi mérés alapján ({when})', { when: F.full.format(n.t) }) + '</div>' : '') +
     '<div class="line">Harmatpont <b>' + ttext(n.dew) + '</b> · hőérzet <b>' + ttext(n.feels) + '</b> · szél <b>' + wtext(n.wind) + '</b></div>' +
     '<div class="line small">Harmatpont-sávok: ' + dewBands() + '. Fülledt időben lassabb tempó és több folyadék javasolt.</div>';
   await advise();
@@ -100,7 +101,7 @@ async function advise() {
   $('advIntVal').textContent = I;
   const w = await weatherAt(ms);
   const te = teff(w);
-  const runs = (RUNS || []).filter(r => !who || r.who === who);
+  const runs = (RUNS || []).filter(r => !who || String(r.who).toLowerCase() === who.toLowerCase());   // „Peti” = „peti” (10.5)
   const model = fitModel(runs);
   if (te == null) { $('advOut').innerHTML = '<span class="muted">Ehhez az időponthoz nincs mérés.</span>'; return; }
   const L = recommend(model, te, I);
@@ -117,8 +118,10 @@ $('advNow').addEventListener('click', () => { $('advWhen').value = localInput(Da
 $('logInt').addEventListener('input', () => $('logIntVal').textContent = $('logInt').value);
 $('logFeel').addEventListener('input', () => { const v = +$('logFeel').value; $('logFeelVal').textContent = (v > 0 ? '+' : '') + v + (v === 0 ? ' (tökéletes)' : v < 0 ? ' (hideg)' : ' (meleg)'); });
 $('logSave').addEventListener('click', async () => {
-  const who = $('logWho').value.trim();
+  let who = $('logWho').value.trim();
   if (!who) { toast('Írd be, ki futott.'); return; }
+  // egy már ismert név más kis-/nagybetűvel ugyanaz a futó (10.5)
+  const known = (RUNS || []).map(r => r.who).find(x => x && x.toLowerCase() === who.toLowerCase()); if (known) who = known;
   const t = new Date($('logWhen').value).getTime();
   if (!t) { toast('Add meg, mikor volt a futás.'); return; }
   const w = await api('/api/at?t=' + t);

@@ -371,10 +371,9 @@ function renderFooter() {
   const parts = [
     num(m.n, 0) + ' mérés',
     F.dayY.format(m.first) + ' – ' + F.dayY.format(m.last),
-    m.files.length + ' CSV fájl (' + m.files.join(', ') + ')',
-    (m.fromCache ? 'betöltve a cache-ből' : 'feldolgozva') + ' ' + num(m.loadMs / 1000, 1) + ' mp alatt',
+    // a technikai részletek (fájlok, betöltési idő) a Névjegyben (7.29)
     num(m.flaggedRows, 0) + ' gyanús mérés jelölve',
-    m.gaps.length + ' adathiány (> ' + m.settings.gapMinutes + ' perc)'
+    tf('{n} adathiány (> {d})', { n: m.gaps.length, d: fmtDuration(m.settings.gapMinutes) })
   ];
   let html = parts.map(esc).join(' · ') + ' · v' + esc(m.version);
   if (m.warnings.length) html += '<br><span class="warn">⚠ ' + m.warnings.map(esc).join('<br>⚠ ') + '</span>';
@@ -884,8 +883,8 @@ async function renderSettings() {
       '<dt>Állomás</dt><dd>' + esc(m.station) + ' · ' + esc(placeName()) + ' (' + num(m.lat, 4) + ', ' + num(m.lon, 4) + (m.latSource === 'beállítás' ? ' – az adatokban nincs koordináta, a Beállítások › Helyszín tartalékértéke' : '') + ')</dd>' +
       '<dt>Mérések</dt><dd>' + num(m.n, 0) + ' db, ' + F.dayY.format(m.first) + ' – ' + F.dayY.format(m.last) + '</dd>' +
       '<dt>Gyanús mérések</dt><dd>' + num(m.flaggedRows, 0) + ' jelölve (semmi nincs törölve)</dd>' +
-      '<dt>Adathiányok</dt><dd>' + m.gaps.length + ' db (> ' + m.settings.gapMinutes + ' perc)</dd>' +
-      '<dt>Betöltés</dt><dd>' + (m.fromCache ? 'cache-ből' : 'CSV-ből') + ', ' + num(m.loadMs / 1000, 1) + ' mp (' + esc(m.loadedAt) + ')</dd>' +
+      '<dt>Adathiányok</dt><dd>' + tf('{n} db (> {d})', { n: m.gaps.length, d: fmtDuration(m.settings.gapMinutes) }) + '</dd>' +
+      '<dt>Betöltés</dt><dd>' + (m.fromCache ? 'gyorsítótárból' : 'CSV-ből') + ', ' + tf('{s} mp', { s: num(m.loadMs / 1000, 1) }) + ' (' + esc(m.loadedAt) + ')</dd>' +
       (m.warnings.length ? '<dt>Figyelmeztetések</dt><dd>' + m.warnings.map(esc).join('<br>') + '</dd>' : '');
   }
   renderSettingsV2();

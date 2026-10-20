@@ -222,7 +222,8 @@ async function renderCompare() {
   groups.forEach((g, gi) => {
     const q = QTY[g.u] ? g.u : null, unit = qu(q, g.u);
     grid.push({ left: 56, right: 20, top: top0 + gi * (gh + 34), height: gh });
-    xAxis.push({ type: 'value', gridIndex: gi, min: 0, max: len / H, interval: step, axisLabel: { show: gi === groups.length - 1, color: muted, formatter: v => days === 1 ? v + 'h' : (v / 24 + 1) + '. nap' } });
+    // halvány rácsvonalak a téma színével (6.23: sötét témán vastag fehér vonalak voltak), az óra „3:00” alakban
+    xAxis.push({ type: 'value', gridIndex: gi, min: 0, max: len / H, interval: step, splitLine: { lineStyle: { color: line, opacity: .45 } }, axisLabel: { show: gi === groups.length - 1, color: muted, formatter: v => days === 1 ? v + ':00' : tf('{n}. nap', { n: v / 24 + 1 }) } });
     yAxis.push({ type: 'value', gridIndex: gi, name: unit, scale: true, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .5 } } });
     res.forEach((X, pi) => g.vars.forEach((v, vi) => {
       const gr = X.r.groups[v[2]];
@@ -260,7 +261,7 @@ async function renderQuality() {
   const token = ++qToken;
   const q = await api('/api/quality?x=1' + stParam());
   if (token !== qToken) return;
-  const fmtMin = m => m < 120 ? m + ' perc' : (m / 60).toFixed(1).replace('.', ',') + ' óra';
+  const fmtMin = m => fmtDuration(m);   // egységes időtartam-formátum (6.22)
   $('stGaps').innerHTML = '<table class="dtable"><thead><tr><th>Utolsó mérés előtte</th><th>Első mérés utána</th><th>Hossz</th></tr></thead><tbody>' +
     q.gaps.slice().sort((a, b) => b.minutes - a.minutes).map(g => '<tr data-a="' + g.from + '" data-b="' + g.to + '"><td>' + F.full.format(g.from) + '</td><td>' + F.full.format(g.to) + '</td><td><b>' + fmtMin(g.minutes) + '</b></td></tr>').join('') + '</tbody></table>';
   $('stGaps').querySelectorAll('tr[data-a]').forEach(r => r.addEventListener('click', () => gotoRange(+r.dataset.a, +r.dataset.b, 6 * H)));

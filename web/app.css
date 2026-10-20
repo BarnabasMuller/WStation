@@ -576,3 +576,12 @@ select.sel, .settings select { max-width: 100%; }
 .settings > .card.wide { column-span: all; display: block; }
 .seg button { white-space: nowrap; }
 .settings .seg { flex-wrap: wrap; }
+/* Futás: a címkék és értékek elkülönülnek (6.25), a csúszka végein a jelentés (7.34) */
+.fld { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 9px; }
+.fld b { min-width: 1.5em; }
+.rng-end { font-size: max(12px, var(--minf)); color: var(--muted); }
+/* változásnapló: tördelődik, nincs vízszintes görgetés (6.29) */
+#clList td { overflow-wrap: anywhere; vertical-align: top; }
+#clList td.nowrap { white-space: nowrap; }
+.cl-raw summary { cursor: pointer; color: var(--accent); font-size: max(12px, var(--minf)); }
+.cl-raw code { display: block; white-space: pre-wrap; max-height: 200px; overflow: auto; font-size: max(11.5px, var(--minf)); }

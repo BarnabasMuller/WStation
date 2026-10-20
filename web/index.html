@@ -227,21 +227,21 @@
       <div class="card wide2">
         <h3>Mit vegyek fel futáshoz?</h3>
         <div class="row2">
-          <input class="inp" id="advWho" list="runNames" placeholder="ki fut? (pl. Peti)" style="width:160px">
-          <input type="datetime-local" class="inp" id="advWhen"> <button class="btn" id="advNow">most</button>
-          <label class="muted">intenzitás <input type="range" id="advInt" min="1" max="10" value="5"> <b id="advIntVal">5</b></label>
+          <input class="inp" id="advWho" list="runNames" placeholder="ki fut? (pl. Peti)" aria-label="Ki fut?" style="width:160px">
+          <input type="datetime-local" class="inp" id="advWhen" aria-label="Mikor?"> <button class="btn" id="advNow">most</button>
+          <label class="muted fld">intenzitás (1–10) <input type="range" id="advInt" min="1" max="10" value="5"> <b id="advIntVal">5</b></label>
         </div>
         <div id="advOut" class="adv"></div>
       </div>
       <div class="card wide2">
         <h3>Futás után: tanítsd a tanácsadót</h3>
         <div class="row2">
-          <input class="inp" id="logWho" list="runNames" placeholder="ki futott?" style="width:160px">
-          <input type="datetime-local" class="inp" id="logWhen">
-          <label class="muted">intenzitás <input type="range" id="logInt" min="1" max="10" value="5"> <b id="logIntVal">5</b></label>
-          <label class="muted">rétegek <input class="inp" id="logLayers" type="number" min="1" max="8" value="2" style="width:60px"></label>
+          <input class="inp" id="logWho" list="runNames" placeholder="ki futott?" aria-label="Ki futott?" style="width:160px">
+          <input type="datetime-local" class="inp" id="logWhen" aria-label="Mikor volt a futás?">
+          <label class="muted fld">intenzitás (1–10) <input type="range" id="logInt" min="1" max="10" value="5"> <b id="logIntVal">5</b></label>
+          <label class="muted fld">rétegek száma <input class="inp" id="logLayers" type="number" min="1" max="8" value="2" style="width:60px"></label>
         </div>
-        <div class="row2"><label class="muted">milyen volt? <input type="range" id="logFeel" min="-5" max="5" value="0" style="width:220px"> <b id="logFeelVal">0 (tökéletes)</b></label>
+        <div class="row2"><label class="muted fld">milyen volt? <span class="rng-end">fáztam</span><input type="range" id="logFeel" min="-5" max="5" value="0" style="width:220px"><span class="rng-end">melegem volt</span> <b id="logFeelVal">0 (tökéletes)</b></label>
           <button class="btn primary" id="logSave">Rögzítés</button></div>
         <div class="hint">−5 = nagyon fáztam · 0 = tökéletes · +5 = nagyon melegem volt. Az időjárást a program a mérésekből keresi ki.</div>
         <datalist id="runNames"></datalist>

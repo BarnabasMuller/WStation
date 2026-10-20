@@ -261,11 +261,22 @@ async function loadChangelog() {
   try { CL = await api('/api/changelog'); } catch (e) { CL = []; }
   renderChangelog();
 }
+// a változásnapló emberi nyelven (6.29): helyi dátum, belső azonosítók nélkül, a nyers JSON csak lenyitva
+function clWhen(t) { const ms = Date.parse(String(t || '').replace(' ', 'T')); return isNaN(ms) ? esc(t || '') : F.full.format(ms); }
+function clKey(k) { return String(k || '').replace(/#?\b(sc|pg|p)[0-9a-z]{6,}\b/g, '…').replace(/\s*›\s*…(\s*›\s*…)*/g, ' › …'); }
+function clVal(v) {
+  if (v == null) return '–';
+  const s = String(v).trim();
+  if (!/^[\[{]/.test(s)) return esc(s.length > 80 ? s.slice(0, 80) + '…' : s);
+  let o; try { o = JSON.parse(s); } catch (e) { return esc(s.slice(0, 80)); }
+  const sum = Array.isArray(o) ? tf('{n} elem', { n: o.length }) : o && o.name ? '„' + o.name + '”' : o && typeof o === 'object' ? tf('{n} beállítás', { n: Object.keys(o).length }) : String(o);
+  return esc(sum) + ' <details class="cl-raw"><summary>részletek</summary><code>' + esc(s.length > 1500 ? s.slice(0, 1500) + '…' : s) + '</code></details>';
+}
 function renderChangelog() {
   const q = ($('clFilter').value || '').toLowerCase();
   const rows = CL.map((e, i) => Object.assign({ i }, e)).filter(e => !q || [e.area, e.key, e.from, e.to].join(' ').toLowerCase().includes(q)).reverse().slice(0, 400);
   $('clList').innerHTML = rows.length ? '<table class="dtable"><thead><tr><th>Mikor</th><th>Hol</th><th>Mit</th><th>Régi</th><th>Új</th><th></th></tr></thead><tbody>' +
-    rows.map(e => '<tr><td>' + esc(e.t) + '</td><td>' + esc(e.area || '') + '</td><td>' + esc(e.key || '') + '</td><td>' + esc(e.from == null ? '–' : e.from) + '</td><td><b>' + esc(e.to == null ? '–' : e.to) + '</b></td><td>' +
+    rows.map(e => '<tr><td class="nowrap">' + clWhen(e.t) + '</td><td>' + esc(e.area || '') + '</td><td>' + esc(clKey(e.key)) + '</td><td>' + clVal(e.from) + '</td><td><b>' + clVal(e.to) + '</b></td><td>' +
       (e.revert ? '<button class="btn small" data-rev="' + e.i + '" title="A régi érték visszaállítása">↶ visszaállít</button>' : '') + '</td></tr>').join('') + '</tbody></table>'
     : '<div class="muted" style="padding:10px">' + (q ? 'Nincs találat.' : 'Még nincs bejegyzés.') + '</div>';
   $('clList').querySelectorAll('[data-rev]').forEach(b => b.addEventListener('click', () => revertChange(CL[+b.dataset.rev])));
