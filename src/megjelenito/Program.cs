@@ -54,12 +54,19 @@ namespace Idojaras
 
             // egy mappából egyszerre csak egy példány fusson (a cache miatt)
             bool created;
-            var mutex = new Mutex(true, "BudaorsIdojaras_" + Hash(dir.ToLowerInvariant()), out created);
+            string key = Hash(dir.ToLowerInvariant());
+            var mutex = new Mutex(true, "BudaorsIdojaras_" + key, out created);
             if (!created)
             {
+                // a futó példány hozza előre az ablakát (15.2: a „már fut” üzenet idős felhasználónak úgy tűnt, mintha nem indulna)
+                try { EventWaitHandle ev; if (EventWaitHandle.TryOpenExisting("WStation_Show_" + key, out ev)) { ev.Set(); ev.Dispose(); return 4; } }
+                catch { }
                 MessageBox.Show("A program már fut.", "WStation", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return 4;
             }
+            var showEv = new EventWaitHandle(false, EventResetMode.AutoReset, "WStation_Show_" + key);
+            var showThread = new Thread(() => { while (showEv.WaitOne()) BringToFront(); }) { IsBackground = true };
+            showThread.Start();
 
             // mappák létrehozása, régi (egy mappás) elrendezés átalakítása, WebView2 DLL-ek kicsomagolása
             var L = Layout.For(dir);
@@ -101,6 +108,7 @@ namespace Idojaras
                 Log("A WebView2 ablak nem indult (" + reason + "), böngészős módra váltok.");
             }
 
+            ServerUrl = server.Url;
             Application.Run(new FallbackForm(server.Url, !noOpen));
             server.Stop();
             GC.KeepAlive(mutex);
@@ -123,6 +131,26 @@ namespace Idojaras
 
         // a főablak (mentés-párbeszédablakokhoz); böngészős módban null
         public static volatile Form Window;
+        static volatile string ServerUrl;
+
+        // második indításkor: az ablak előre (kis méretből vissza); böngészős módban a felület újra megnyílik
+        static void BringToFront()
+        {
+            var w = Window;
+            if (w != null && !w.IsDisposed)
+            {
+                try
+                {
+                    w.BeginInvoke((Action)(() =>
+                    {
+                        if (w.WindowState == FormWindowState.Minimized) w.WindowState = FormWindowState.Normal;
+                        w.Show(); w.TopMost = true; w.Activate(); w.TopMost = false;
+                    }));
+                }
+                catch { }
+            }
+            else if (ServerUrl != null) OpenExternal(ServerUrl);
+        }
 
         public static void Log(string msg)
         {

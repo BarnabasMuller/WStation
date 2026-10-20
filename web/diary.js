@@ -17,7 +17,16 @@ async function renderDiary() {
   if (!$('dDate').value) $('dDate').value = DS.today();
   // öntözésnél zóna (a szárazság-profilok közül) és mennyiség
   const z = $('dZone');
-  if (typeof DR !== 'undefined' && DR && z.options.length !== DR.config.profiles.length) z.innerHTML = DR.config.profiles.filter(p => p.type !== 'felszin').map(p => '<option class="ut" value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+  // csak ha a zónák listája tényleg változott, és a kiválasztott zóna megmarad (14.4: korábban minden frissítéskor az elsőre ugrott)
+  if (typeof DR !== 'undefined' && DR) {
+    const zones = DR.config.profiles.filter(p => p.type !== 'felszin'), sig = zones.map(p => p.id + ':' + p.name).join('|');
+    if (z.dataset.sig !== sig) {
+      const keep = z.value;
+      z.innerHTML = zones.map(p => '<option class="ut" value="' + p.id + '">' + esc(p.name) + '</option>').join('');
+      if (zones.some(p => p.id === keep)) z.value = keep;
+      z.dataset.sig = sig;
+    }
+  }
   $('dWater').classList.toggle('hidden', $('dTag').value !== 'öntözés');
   const filterMonth = UI.cal && UI.cal.view === 'month' ? calMonth : null;
   const rows = list.map((x, i) => Object.assign({ i }, x)).filter(x => !filterMonth || (x.date || '').startsWith(filterMonth)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));

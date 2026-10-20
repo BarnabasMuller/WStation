@@ -257,14 +257,17 @@ namespace Telepito
                 progress("Régi fájlok elrendezése...", 15);
                 MigrateInPlace(target, r);
 
-                // a programfájlok mindig frissülnek, az adatok és a beállítások soha nem íródnak felül
+                // a programfájlok mindig frissülnek, az adatok és a beállítások soha nem íródnak felül.
+                // Egyben cserél (16.7): előbb minden új fájl .uj-ként, és csak ha mind megvan, jönnek a cserék; ha egy csere
+                // nem sikerül (pl. közben elindult az ütemezett Letöltő), a már kicseréltek visszaállnak – nem marad félig frissített állapot.
                 var asm = Assembly.GetExecutingAssembly();
+                var plan = new List<string[]>();   // [cél, .uj, név]
                 int i = 0;
                 foreach (var f in Names.Files)
                 {
                     // a leírások a választott nyelven (docs/<kód>/…), ha van ilyen; különben magyarul
                     string res = LocalDoc(asm, f[0]), name = res != f[0] ? Langs.T(f[1]) : f[1];
-                    progress("Másolás: " + name, 20 + 50 * i++ / Names.Files.Length);
+                    progress("Másolás: " + name, 20 + 40 * i++ / Names.Files.Length);
                     string dest = Path.Combine(target, name);
                     string tmp = dest + ".uj";
                     using (var s = asm.GetManifestResourceStream(res))
@@ -272,16 +275,40 @@ namespace Telepito
                         if (s == null) throw new Exception("Hiányzik a telepítőből: " + f[0]);
                         using (var fs = Guard.OpenWrite(tmp, FileMode.Create, FileAccess.Write, FileShare.None)) s.CopyTo(fs);
                     }
-                    try
+                    plan.Add(new[] { dest, tmp, f[1] });
+                }
+                progress("A programfájlok cseréje...", 62);
+                bool paused = Kozos.Utemezes.Pause(true);   // közben ne induljon el az ütemezett Letöltő
+                var done = new List<string[]>();
+                try
+                {
+                    running = RunningIn(target);
+                    if (running != null) throw new Exception("A(z) " + running + " közben elindult ebből a mappából. Zárd be, majd próbáld újra.");
+                    foreach (var x in plan)
                     {
-                        if (File.Exists(dest)) Guard.Replace(tmp, dest, null); else Guard.Move(tmp, dest);
-                    }
-                    catch (IOException)
-                    {
-                        try { Guard.Delete(tmp); } catch { }
-                        throw new Exception("A(z) " + f[1] + " most használatban van, ezért nem cserélhető. Zárd be a Megjelenítőt és a Letöltőt, majd próbáld újra.");
+                        string bak = x[0] + ".regi";
+                        try
+                        {
+                            if (File.Exists(bak)) Guard.Delete(bak);
+                            if (File.Exists(x[0])) Guard.Replace(x[1], x[0], bak); else Guard.Move(x[1], x[0]);
+                            done.Add(new[] { x[0], File.Exists(bak) ? bak : null });
+                        }
+                        catch (IOException)
+                        {
+                            throw new Exception("A(z) " + x[2] + " most használatban van, ezért nem cserélhető. Zárd be a Megjelenítőt és a Letöltőt, majd próbáld újra.");
+                        }
                     }
                 }
+                catch
+                {
+                    // visszaállítás: a már kicserélt fájlok a régire, az újonnan létrehozottak törlődnek; a maradék .uj-k is
+                    for (int k = done.Count - 1; k >= 0; k--)
+                        try { if (done[k][1] != null) Guard.Replace(done[k][1], done[k][0], null); else Guard.Delete(done[k][0]); } catch { }
+                    foreach (var x in plan) try { if (File.Exists(x[1])) Guard.Delete(x[1]); } catch { }
+                    throw;
+                }
+                finally { if (paused) Kozos.Utemezes.Pause(false); }
+                foreach (var x in done) if (x[1] != null) try { Guard.Delete(x[1]); } catch { }
                 r.Log.Add("programok és leírások: " + (r.Updated ? "frissítve" : "telepítve"));
 
                 // más nyelvű nevek eltávolítása (nyelvváltás, ill. a 2.2.1-es magyar nevekről), hogy ne legyen két Megjelenítő

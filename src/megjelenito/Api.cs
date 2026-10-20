@@ -452,6 +452,7 @@ namespace Idojaras
             w.Key("est").Arr(); if (r.Est != null) foreach (var b in r.Est) w.Bool(b); w.EndArr();
             arr("ffmc", r.Ffmc, 1); arr("dmc", r.Dmc, 1); arr("dc", r.Dc, 1); arr("isi", r.Isi, 1); arr("bui", r.Bui, 1); arr("fwi", r.Fwi, 1);
             arr("fwiT", r.FwiT, 1); arr("fwiH", r.FwiH, 0); arr("fwiW", r.FwiW, 1); arr("fwiRo", r.FwiRo, 2);
+            w.Key("fwiEst").Arr(); if (r.FwiEst != null) foreach (var b in r.FwiEst) w.Bool(b); w.EndArr();
             arr("gdd", r.Gdd, 1); arr("gddCum", r.GddCum, 0); arr("gddPheno", r.GddPheno, 0);
             w.Key("pheno").Obj();
             foreach (var kv in r.Pheno) w.Key(kv.Key.ToString(Inv)).Arr().Str(kv.Value[0].ToString("yyyy-MM-dd", Inv)).Str(kv.Value[1].ToString("yyyy-MM-dd", Inv)).EndArr();

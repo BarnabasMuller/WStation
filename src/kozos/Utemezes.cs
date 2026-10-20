@@ -216,6 +216,20 @@ namespace Kozos
             return xml;
         }
 
+        // telepítés idejére: az ütemezett letöltés ne induljon el a fájlcsere közben (16.7); true, ha volt mit szüneteltetni
+        public static bool Pause(bool pause)
+        {
+            try
+            {
+                string o, xml;
+                if (Run("/Query /TN \"" + TaskName + "\" /XML", out xml) != 0) return false;   // nincs ilyen feladat
+                // a felhasználó által kikapcsolt feladatot nem kapcsoljuk be utána
+                if (pause && Regex.IsMatch(xml, @"<Settings>[\s\S]*?<Enabled>false</Enabled>[\s\S]*?</Settings>")) return false;
+                return Run("/Change /TN \"" + TaskName + "\" /" + (pause ? "DISABLE" : "ENABLE"), out o) == 0;
+            }
+            catch { return false; }
+        }
+
         public static bool Remove(out string message)
         {
             if (QuerySpec().kind == "off") { message = "Nincs ütemezett letöltés."; return true; }

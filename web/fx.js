@@ -20,9 +20,9 @@ const FX = {
     text: 'A klasszikus Beaufort-skála egész fokozatait a WMO-képlet folytonossá teszi: így látszik, hogy 3,3 vagy 3,9 Bft fújt. A fokozat neve (pl. „gyenge szél”) a kerekített értékből jön; 1 csomó (1,9 km/h) alatt szélcsend (0), a Szél fül szélcsend-aránya is ezzel számol. Példa: 18 km/h = 5,0 m/s → 3,3 Bft.'
   },
   sun: {
-    title: '☀️ Napsütéses órák és napenergia',
-    f: 'napsütéses órák = Σ Δt, ahol a napsugárzás ≥ 120 W/m² (WMO)<br>napenergia (kWh/m²) = Σ (napsugárzás · Δt) / 3 600 000',
-    text: 'A WMO szerint „süt a nap”, ha a közvetlen napsugárzás legalább 120 W/m². A mi állomásunk teljes (globális) sugárzást mér, ezért ez jó közelítés. A napenergia a vízszintes felületre jutó energia.'
+    title: '☀️ Napsütéses órák és napenergia (becslés)',
+    f: 'napsütéses órák = Σ Δt, ahol a napsugárzás ≥ 120 W/m²<br>napenergia (kWh/m²) = Σ (napsugárzás · Δt) / 3 600 000',
+    text: 'Mindkettő becslés, inkább felülbecsül: a Weather Underground az 5 perces szakasz legnagyobb napsugárzását adja, nem az átlagát, ezért gomolyfelhős napon a valódinál több jön ki. A WMO 120 W/m²-es határa a közvetlen napsugárzásra vonatkozik, az állomás viszont a vízszintes felületre jutó teljes (globális) sugárzást méri: világos, borult időben ez többnek, alacsony téli napnál kevesebbnek mutatja a napsütést. A napok egymáshoz mérésére jó, abszolút értéknek tájékoztató.'
   },
   zambretti: {
     title: '🌤️ Zambretti-előrejelzés',
@@ -45,7 +45,7 @@ const FX = {
   thresholds: {
     title: '📊 Statisztikai küszöbök',
     f: 'hőségnap: T<sub>max</sub> ≥ T<sub>h</sub> · trópusi éjszaka: T<sub>min</sub> ≥ T<sub>tr</sub> · fagyos nap: T<sub>min</sub> &lt; T<sub>f</sub> · téli nap: T<sub>max</sub> &lt; T<sub>t</sub>',
-    text: 'A napok számlálása a megadott határok szerint (az OMSZ szokásos küszöbeivel). Csak a legalább 80%-ban lefedett napok számítanak.',
+    text: 'A napok számlálása a megadott határok szerint (az OMSZ szokásos küszöbeivel). Mindenhol csak a legalább 80%-ban lefedett napok számítanak (Statisztika, Áttekintés, Jelentés); a csapadékösszeg minden napból.',
     params: [['HosegNap', 'Hőségnap határa', 'T_h', '°C', 'OMSZ: 30 °C'], ['TropusiEjszaka', 'Trópusi éjszaka határa', 'T_tr', '°C', 'OMSZ: 20 °C'], ['FagyosNap', 'Fagyos nap határa', 'T_f', '°C', '0 °C'], ['TeliNap', 'Téli nap határa', 'T_t', '°C', '0 °C'], ['HianyPerc', 'Adathiány, ha a szünet hosszabb', 't_hiány', 'perc', '15 perc (az állomás 5 percenként küld)']]
   },
   windy: {
@@ -61,8 +61,8 @@ const FX = {
   },
   runmodel: {
     title: '🏃 Futóruházat-tanácsadó',
-    f: 'T<sub>hat</sub> = hőérzet − 0,3·max(0, v − 10) − 2·[esik] + 1,5·[napsütés]<br>érzet = β₀ + β₁·T<sub>hat</sub> + β₂·rétegek + β₃·intenzitás (lineáris modell, legkisebb négyzetek)',
-    text: 'A futás után megadott érzetből (−3 fázott … +3 melege volt) tanul: kevés adatnál az ökölszabály a súlyosabb („öltözz úgy, mintha 10 °C-kal melegebb lenne”), több futás után egyre inkább a saját adatod. A javasolt rétegszám az, ahol a becsült érzet a legközelebb van a 0-hoz.'
+    f: 'T<sub>hat</sub> = hőérzet + 2 (napsugárzás &gt; 500 W/m²) vagy + 1 (&gt; 200 W/m²) − 2 (esik, &gt; 0,5 mm/h) − 1 (szél &gt; 20 km/h)<br>érzet = β₀ + β₁·T<sub>hat</sub> + β₂·rétegek + β₃·intenzitás (ridge-regresszió, λ = 3, az ökölszabály felé húzva; β₂ ≥ 0,3)',
+    text: 'A futás után megadott érzetből (−5 nagyon fáztam … 0 tökéletes … +5 nagyon melegem volt) tanul: kevés adatnál az ökölszabály a súlyosabb („öltözz úgy, mintha 10 °C-kal melegebb lenne”), több futás után egyre inkább a saját adatod. A javasolt rétegszám az, ahol a becsült érzet a legközelebb van a 0-hoz (1–6 réteg).'
   },
   cloud: {
     title: '☁️ Felhőzet (becslés a saját mérésekből)',

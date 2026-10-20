@@ -133,13 +133,20 @@ async function renderHourHeat() {
   const data = [];
   h.values.forEach((row, x) => row.forEach((v, y) => { if (v != null) data.push([x, y, conv(v)]); }));
   const vals = data.map(p => p[2]);
+  // üres időszaknál üres-állapot szöveg (15.4: a Math.min(...[]) Infinity-t adott, hibás színskálával)
+  let empty = $('stHmEmpty');
+  if (!empty) { empty = document.createElement('div'); empty.id = 'stHmEmpty'; empty.className = 'muted'; empty.style.padding = '12px'; $('stHm').after(empty); }
+  empty.textContent = vals.length ? '' : 'Ebben az időszakban nincs adat.';
+  $('stHm').classList.toggle('hidden', !vals.length);
+  if (!vals.length) return;
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line'), card = cssVar('--card');
   if (!stHm || stHm.isDisposed()) stHm = echarts.init($('stHm'));
   stHm.setOption({
     animation: false, grid: { left: 46, right: 80, top: 24, bottom: 56 },
     tooltip: { confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink }, formatter: p => DS.fmt(h.days[p.data[0]], { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + ', ' + p.data[1] + ' óra: <b>' + num(p.data[2], 1) + ' ' + unit + '</b>' },
-    xAxis: { type: 'category', data: h.days.map(s => s.slice(5)), axisLabel: { color: muted } },
-    yAxis: { type: 'category', data: [...Array(24).keys()].map(x => x + 'h'), axisLabel: { color: muted } },
+    // helyi dátum és óra (6.24, 6.21): „jan. 1.”, „6:00”
+    xAxis: { type: 'category', data: h.days.map(s => DS.fmt(s, { month: 'short', day: 'numeric' })), axisLabel: { color: muted, hideOverlap: true } },
+    yAxis: { type: 'category', data: [...Array(24).keys()].map(x => x + ':00'), axisLabel: { color: muted } },
     dataZoom: [{ type: 'slider', xAxisIndex: 0, bottom: 6, height: 18, textStyle: { color: muted } }, { type: 'inside', xAxisIndex: 0 }],
     visualMap: { min: Math.min(...vals), max: Math.max(...vals), calculable: true, right: 6, top: 24, textStyle: { color: muted }, inRange: { color: info[2] } },
     series: [{ type: 'heatmap', data, progressive: 5000 }]

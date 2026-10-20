@@ -66,10 +66,11 @@ async function renderWind() {
     animation: false, grid: { left: 86, right: 90, top: 30, bottom: 40 },
     title: { text: 'Átlagszél napszak és hónap szerint (' + wlabel() + ')', left: 4, top: 0, textStyle: { color: ink, fontSize: fs(13) } },
     tooltip: { confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink }, formatter: p => MONTHS_FULL[p.data[1]] + ', ' + p.data[0] + '–' + (p.data[0] + 1) + ' óra: <b>' + num(p.data[2], windUnit() === 'bft' ? 2 : 1) + ' ' + wlabel() + '</b>' },
-    xAxis: { type: 'category', data: [...Array(24).keys()].map(h => h + 'h'), axisLabel: { color: muted }, splitArea: { show: false } },
+    xAxis: { type: 'category', data: [...Array(24).keys()].map(h => h + ':00'), axisLabel: { color: muted, hideOverlap: true }, splitArea: { show: false } },
     yAxis: { type: 'category', data: MONTHS_FULL, axisLabel: { color: muted }, min: monthsWith.length ? monthsWith[0] : 0, max: monthsWith.length ? monthsWith[monthsWith.length - 1] : 11 },
     visualMap: { min: 0, max: Math.max(1, ...vals), calculable: true, orient: 'vertical', right: 10, top: 40, textStyle: { color: muted }, inRange: { color: SEQ.wind } },
-    series: [{ type: 'heatmap', data, label: { show: true, fontSize: fs(9), color: '#222', formatter: p => num(p.data[2], ({ bft: 2, kn: 1, ms: 1 })[windUnit()] || 0) } }]
+    // a cellaszám csak akkor, ha olvasható méretben elfér (6.21); különben a buboréksúgóban
+    series: [{ type: 'heatmap', data, label: { show: ($('windHm').clientWidth - 176) / 24 >= fs(11) * 2.6, fontSize: fs(11), color: '#222', formatter: p => num(p.data[2], ({ bft: 2, kn: 1, ms: 1 })[windUnit()] || 0) } }]
   }, true);
 
   // szélrózsa: 16 irány × csomókategória

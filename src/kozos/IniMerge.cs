@@ -12,6 +12,11 @@ namespace Kozos
     {
         public static List<string> Merge(string path, string template)
         {
+            if (!File.Exists(path)) return new List<string>();
+            return Guard.Locked(path, () => MergeUnlocked(path, template));   // a másik program se írjon bele közben (15.3)
+        }
+        static List<string> MergeUnlocked(string path, string template)
+        {
             var added = new List<string>();
             if (!File.Exists(path)) return added;
             var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

@@ -475,6 +475,7 @@ namespace Idojaras
         public double[] CalRatio = new double[13], CalFactor = new double[13];  // havi kalibráció (1..12)
         public double[] Ffmc, Dmc, Dc, Isi, Bui, Fwi, Gdd, GddCum, GddPheno, Vpd;
         public double[] FwiT, FwiH, FwiW, FwiRo;   // az FWI napi (déli) bemenetei, a magyarázathoz
+        public bool[] FwiEst;                       // a déli mérés hiányzott: a bemenet pótolt (13.6)
         public Dictionary<int, DateTime[]> Pheno = new Dictionary<int, DateTime[]>();   // év -> [rügyfakadás, teljes lomb] a GDD-ből
         public double SuggestedFactor = double.NaN;
     }
@@ -721,7 +722,7 @@ namespace Idojaras
         {
             int n = dates.Length;
             r.Ffmc = new double[n]; r.Dmc = new double[n]; r.Dc = new double[n]; r.Isi = new double[n]; r.Bui = new double[n]; r.Fwi = new double[n];
-            r.FwiT = new double[n]; r.FwiH = new double[n]; r.FwiW = new double[n]; r.FwiRo = new double[n];
+            r.FwiT = new double[n]; r.FwiH = new double[n]; r.FwiW = new double[n]; r.FwiRo = new double[n]; r.FwiEst = new bool[n];
             var fw = cfg.fwi;
             double F = fw.ffmc0, P = fw.dmc0, D = fw.dc0;
             int season = Md(fw.seasonStart);
@@ -737,8 +738,23 @@ namespace Idojaras
                 int best = -1; long bd = long.MaxValue;
                 for (int j = Math.Max(0, k - 1); j <= Math.Min(ds.N - 1, k); j++) { long dd = Math.Abs(ds.T[j] - noon); if (dd < bd) { bd = dd; best = j; } }
                 bool ok = best >= 0 && bd <= 5400 && (ds.Flags[best] & (Flag.Temp | Flag.Hum)) == 0;
-                double T = ok ? ds.C[Col.TA][best] : r.Tmax[i], H = ok ? ds.C[Col.HA][best] : 50, W = ok ? ds.C[Col.WSA][best] * fw.windFactor : 10;
-                if (double.IsNaN(T)) T = 15; if (double.IsNaN(H)) H = 50; if (double.IsNaN(W)) W = 10;
+                double T, H, W;
+                if (ok) { T = ds.C[Col.TA][best]; H = ds.C[Col.HA][best]; W = ds.C[Col.WSA][best] * fw.windFactor; }
+                else
+                {
+                    // nincs déli mérés (13.6): a legközelebbi jó mérés ±4 órán belül, különben a nap értékei
+                    // (dél körül a hőmérséklet a maximum, a pára a minimum közelében jár) – kitalált 50 % helyett
+                    r.FwiEst[i] = true;
+                    int near = -1; long nd = long.MaxValue;
+                    for (int j = ds.LowerBound(noon - 4 * 3600); j < ds.N && ds.T[j] <= noon + 4 * 3600; j++)
+                        if ((ds.Flags[j] & (Flag.Temp | Flag.Hum)) == 0 && !float.IsNaN(ds.C[Col.TA][j]) && !float.IsNaN(ds.C[Col.HA][j]) && Math.Abs(ds.T[j] - noon) < nd) { nd = Math.Abs(ds.T[j] - noon); near = j; }
+                    DayStat dsd; ds.DayMap.TryGetValue(Tz.DayNumber(dt), out dsd);
+                    T = near >= 0 ? ds.C[Col.TA][near] : r.Tmax[i];
+                    H = near >= 0 ? ds.C[Col.HA][near] : dsd != null && !double.IsNaN(dsd.HumMin) ? dsd.HumMin : double.NaN;
+                    W = (near >= 0 && !float.IsNaN(ds.C[Col.WSA][near]) ? ds.C[Col.WSA][near] : dsd != null ? dsd.WindAvg : double.NaN) * fw.windFactor;
+                }
+                // ha semmi nincs: a tegnapi bemenet (ennek a hatása a legkisebb), első napon semleges érték
+                if (double.IsNaN(T)) T = i > 0 ? r.FwiT[i - 1] : 15; if (double.IsNaN(H)) H = i > 0 ? r.FwiH[i - 1] : 60; if (double.IsNaN(W)) W = i > 0 ? r.FwiW[i - 1] : 10;
                 H = Math.Max(0, Math.Min(100, H));
                 // 24 órás csapadék délig: tegnap dél utáni + ma délelőtti
                 double noonTot = ok && !float.IsNaN(ds.C[Col.PTOT][best]) ? ds.C[Col.PTOT][best] : double.NaN;

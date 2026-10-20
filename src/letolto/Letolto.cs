@@ -298,6 +298,11 @@ MetarKod=LHBP
 
         static void SetValue(string path, string key, string value)
         {
+            Guard.Locked(path, () => SetValueUnlocked(path, key, value));   // a Megjelenítő is írhatja (15.3)
+            Log.Info(key + " elmentve a beállításfájlba.");
+        }
+        static void SetValueUnlocked(string path, string key, string value)
+        {
             var lines = ReadLines(path).ToList();
             bool found = false;
             for (int i = 0; i < lines.Count; i++)
@@ -310,8 +315,7 @@ MetarKod=LHBP
                 }
             }
             if (!found) lines.Add(key + "=" + value);
-            Guard.WriteAllLines(path, lines, new UTF8Encoding(true));
-            Log.Info(key + " elmentve a beállításfájlba.");
+            Guard.WriteAllLinesAtomic(path, lines, new UTF8Encoding(true));
         }
 
         static IEnumerable<string> ReadLines(string path)
@@ -1337,10 +1341,46 @@ MetarKod=LHBP
             return 0;
         }
 
+        // a data mappa többi részletes CSV-jének napjai (ÉÉÉÉHHNN) az adott állomásra
+        static HashSet<string> OtherObsDays(string dir, string mainName, string sid)
+        {
+            var set = new HashSet<string>();
+            try
+            {
+                foreach (var f in Directory.GetFiles(dir, "idojaras_adatok*.csv"))
+                {
+                    if (string.Equals(Path.GetFileName(f), mainName, StringComparison.OrdinalIgnoreCase)) continue;
+                    using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var sr = new StreamReader(fs, Encoding.UTF8, true))
+                    {
+                        string head = sr.ReadLine();
+                        if (head == null) continue;
+                        char d = head.Contains(";") ? ';' : ',';
+                        var cols = head.TrimStart('\uFEFF').Split(d).Select(c => c.Trim().Trim('"')).ToList();
+                        int iSt = cols.IndexOf("stationID"), iT = cols.IndexOf("obsTimeLocal");
+                        if (iT < 0) continue;
+                        string line;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            var p = line.Split(d);
+                            if (p.Length <= iT || (iSt >= 0 && (p.Length <= iSt || !string.Equals(p[iSt].Trim('"'), sid, StringComparison.OrdinalIgnoreCase)))) continue;
+                            string t = p[iT].Trim('"');
+                            if (t.Length >= 10) set.Add(t.Substring(0, 10).Replace("-", ""));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) { Log.Warn("Az átvett adatfájlok nem olvashatók: " + ex.Message); }
+            return set;
+        }
+
         // A korábbi lekérdezések állapotát összeveti a CSV tényleges tartalmával
         static void Reconcile(StationState stn, bool stationIsNew, Table obs, DateTime today, string sid)
         {
             var present = obs.DaysPresent(sid);
+            // a telepítő által átvett régi adat külön fájlban lehet (idojaras_adatok_atvett_….csv): az ottani napok is megvannak,
+            // nem kell újra letölteni őket (16.4 – fölösleges API-hívások)
+            foreach (var d in OtherObsDays(Path.GetDirectoryName(obs.FilePath), Path.GetFileName(obs.FilePath), sid)) present.Add(d);
             if (!obs.Existed)
             {
                 if (stn.Days.Count > 0)

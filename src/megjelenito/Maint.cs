@@ -227,6 +227,8 @@ namespace Idojaras
                 try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
                 catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 if (!File.Exists(ini)) { status = 400; return "{\"error\":\"Még nincs beallitasok.ini – előbb indítsd el egyszer a Letöltőt.\"}"; }
+                // olvasás és írás egy zár alatt: közben az ütemezett Letöltő nem írhat bele (15.3)
+                string err = Guard.Locked(ini, () => {
                 var cur = Settings.ReadIni(ini);
                 var lines = File.ReadAllLines(ini, Encoding.UTF8).ToList();
                 foreach (var kv in d)
@@ -234,14 +236,17 @@ namespace Idojaras
                     Func<string, bool> ok;
                     if (!Allowed.TryGetValue(kv.Key, out ok)) continue;
                     string val = Convert.ToString(kv.Value, CultureInfo.InvariantCulture);
-                    if (!ok(val)) { status = 400; return "{\"error\":\"Érvénytelen érték: " + kv.Key + " = " + val.Replace("\"", "'") + "\"}"; }
+                    if (!ok(val)) return "{\"error\":\"Érvénytelen érték: " + kv.Key + " = " + val.Replace("\"", "'") + "\"}";
                     string old; cur.TryGetValue(kv.Key, out old);
                     if (old == val) continue;
                     int idx = lines.FindIndex(l => l.TrimStart().StartsWith(kv.Key + "=", StringComparison.OrdinalIgnoreCase));
                     if (idx >= 0) lines[idx] = kv.Key + "=" + val; else lines.Add(kv.Key + "=" + val);
                     ChangeLog.Add("Letöltő beállítás", kv.Key, old, val, new Dictionary<string, object> { { "type", "dl" }, { "key", kv.Key }, { "value", old } });
                 }
-                Guard.WriteAllLines(ini, lines, new UTF8Encoding(true));
+                Guard.WriteAllLinesAtomic(ini, lines, new UTF8Encoding(true));
+                return (string)null;
+                });
+                if (err != null) { status = 400; return err; }
             }
             var c2 = Settings.ReadIni(ini);
             var w = new JW().Obj().P("hasIni", File.Exists(ini));

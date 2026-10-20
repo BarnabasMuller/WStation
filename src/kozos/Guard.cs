@@ -44,4 +44,29 @@ static class Guard
     public static FileStream OpenWrite(string path, FileMode mode, FileAccess access, FileShare share) { return new FileStream(P(path), mode, access, share); }
     public static DirectoryInfo CreateDirectory(string path) { return Directory.CreateDirectory(P(path)); }
     public static void DeleteDirectory(string path, bool recursive) { Directory.Delete(P(path), recursive); }
+
+    // Ugyanazt a fájlt (pl. beallitasok.ini) a Megjelenítő és az ütemezett Letöltő is írhatja: rendszerszintű,
+    // a fájl útvonalához kötött zár, hogy az egyik módosítása ne vesszen el (15.3). Legfeljebb 10 másodpercig vár.
+    public static T Locked<T>(string path, Func<T> f)
+    {
+        uint h = 2166136261;
+        foreach (char c in Path.GetFullPath(path).ToLowerInvariant()) { h ^= c; h *= 16777619; }
+        using (var m = new System.Threading.Mutex(false, "WStation_file_" + h.ToString("x8")))
+        {
+            bool own = false;
+            try { own = m.WaitOne(10000); }
+            catch (System.Threading.AbandonedMutexException) { own = true; }
+            try { return f(); }
+            finally { if (own) m.ReleaseMutex(); }
+        }
+    }
+    public static void Locked(string path, Action a) { Locked<object>(path, () => { a(); return null; }); }
+
+    // atomi csere: előbb .tmp, aztán a régi helyére – egy félbeszakadt írás nem hagy csonka fájlt
+    public static void WriteAllLinesAtomic(string path, IEnumerable<string> lines, Encoding enc)
+    {
+        string tmp = path + ".tmp";
+        File.WriteAllLines(P(tmp), lines, enc);
+        if (File.Exists(P(path))) File.Replace(P(tmp), P(path), null); else File.Move(P(tmp), P(path));
+    }
 }

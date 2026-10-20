@@ -424,7 +424,7 @@ input[type=range] { vertical-align: middle; accent-color: var(--accent); }
 @media print {
   @page { size: A4; margin: 12mm; }
   body { background: #fff !important; }
-  .topbar, #staleBanner, footer, .no-print, .page:not([data-page="jelentes"]), #toast, #overlay, #modal { display: none !important; }
+  .topbar, #staleBanner, #updateBanner, #changeBar, footer, .no-print, .page:not([data-page="jelentes"]), #toast, #overlay, #modal, #cdlg { display: none !important; }
   main { padding: 0; max-width: none; }
   .report { box-shadow: none; padding: 0; margin: 0; max-width: none; border-radius: 0; }
   .rep-chart { break-inside: avoid; }

@@ -555,6 +555,7 @@ async function renderDroughtExtras() {
   const fwi = last(DR.fwi), [fname, fcol] = fwiClass(fwi);
   cards.push('<div class="card dr-card"><button class="qbtn" data-q2="fwi">?</button><h3>🔥 Tűzveszély (kanadai FWI)</h3>' +
     '<div class="big" style="color:' + fcol + '">' + num(fwi, 0) + '<small>' + fname + '</small></div>' +
+    (DR.fwiEst && last(DR.fwiEst) ? '<div class="line small muted" title="Az utolsó adatnapon délben nem volt mérés: a legközelebbi méréssel vagy a nap értékeivel pótolva.">⚠ becsült (hiányos dél)</div>' : '') +
     '<div class="line">Fű, avar (FFMC): <b>' + num(last(DR.ffmc), 0) + '</b> · felső talaj (DMC): <b>' + num(last(DR.dmc), 0) + '</b> · mély talaj, fák (DC): <b>' + num(last(DR.dc), 0) + '</b></div>' +
     '<div class="line small">Terjedési index (ISI) ' + num(last(DR.isi), 1) + ' · éghető anyag (BUI) ' + num(last(DR.bui), 0) + '</div></div>');
   // VPD

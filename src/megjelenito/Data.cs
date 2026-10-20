@@ -642,8 +642,12 @@ namespace Idojaras
 
         // ------------------------------------------------------------------ feldolgozás
 
+        // a napi lefedettségben ennél hosszabb szünet hiány (a „HianyPerc” beállítás, 13.5 – korábban fixen 15 perc)
+        static long gapSec = 900;
+
         public static void Process(Dataset ds, Settings s)
         {
+            gapSec = Math.Max(300, s.GapMinutes * 60L);
             int n = ds.N;
             ds.Day = new int[n];
             ds.Hour = new byte[n];
@@ -825,7 +829,7 @@ namespace Idojaras
             long covered = 0;
             for (int i = a; i < b; i++)
             {
-                long dt = i > a ? Math.Min(ds.T[i] - ds.T[i - 1], 900) : Math.Min(ds.T[i] - d.Start, 300);
+                long dt = i > a ? Math.Min(ds.T[i] - ds.T[i - 1], gapSec) : Math.Min(ds.T[i] - d.Start, 300);
                 if (dt < 0) dt = 0;
                 covered += dt;
 

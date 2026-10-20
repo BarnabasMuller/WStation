@@ -24,6 +24,8 @@ async function renderReport() {
   if (st.mode === 'month') await monthReport(d, sel.value); else await yearReport(d, sel.value);
 }
 
+// a jelentés fehér lapon van (képernyőn és PDF-ben is): a grafikonfeliratok fix sötétszürkék, a témától függetlenül (16.5)
+const REP_MUTED = '#4b5563';
 function repTable(rows) { return '<table class="rtable">' + rows.map(r => '<tr><td>' + r[0] + '</td><td><b>' + r[1] + '</b></td></tr>').join('') + '</table>'; }
 
 function monthStats(d, m) {
@@ -94,9 +96,9 @@ async function monthReport(d, m) {
   const x = s.ix.map(i => DS.ms(d.date[i]) + 12 * H);
   const c1 = echarts.init($('repC1'));
   c1.setOption({
-    animation: false, grid: { left: 44, right: 44, top: 26, bottom: 26 }, legend: { top: 0, textStyle: { color: cssVar('--muted') } },
-    xAxis: { type: 'time', axisLabel: { formatter: v => F.day.format(v), color: cssVar('--muted') } },
-    yAxis: [{ type: 'value', name: tlabel(), scale: true, axisLabel: { color: cssVar('--muted') } }, { type: 'value', name: rlabel(), min: 0, splitLine: { show: false }, axisLabel: { color: cssVar('--muted') } }],
+    animation: false, grid: { left: 44, right: 44, top: 26, bottom: 26 }, legend: { top: 0, textStyle: { color: REP_MUTED } },
+    xAxis: { type: 'time', axisLabel: { formatter: v => F.day.format(v), color: REP_MUTED } },
+    yAxis: [{ type: 'value', name: tlabel(), scale: true, axisLabel: { color: REP_MUTED } }, { type: 'value', name: rlabel(), min: 0, splitLine: { show: false }, axisLabel: { color: REP_MUTED } }],
     series: [
       { name: 'Max.', type: 'line', data: s.ix.map((i, k) => [x[k], tconv(d.tmax[i])]), lineStyle: { color: '#e4572e' }, itemStyle: { color: '#e4572e' }, symbolSize: 4 },
       { name: 'Min.', type: 'line', data: s.ix.map((i, k) => [x[k], tconv(d.tmin[i])]), lineStyle: { color: '#3d7ff5' }, itemStyle: { color: '#3d7ff5' }, symbolSize: 4 },

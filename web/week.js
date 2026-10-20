@@ -4,7 +4,7 @@
 const WEEK_ROWS = [
   { k: 'temp', name: 'Hőmérséklet (min / max / átlag)' },
   { k: 'rain', name: 'Csapadék és max. intenzitás' },
-  { k: 'sun', name: 'Napsütéses órák' },
+  { k: 'sun', name: 'Napsütéses órák (becslés)' },
   { k: 'cloud', name: 'Felhőzet (becslés, nappal)' },
   { k: 'energy', name: 'Napenergia (kWh/m²)' },
   { k: 'wind', name: 'Átlagszél és max. lökés' },

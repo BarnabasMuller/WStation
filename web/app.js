@@ -799,9 +799,14 @@ function setRange(r) {
 // ------------------------------------------------------------------ események
 document.querySelectorAll('#ranges button').forEach(b => b.addEventListener('click', () => setRange(b.dataset.r)));
 $('btnRefresh').addEventListener('click', () => reload(STATUS ? STATUS.hasDownloader : true));
+let baseToken = 0;
 $('hideSuspect').addEventListener('change', async e => {
   hideSuspect = e.target.checked;
-  BASE = await api('/api/series?n=2400&clean=' + (hideSuspect ? 1 : 0));
+  // gyors kétszeri kattintásnál a régebbi válasz ne írja felül az újabbat (14.6)
+  const tok = ++baseToken;
+  const res = await api('/api/series?n=2400&clean=' + (hideSuspect ? 1 : 0));
+  if (tok !== baseToken) return;
+  BASE = res;
   DETAIL = null;
   if (!chart) return;
   applyData();

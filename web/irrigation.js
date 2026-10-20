@@ -62,6 +62,16 @@ function pgSummary(pg) {
   const when = pg.every > 0 ? (pg.every === 1 ? 'naponta' : pg.every + ' naponta') : String(pg.days || '').split(/[,; ]+/).filter(Boolean).map(d => DOW[+d - 1]).join('-');
   return (p ? TYPE_ICON[p.type] + ' ' + ut(p.name) : '<span class="neg">törölt zóna</span>') + ' · ' + when + ', ' + num(pg.amount, pg.amount % 1 ? 1 : 0) + ' ' + IRR_UNIT_NAME[pg.unit];
 }
+// két öntözési időszak átfed-e (évenként ismétlődőnél HH-NN szerint, az évfordulón átnyúlót is kezelve)
+function schedOverlap(a, b) {
+  const md = x => x.slice(5);
+  const spans = sc => sc.from <= sc.to ? [[sc.from, sc.to]] : [[sc.from, '12-31'], ['01-01', sc.to]];
+  if (!a.yearly && !b.yearly) return a.from <= b.to && b.from <= a.to;
+  if (a.yearly && b.yearly) return spans(a).some(x => spans(b).some(y => x[0] <= y[1] && y[0] <= x[1]));
+  const y = a.yearly ? a : b, d = a.yearly ? b : a;
+  if (d.to.slice(0, 4) !== d.from.slice(0, 4)) return true;   // évhatáron átnyúló dátumos időszak: biztosan átfed
+  return spans(y).some(x => x[0] <= md(d.to) && md(d.from) <= x[1]);
+}
 function scText(sc) {
   if (sc.yearly) return 'minden évben ' + sc.from.replace('-', '. ') + '. – ' + sc.to.replace('-', '. ') + '.';
   const f = s => DS.fmt(s, { year: 'numeric', month: 'short', day: 'numeric' });
@@ -103,11 +113,15 @@ function renderIrrigation() {
     saveDroughtConfig('Program törölve.');
   }));
   box.querySelectorAll('[data-pedit]').forEach(b => b.addEventListener('click', () => programForm(c.programs[+b.dataset.pedit])));
-  box.querySelectorAll('[data-sdel]').forEach(b => b.addEventListener('click', () => { c.schedules.splice(+b.dataset.sdel, 1); saveDroughtConfig('Időszak törölve.'); }));
+  box.querySelectorAll('[data-sdel]').forEach(b => b.addEventListener('click', async () => {
+    const sc = c.schedules[+b.dataset.sdel], pg = c.programs.find(x => x.id === sc.program);
+    if (!(await askConfirm('Törlöd ezt az öntözési időszakot?', { sub: (pg ? pg.name + ': ' : '') + scText(sc) + '. A talajvíz-mérleg ezután nem számol vele.', ok: 'Időszak törlése', cancel: 'Megtartom', danger: true }))) return;   // 14.5
+    c.schedules.splice(+b.dataset.sdel, 1); saveDroughtConfig('Időszak törölve.');
+  }));
   $('pgNew').addEventListener('click', () => programForm(null));
   if ($('scYearly')) {
     $('scYearly').addEventListener('change', e => { $('scDates').classList.toggle('hidden', e.target.checked); $('scMd').classList.toggle('hidden', !e.target.checked); });
-    $('scAdd').addEventListener('click', () => {
+    $('scAdd').addEventListener('click', async () => {
       const yearly = $('scYearly').checked;
       const from = yearly ? $('scFromMd').value.trim() : $('scFrom').value, to = yearly ? $('scToMd').value.trim() : $('scTo').value;
       let err = '';
@@ -115,7 +129,10 @@ function renderIrrigation() {
       else if (!yearly && from > to) err = 'a „tól” későbbi, mint az „ig”';
       $('scErr').textContent = err ? '⚠ ' + err : '';
       if (err) return;
-      c.schedules.push({ id: 'sc' + Date.now().toString(36), program: $('scProg').value, from, to, yearly });
+      // ugyanannak a programnak egymást átfedő időszakai: az átfedő napokon kétszer számolna (14.5)
+      const nw = { program: $('scProg').value, from, to, yearly }, ov = c.schedules.filter(o => o.program === nw.program && schedOverlap(o, nw));
+      if (ov.length && !(await askConfirm('⚠ Átfed a(z) ' + ov.map(scText).join(', ') + ' időszakkal.', { sub: 'Az átfedő napokon a program kétszer számít bele a talajvíz-mérlegbe. Mégis hozzáadod?', ok: 'Mégis hozzáadom', cancel: 'Mégse' }))) return;
+      c.schedules.push(Object.assign({ id: 'sc' + Date.now().toString(36) }, nw));
       saveDroughtConfig('Időszak hozzáadva – a mérleg beszámítja.');
     });
   }
