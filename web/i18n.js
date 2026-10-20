@@ -64,7 +64,7 @@ function i18nBuild() {
 // egy szöveg fordítása: előbb a teljes (levágott) szöveg, aztán a benne lévő ismert kifejezések
 function tr(s) {
   if (!I18N || s == null) return s;
-  s = String(s).replace(/[  ]{2,}/g, ' ');
+  s = String(s).replace(/\s*\n\s*|[ \u00a0]{2,}/g, ' ');   // a HTML-ben tördelt bekezdés is egyezzen
   const t = s.trim();
   if (!t || !/[A-Za-zÀ-ž]/.test(t)) return s;
   const whole = I18N.map.get(t) || I18N.map.get(t.replace(/[.:!?]+$/, ''));
@@ -78,7 +78,10 @@ function tr(s) {
 // mondatsablon: egész mondat helyőrzőkkel, a nyelvi fájlban is egészben (pl. "{n} m³-rel kevesebb víz" → "{n} m³ less water").
 // Ott kell, ahol a szórend nyelvenként más, vagy a magyar rag a számhoz tapad (6.33, 6.35, 6.37). A behelyettesített értékek nem fordulnak.
 function tf(tpl, vars) {
-  const t = (I18N && I18N.map.get(tpl)) || tpl;
+  let t = I18N && I18N.map.get(tpl);
+  // a kulcsgyűjtő a szélső írásjeleket levágja (pl. „…({avg}).” → „…({avg}”): azokat visszarakjuk
+  if (I18N && !t) { const m = tpl.match(/^([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)([\s\S]*?)([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)$/); const w = m && I18N.map.get(m[2]); if (w) t = m[1] + w + m[3]; }
+  t = t || tpl;
   return t.replace(/\{(\w+)\}/g, (m, k) => vars && vars[k] !== undefined ? vars[k] : m);
 }
 function trWhole(s) {

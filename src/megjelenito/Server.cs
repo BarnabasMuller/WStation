@@ -148,7 +148,7 @@ namespace Idojaras
             if (name.Contains("..")) return null;
             if (WebDir != null)
             {
-                string f = Path.Combine(WebDir, name.Replace('/', '\\'));
+                string f = Path.Combine(WebDir, name.Replace('/', Path.DirectorySeparatorChar));
                 return File.Exists(f) ? File.ReadAllBytes(f) : null;
             }
             using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("web/" + name))

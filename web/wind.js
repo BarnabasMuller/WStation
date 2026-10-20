@@ -53,7 +53,7 @@ async function renderWind() {
     ['Uralkodó irány', dom == null ? '–' : dirText(dom), dom == null ? '' : num(dom, 0) + '° felől'],
     // a definíciók a fül egységében (7.32)
     ['Szélcsend (' + (windUnit() === 'bft' ? '0 Bft' : '< ' + wtext(CALM_KMH, 1)) + ')', num(w.calmPct, 0) + '%', 'a mérések arányában'],
-    ['Szeles délutánok', w.windyDays + ' nap', 'átlag ≥ ' + wtext(w.windyKmh, windUnit() === 'bft' ? 2 : null) + ' ' + w.afternoonFrom + '–' + w.afternoonTo + ' óra között, ' + w.afternoonDays + ' napból · leghosszabb sorozat: ' + w.windyStreak + ' nap']
+    ['Szeles délutánok', w.windyDays + ' nap', tf('átlag ≥ {v} {a}–{b} óra között, {n} napból · leghosszabb sorozat: {s} nap', { v: wtext(w.windyKmh, windUnit() === 'bft' ? 2 : null), a: w.afternoonFrom, b: w.afternoonTo, n: w.afternoonDays, s: w.windyStreak })]
   ].map(([x, y, z]) => '<div class="card mini"><h3>' + x + '</h3><div class="big">' + y + '</div><div class="line small">' + esc(z) + '</div></div>').join('');
 
   // óra × hónap hőtérkép
@@ -95,7 +95,7 @@ async function renderWind() {
   }, true);
 
   // szeles délutánok listája
-  $('windDays').innerHTML = w.windyList.length ? w.windyList.map(s => '<button class="chip" data-d="' + s + '">' + DS.fmt(s, { month: 'short', day: 'numeric', weekday: 'short' }) + '</button>').join('') : '<span class="muted">Ebben az időszakban nem volt 3 Bft fölötti délután.</span>';
+  $('windDays').innerHTML = w.windyList.length ? w.windyList.map(s => '<button class="chip" data-d="' + s + '">' + DS.fmt(s, { month: 'short', day: 'numeric', weekday: 'short' }) + '</button>').join('') : '<span class="muted">Ebben az időszakban nem volt szeles délután.</span>';
   $('windDays').querySelectorAll('[data-d]').forEach(c => c.addEventListener('click', () => gotoDay(c.dataset.d)));
 }
 

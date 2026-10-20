@@ -83,7 +83,7 @@ async function renderAlerts() {
   let a;
   try { a = await api('/api/alerts'); } catch (e) { return; }
   // teendővel (7.28): mi a gond, és mit tegyen a felhasználó
-  $('alertBox').innerHTML = (a.hasIni ? '' : '<p class="msg err">A riasztások még nem állíthatók, mert a program még nem töltött le adatot. Kattints a <b>Frissítés</b> gombra (jobb felül), utána itt beállíthatod őket. <button class="btn small" id="alertRefresh">Frissítés most</button></p>') +
+  $('alertBox').innerHTML = (a.hasIni ? '' : '<p class="msg err">' + tf('A riasztások még nem állíthatók, mert a program még nem töltött le adatot. Kattints a {b} gombra (jobb felül), utána itt beállíthatod őket.', { b: '<b>' + tf('Frissítés') + '</b>' }) + ' <button class="btn small" id="alertRefresh">Frissítés most</button></p>') +
     '<table class="ptable small al-tab"><tbody>' + ALERT_UI.map(([on, val, label, unit, q]) => {
       const orig = parseFloat(String(a[val]).replace(',', '.')), v = qv(q, orig);
       // a megjelenített érték a nyelv tizedesjelével; ha a felhasználó nem írja át, mentéskor az eredeti (metrikus) érték marad (9.4)

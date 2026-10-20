@@ -51,17 +51,21 @@ function summaryText(d, m, s) {
   if (others.length >= 2 && s.tavg != null) {
     // a nevezőben a vizsgált hónap is benne van (akkor is, ha részleges, és ezért az `all`-ból kimaradt)
     const n = others.length + 1, rankWarm = 1 + others.filter(o => o.s.tavg > s.tavg).length;
-    temp = rankWarm === 1 ? 'az eddigi legmelegebb hónap' : rankWarm === n ? 'az eddigi leghidegebb hónap' : 'a ' + n + ' hónapból a ' + rankWarm + '. legmelegebb';
-    if (partial) temp += ' – részleges hónap: ' + days + ' / ' + dim + ' nap adata';
-  } else if (partial) temp = 'részleges hónap: ' + days + ' / ' + dim + ' nap adata';
+    // egész mondatos sablonok (6.33): más nyelven is helyes a szórend
+    temp = rankWarm === 1 ? tf('az eddigi legmelegebb hónap') : rankWarm === n ? tf('az eddigi leghidegebb hónap') : tf('a(z) {n} hónapból a(z) {r}. legmelegebb', { n, r: rankWarm });
+    if (partial) temp += ' – ' + tf('részleges hónap: {d} / {m} nap adata', { d: days, m: dim });
+  } else if (partial) temp = tf('részleges hónap: {d} / {m} nap adata', { d: days, m: dim });
   // a hónap saját sokéves átlagához mérve (9.6: júniusban kb. kétszer annyi eső az átlag, mint januárban); részleges hónapnál arányosan
   const norm = (META.settings.rainNormal || [])[+m.slice(5, 7) - 1], exp = norm != null ? norm * days / dim : null;
   const ratio = exp ? s.rain / exp : null;
   wet = ratio == null ? '' : ratio < 0.4 ? 'nagyon száraz' : ratio < 0.75 ? 'száraz' : ratio <= 1.3 ? 'átlagos csapadékú' : ratio <= 2 ? 'csapadékos' : 'nagyon csapadékos';
-  const wetPct = ratio == null ? '' : ' (csapadék: a sokéves havi átlag ' + num(ratio * 100, 0) + '%-a)';
+  const wetPct = ratio == null ? '' : ' (' + tf('csapadék: a sokéves havi átlag {p}%-a', { p: num(ratio * 100, 0) }) + ')';
   const warm = s.tavg == null ? '' : s.tavg >= 22 ? 'Forró' : s.tavg >= 17 ? 'Meleg' : s.tavg >= 10 ? 'Enyhe' : s.tavg >= 3 ? 'Hűvös' : 'Hideg';
-  return warm + (wet ? ', ' + wet : '') + ' hónap' + wetPct + ': átlag <b>' + ttext(s.tavg) + '</b>' + (temp ? ' (' + temp + ')' : '') + ', <b>' + rtext(s.rain, 1) + '</b> csapadék ' + s.rainy + ' esős nappal, <b>' + num(s.sun, 0) + ' óra</b> napsütés.' +
-    (s.hot ? ' ' + s.hot + ' hőségnap' + (s.trop ? ' és ' + s.trop + ' trópusi éjszaka' : '') + '.' : '') + (s.frost ? ' ' + s.frost + ' fagyos nap.' : '');
+  const T = x => typeof tr === 'function' ? tr(x) : x;   // a jelzők a sablonba fordítva kerülnek
+  const head = wet ? tf('{warm}, {wet} hónap', { warm: T(warm), wet: T(wet) }) : tf('{warm} hónap', { warm: T(warm) });
+  return head + wetPct + ': ' + tf('átlag {t}', { t: '<b>' + ttext(s.tavg) + '</b>' }) + (temp ? ' (' + temp + ')' : '') + ', ' +
+    tf('{r} csapadék {n} esős nappal, {s} napsütés.', { r: '<b>' + rtext(s.rain, 1) + '</b>', n: s.rainy, s: '<b>' + tf('{h} óra', { h: num(s.sun, 0) }) + '</b>' }) +
+    (s.hot ? ' ' + (s.trop ? tf('{h} hőségnap és {t} trópusi éjszaka.', { h: s.hot, t: s.trop }) : tf('{h} hőségnap.', { h: s.hot })) : '') + (s.frost ? ' ' + tf('{n} fagyos nap.', { n: s.frost }) : '');
 }
 
 async function monthReport(d, m) {

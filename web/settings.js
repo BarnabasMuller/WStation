@@ -66,7 +66,7 @@ function logDroughtDiff(before, after) {
 
 // ------------------------------------------------------------------ nézet újrarajzolása (nyelv, mértékegység, betűméret után)
 function refreshView() {
-  if (!META) return;
+  if (!META || !TODAY) return;   // betöltés közben (a META már megvan, a TODAY még nincs) nincs mit újrarajzolni
   renderHeader(); renderToday(); renderFooter();
   if (chart) {
     const r = visibleRange();
@@ -211,7 +211,7 @@ function renderBackup(b) {
   if (b.days > 0 && ![0, 1, 7, 14, 30].includes(b.days)) { const o = document.createElement('option'); o.value = String(b.days); o.dataset.custom = '1'; o.textContent = tf('egyedi ({n} naponta)', { n: b.days }); sel.appendChild(o); }
   sel.value = String(b.days >= 0 ? b.days : 7);
   $('bkKeep').value = b.keep;
-  $('bkLast').textContent = b.last ? b.last + ' (' + num(b.lastSize / 1024, 1) + ' MB, összesen ' + b.count + ' mentés)' + (b.due ? ' – esedékes' : '') : 'még nincs mentés';
+  $('bkLast').textContent = b.last ? b.last + ' (' + num(b.lastSize / 1024, 1) + ' MB, összesen ' + b.count + ' mentés)' + (b.due ? ' – esedékes' : '') : tf('még nincs mentés');
 }
 async function loadBackup() { try { renderBackup(await api('/api/backup')); } catch (e) { } }
 $('bkSave').addEventListener('click', async () => {

@@ -109,7 +109,7 @@ async function advise() {
   const perLayer = model.beta[2] / Math.max(0.05, model.beta[1]);
   $('advOut').innerHTML = '<div class="adv-big">' + L + ' réteg</div>' +
     '<div class="line"><b>' + clothing(L, te) + '</b></div>' +
-    '<div class="line">Időjárás' + (w.future ? ' (a legutóbbi mérés alapján, ' + F.full.format(w.t) + ')' : ' (' + F.full.format(w.t) + ')') + ': ' + ttext(w.temp) + ', hőérzet ' + ttext(w.feels) + ', szél ' + wtext(w.wind) + ', pára ' + num(w.hum, 0) + ' %' + (w.rainRate > 0.5 ? ', eső' : '') + ' → hatásos hőmérséklet <b>' + ttext(te, 1) + '</b></div>' +
+    '<div class="line">Időjárás' + (w.future ? ' (a legutóbbi mérés alapján, ' + F.full.format(w.t) + ')' : ' (' + F.full.format(w.t) + ')') + ': ' + tf('{t}, hőérzet {f}, szél {w}, pára {h} %', { t: ttext(w.temp), f: ttext(w.feels), w: wtext(w.wind), h: num(w.hum, 0) }) + (w.rainRate > 0.5 ? ', ' + tf('esik') : '') + ' → ' + tf('hatásos hőmérséklet {te}', { te: '<b>' + ttext(te, 1) + '</b>' }) + '</div>' +
     '<div class="line small">Megbízhatóság: ' + rel + (who ? ' – ' + esc(who) : '') + '. A modell szerint egy réteg kb. ' + tdtext(perLayer, 0) + '-ot ér, egy intenzitáspont kb. ' + tdtext(model.beta[3] / Math.max(0.05, model.beta[1]), 1) + '-ot.</div>';
 }
 

@@ -174,13 +174,13 @@ async function renderInsights() {
   const cl = await getCloudNow().catch(() => null);
   const cn = cl && cl.now;
   const cloudLine = cn ? '<div class="line cloud-line">Felhőzet (becslés): <b>' + num(cn.pct, 0) + ' %</b> (' + num(cn.okta, 0) + ' okta) – ' + esc(cn.type) +
-      ' <span class="muted small">· ' + (cn.src === 'éjjel' ? 'éjjeli becslés, ' : '') + 'megbízhatóság: ' + esc(cn.conf || '–') + (isToday ? '' : ', ' + F.full.format(cn.t)) + '</span></div>' +
+      ' <span class="muted small">· ' + (cn.src === 'éjjel' ? 'éjjeli becslés, ' : '') + tf('megbízhatóság: {c}', { c: esc(typeof tr === 'function' ? tr(cn.conf || '–') : cn.conf || '–') }) + (isToday ? '' : ', ' + F.full.format(cn.t)) + '</span></div>' +
       (cl.dayPct != null ? '<div class="line small">Nappal átlagosan ' + num(cl.dayPct, 0) + ' % – ' + esc(cl.dayType || '') + '</div>' : '')
     : '<div class="line small muted">Felhőzet: most nem becsülhető (alacsony nap, szürkület vagy szél).</div>';
   skyCard.innerHTML = '<h3>Égbolt' + (isToday ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0">(' + DS.fmt(t.date, { month: 'short', day: 'numeric' }) + ')</span>') + '</h3><div class="moon">' + mp.icon + '</div>' +
     '<div class="line">' + sky + '</div>' + cloudLine +
     '<div class="line">Hold: <b>' + mp.name + '</b>, ' + num(mp.illum * 100, 0) + '% megvilágított</div>' +
-    '<div class="line small">Telihold: ' + F.day.format(mp.nextFull) + ' · újhold: ' + F.day.format(mp.nextNew) + '</div>';
+    '<div class="line small">' + tf('Telihold: {full} · újhold: {nw}', { full: F.day.format(mp.nextFull), nw: F.day.format(mp.nextNew) }) + '</div>';
 
   renderOnThisDay(d);
 }

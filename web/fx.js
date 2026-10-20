@@ -193,7 +193,7 @@ async function renderSuspect(box) {
       const p = await post('/api/ini/preview', o);
       const byCode = {}; p.counts.forEach(c => byCode[c.code] = c.count);
       box.querySelectorAll('.su-n').forEach(el => { const n = el.dataset.codes.split(',').reduce((s, c) => s + (byCode[c] || 0), 0); el.textContent = '– ' + num(n, 0) + ' jelölés'; });
-      $('suSum').innerHTML = 'Így <b>' + num(p.flagged, 0) + '</b> mérés lenne gyanús a ' + num(p.n, 0) + '-ból (' + num(p.flagged / Math.max(1, p.n) * 100, 2) + '%).';
+      $('suSum').innerHTML = tf('Így {n} mérés lenne gyanús, az összes {all} közül ({pct}%).', { n: '<b>' + num(p.flagged, 0) + '</b>', all: num(p.n, 0), pct: num(p.flagged / Math.max(1, p.n) * 100, 2) });   // 6.37
     } catch (e) { $('suSum').textContent = '⚠ ' + e.message; }
   };
   box.addEventListener('change', () => { clearTimeout(box._t); box._t = setTimeout(preview, 250); });

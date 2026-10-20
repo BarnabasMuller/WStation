@@ -94,7 +94,7 @@ namespace Idojaras
                 if (stopped)
                 {
                     DownloadOk = false;
-                    DownloadMessage = timedOut ? "A letöltés " + DownloadTimeoutMin + " perc után sem fejeződött be, ezért leállítottam. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja."
+                    DownloadMessage = timedOut ? "A letöltés fél óra alatt sem fejeződött be, ezért leállítottam. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja."
                                                : "A letöltés megszakítva. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja.";
                     cancelDownload = false;
                     Interlocked.Increment(ref DownloadSerial);

@@ -41,7 +41,8 @@ $js = New-Object System.Web.Script.Serialization.JavaScriptSerializer
 $js.MaxJsonLength = 50000000
 $langDir = Join-Path $Root 'web\lang'
 $all = New-Object 'System.Collections.Generic.SortedSet[string]' ([StringComparer]::Ordinal)
-foreach ($k in $set) { if ($k -notmatch '[<>{}]|="') { [void]$all.Add(($k -replace '\s{2,}', ' ')) } }
+# a {szo} helyőrzős mondatsablonok (tf) megmaradnak, más kapcsos zárójel nem
+foreach ($k in $set) { if ($k -notmatch '[<>]|="' -and ($k -replace '\{\w+\}', '') -notmatch '[{}]') { [void]$all.Add(($k -replace '\s{2,}', ' ')) } }
 foreach ($f in Get-ChildItem $langDir -Filter '*.json' | Where-Object { $_.Name -notlike '_*' }) {
   $d = $js.DeserializeObject([IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8))
   foreach ($k in $d.Keys) { if ($k -ne '_meta') { [void]$all.Add($k) } }

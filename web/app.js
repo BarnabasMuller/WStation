@@ -369,7 +369,7 @@ function loadSchedule() {
 }
 function renderHeader() {
   const n = TODAY.now || {};
-  $('sub').textContent = META.station + (placeName() !== META.station ? ' · ' + placeName() : '') + ' · utolsó mérés: ' + dayLabel(Math.max(META.last, n.t || 0));
+  $('sub').textContent = META.station + (placeName() !== META.station ? ' · ' + placeName() : '') + ' · ' + tf('utolsó mérés: {when}', { when: dayLabel(Math.max(META.last, n.t || 0)) });
   const b = $('staleBanner');
   if (n.ageMin > staleLimitMin()) {
     b.textContent = 'Az utolsó mérés ' + relTime(n.t) + ' készült (' + F.fullL.format(n.t) + '). Kattints a Frissítés gombra az új adatok letöltéséhez.';
@@ -454,7 +454,7 @@ function renderToday() {
       <h3>Szél</h3>
       <svg class="compass" viewBox="0 0 64 64" aria-hidden="true">
         <circle cx="32" cy="32" r="26"/>
-        <text x="32" y="11">É</text><text x="32" y="60">D</text><text x="57" y="35">K</text><text x="7" y="35">Ny</text>
+        <text x="32" y="11">${DIRS[0]}</text><text x="32" y="60">${DIRS[8]}</text><text x="57" y="35">${DIRS[4]}</text><text x="7" y="35">${DIRS[12]}</text>
         ${n.dir != null && !isNaN(n.dir) ? `<path class="arrow" d="M32 13 L38.5 36 L32 31.5 L25.5 36 Z" style="transform: rotate(${n.dir + 180}deg)"/>` : ''}
       </svg>
       <div class="big">${num(wconv(n.wind), 1)}<small>${wlabel()}</small></div>
@@ -961,8 +961,8 @@ function evDetail(e) {
 }
 // a rekord címe a küszöbbel a választott egységben (9.5: a szerver csak a számot küldi)
 function recTitle(r) {
-  if (r.thrQ === 'rainLt') return r.title + ' (< ' + rthr(r.thr) + '/nap)';
-  if (r.thrQ === 'rainGe') return r.title + ' (≥ ' + rthr(r.thr) + '/nap)';
+  if (r.thrQ === 'rainLt') return tf('{t} (< {v}/nap)', { t: r.title, v: rthr(r.thr) });
+  if (r.thrQ === 'rainGe') return tf('{t} (≥ {v}/nap)', { t: r.title, v: rthr(r.thr) });
   return r.title;
 }
 // a hihetőségi határ fölötti hőmérséklet-csúcs jelzése (8.5)

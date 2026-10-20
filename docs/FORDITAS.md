@@ -22,6 +22,8 @@ A program magyarul készül; minden más nyelv **egy-egy fájl**, a kódot nem k
 3. Írd be a fordításokat: minden sor `"magyar szöveg": "fordítás"`. Ami üresen marad, az magyarul jelenik meg.
    - A hónapok és a napok nevét a program magától adja a `locale` alapján.
    - Ahol a magyar szöveg darabokban áll (pl. `"A feltöltéshez kb"`), a fordítás is darab legyen.
+   - A `{név}` helyőrzős kulcsok egész mondatok (pl. `"Ma {time} óta"`): a fordításban a helyőrzők maradjanak meg
+     (a sorrendjük szabadon változhat, pl. `"Since {time} today"`), a program ezekbe írja be az értékeket.
 4. Futtasd a `build.bat`-ot. A nyelv megjelenik a **Beállítások › Nyelv** listában és a telepítőben.
 
 Fejlesztés közben (`Megjelenítő.exe --bongeszo --web <a web mappa>`) a nyelvi fájl azonnal, build nélkül is betöltődik.

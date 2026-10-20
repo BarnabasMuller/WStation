@@ -29,6 +29,8 @@ While developing (`Megjelenítő.exe --bongeszo --web web`) the file is read fro
   (at most four words), to avoid half-translated sentences.
 - Where the Hungarian source is split by numbers or markup, the keys are fragments (e.g. `"A feltöltéshez kb"`);
   translate them as fragments.
+- Keys with `{name}` placeholders are whole-sentence templates (e.g. `"Ma {time} óta"`): keep every placeholder in the
+  translation – their order may change freely (e.g. `"Since {time} today"`); the program fills in the values.
 
 ## 2. Guides (txt)
 
