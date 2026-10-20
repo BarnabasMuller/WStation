@@ -258,7 +258,7 @@ function lawnAdvice(p, r) {
   const out = [];
   let status, cls;
   if (tmax != null && tmax < 5) { status = 'Most nem kell locsolni (hideg van).'; cls = 'ok'; }
-  else if (rain2 >= 5) { status = 'Az elmúlt 2 napban ' + rtext(rain2, 1) + ' eső esett – várj vele.'; cls = 'ok'; }
+  else if (rain2 >= 5 && dr < raw) { status = 'Az elmúlt 2 napban ' + rtext(rain2, 1) + ' eső esett – várj vele.'; cls = 'ok'; }
   else if (dr < raw * 0.5) { status = 'Nem kell locsolni.'; cls = 'ok'; out.push('Még kb. <b>' + Math.max(1, Math.round((raw - dr) / etcAvg)) + ' nap</b> elég a talajban lévő víz (eső nélkül).'); }
   else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; out.push('Kb. <b>' + Math.max(1, Math.round((raw - dr) / etcAvg)) + ' nap</b> múlva éri el a stresszhatárt.'); }
   else { status = 'Locsolni kell.'; cls = 'strong'; }
@@ -285,7 +285,7 @@ function shrubAdvice(p, r) {
   const out = [];
   let status, cls;
   const daily = etcAvg * p.area;
-  if (sumLast(DR.rain, 2) >= 8) { status = 'Az elmúlt napok esője elég.'; cls = 'ok'; }
+  if (sumLast(DR.rain, 2) >= 8 && dr < raw) { status = 'Az elmúlt napok esője elég.'; cls = 'ok'; }   // az eső már benne van a mérlegben: csak a stresszhatár alatt (11.2)
   else if (dr < raw * 0.5) { status = 'Nem kell locsolni.'; cls = 'ok'; }
   else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; }
   else { status = 'Locsolni kell.'; cls = 'strong'; }
@@ -308,13 +308,17 @@ function potAdvice(pots) {
     const need = Math.max(0.01, (last(r.kc) || 1) * avgLast(DR.et0, 3) * etF * A);   // liter/nap
     const rainL = (DR.rain[DR.n - 1] || 0) * A * (p.place === 'fedett' ? 0 : p.place === 'felig' ? 0.5 : 1);
     const every = Math.max(0.5, tawL * p.p / need);
-    let txt = '<b>' + esc(p.name) + '</b> (' + num(p.potLiters, 0) + ' l, ' + PROFILE_PARAMS.place.options[p.place] + '): ma kb. <b>' + fmtL(need) + '</b> vizet párologtat. ';
-    if (rainL >= need) txt += 'A mai eső elég volt.';
+    // a cserép mostani állapota (11.3): ha a stresszhatáron túl van, előbb most kell meglocsolni
+    const dr = last(r.dr), raw = last(r.raw), nowL = Math.max(0, dr) * A;
+    let txt = '<b>' + esc(p.name) + '</b> (' + num(p.potLiters, 0) + ' l, ' + PROFILE_PARAMS.place.options[p.place] + '): az utolsó adatnapon kb. <b>' + fmtL(need) + '</b> vizet párologtatott. ';
+    if (dr != null && raw != null && dr >= raw) { txt += '<b class="neg">Most locsold meg</b>: kb. <b>' + fmtL(nowL) + '</b> kell a feltöltéshez. Utána '; worst = 'strong'; }
+    if (rainL >= need && !(dr >= raw)) txt += 'Az utolsó adatnap esője elég volt.';
     else if (every < 1) { txt += '<b class="neg">Naponta kétszer</b> locsold, alkalmanként kb. ' + fmtL(need / 2 + 0.05) + '.'; worst = 'strong'; }
     else { txt += 'Kb. <b>' + (every < 1.5 ? 'naponta' : Math.round(every) + ' naponta') + '</b> locsold, alkalmanként kb. <b>' + fmtL(Math.min(tawL, need * Math.max(1, Math.round(every)))) + '</b>.'; if (every < 2 && order[worst] < 1) worst = 'mild'; }
     out.push(txt);
   }
-  const status = worst === 'strong' ? 'Kánikula: a cserepeknek sok víz kell.' : worst === 'mild' ? 'Naponta érdemes ránézni.' : 'Ritkán kell locsolni.';
+  const dry = pots.some(p => { const r = resById(p.id); return last(r.dr) >= last(r.raw); });
+  const status = dry ? 'Locsolni kell: a cserép kiszáradt.' : worst === 'strong' ? 'Kánikula: a cserepeknek sok víz kell.' : worst === 'mild' ? 'Naponta érdemes ránézni.' : 'Ritkán kell locsolni.';
   return { status, cls: worst, lines: out };
 }
 

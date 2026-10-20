@@ -155,7 +155,7 @@ namespace Idojaras
                 double rain = 0, maxRate = 0, gust = 0;
                 for (int i = a; i < z; i++)
                 {
-                    double r = V(ds, Col.PRATE, i, Flag.Rain); if (r > maxRate) maxRate = r;
+                    double r = V(ds, Col.PRATE, i, Flag.RainRate); if (r > maxRate) maxRate = r;
                     double g = V(ds, Col.WGH, i, Flag.Wind); if (g > gust) gust = g;
                 }
                 rain = maxRate;

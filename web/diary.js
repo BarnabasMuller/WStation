@@ -72,14 +72,19 @@ const ALERT_UI = [
 async function renderAlerts() {
   let a;
   try { a = await api('/api/alerts'); } catch (e) { return; }
-  $('alertBox').innerHTML = (a.hasIni ? '' : '<p class="msg err">Még nincs beállításfájl: előbb indítsd el egyszer a Letöltőt.</p>') +
+  // teendővel (7.28): mi a gond, és mit tegyen a felhasználó
+  $('alertBox').innerHTML = (a.hasIni ? '' : '<p class="msg err">A riasztások még nem állíthatók, mert a program még nem töltött le adatot. Kattints a <b>Frissítés</b> gombra (jobb felül), utána itt beállíthatod őket. <button class="btn small" id="alertRefresh">Frissítés most</button></p>') +
     '<table class="ptable small"><tbody>' + ALERT_UI.map(([on, val, label, unit, q]) => {
-      const v = qv(q, parseFloat(String(a[val]).replace(',', '.')));
-      return '<tr><td><label class="switch small"><input type="checkbox" data-k="' + on + '"' + (String(a[on]).toLowerCase() === 'true' ? ' checked' : '') + '><span class="slider"></span></label></td><td>' + label + '</td><td><input class="inp num" inputmode="decimal" data-k="' + val + '" data-q="' + q + '" value="' + (v == null ? '' : String(+v.toFixed(qd(q, 1) + 1))) + '"> <span class="unit">' + qu(q) + ' ' + unit + '</span> <span class="perr"></span></td></tr>';
+      const orig = parseFloat(String(a[val]).replace(',', '.')), v = qv(q, orig);
+      // a megjelenített érték a nyelv tizedesjelével; ha a felhasználó nem írja át, mentéskor az eredeti (metrikus) érték marad (9.4)
+      const shown = v == null ? '' : String(+v.toFixed(qd(q, 1) + 1)).replace('.', decSep());
+      const id = 'al_' + val;
+      return '<tr><td><label class="switch small"><input type="checkbox" data-k="' + on + '" aria-label="' + esc(label) + ' – riasztás be/ki"' + (String(a[on]).toLowerCase() === 'true' ? ' checked' : '') + '><span class="slider"></span></label></td><td><label for="' + id + '">' + label + '</label></td><td><input class="inp num" id="' + id + '" inputmode="decimal" data-k="' + val + '" data-q="' + q + '" data-orig="' + (isNaN(orig) ? '' : orig) + '" data-shown="' + esc(shown) + '" value="' + esc(shown) + '"> <span class="unit">' + qu(q) + ' ' + unit + '</span> <span class="perr"></span></td></tr>';
     }).join('') +
     '<tr><td></td><td>Ismétlés legfeljebb</td><td><input class="inp num" type="number" step="1" data-k="RiasztasIsmetlesOra" value="' + esc(a.RiasztasIsmetlesOra) + '"> <span class="unit">óránként</span></td></tr>' +
     '<tr><td></td><td>Csendes órák</td><td><input class="inp num" type="number" step="1" min="0" max="24" data-k="CsendesTol" value="' + esc(a.CsendesTol) + '"> – <input class="inp num" type="number" step="1" min="0" max="24" data-k="CsendesIg" value="' + esc(a.CsendesIg) + '"></td></tr>' +
     '</tbody></table>';
+  if ($('alertRefresh')) $('alertRefresh').addEventListener('click', async () => { await reload(true); renderAlerts(); });
 }
 $('alertSave').addEventListener('click', async () => {
   const body = {};
@@ -93,10 +98,13 @@ $('alertSave').addEventListener('click', async () => {
     let msg = '';
     if (isNaN(x)) msg = '⚠ számot adj meg';
     else if (el.dataset.q) {
-      x = qback(el.dataset.q, x);
+      const unchanged = el.value === el.dataset.shown && el.dataset.orig !== '';
+      x = unchanged ? parseFloat(el.dataset.orig) : qback(el.dataset.q, x);
       const [lo, hi] = row[5];
-      if (x < lo - 1e-9 || x > hi + 1e-9) msg = '⚠ ' + num(qv(row[4], lo), qd(row[4], 0)) + ' és ' + num(qv(row[4], hi), qd(row[4], 0)) + ' ' + qu(row[4]) + ' között';
-      x = +x.toFixed(2);
+      // a határok annyi tizedessel, amennyi a választott egységben értelmes (pl. inHg: 0,015)
+      const bd = q => { const lo2 = Math.abs(qv(q, lo)); return lo2 > 0 && lo2 < 1 ? 3 : lo2 < 10 && qd(q, 0) > 0 ? 2 : qd(q, 0); };
+      if (x < lo - 1e-9 || x > hi + 1e-9) msg = '⚠ ' + num(qv(row[4], lo), bd(row[4])) + ' és ' + num(qv(row[4], hi), bd(row[4])) + ' ' + qu(row[4]) + ' között';
+      if (!unchanged) x = +x.toFixed(2);
     } else if (el.dataset.k === 'RiasztasIsmetlesOra' && (x < 1 || x > 168 || x % 1)) msg = '⚠ 1–168 egész óra';
     else if ((el.dataset.k === 'CsendesTol' || el.dataset.k === 'CsendesIg') && (x < 0 || x > 24 || x % 1)) msg = '⚠ 0–24 egész';
     if (err) err.textContent = msg; else if (msg) el.title = msg;

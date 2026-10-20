@@ -43,7 +43,7 @@ function moonPhase(ms) {
   const nextNew = ms + ((P - age) % P) * 86400000;
   return { age, illum, name: names[k], icon: icons[k], nextFull, nextNew };
 }
-function hm(h) { const m = Math.round(h * 60); return Math.floor(m / 60) + ' ó ' + String(m % 60).padStart(2, '0') + ' p'; }
+function hm(h) { return fmtDuration(h * 60); }
 
 // ------------------------------------------------------------------ Zambretti (Negretti & Zambra), magyarul
 const ZAMB = {

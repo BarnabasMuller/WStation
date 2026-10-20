@@ -31,19 +31,21 @@ namespace Idojaras
     static class Flag
     {
         public const int QC0 = 1, QCNEG = 2, UV = 4, TEMP = 8, HUM = 16, PRES = 32, RAIN = 64, WIND = 128,
-                         SPIKE = 256, SUN = 512, RESTART = 1024, SOLAR = 2048;
+                         SPIKE = 256, SUN = 512, RESTART = 1024, SOLAR = 2048, RAINJUMP = 4096, WINDFROZEN = 8192;
         public const int Common = QC0 | QCNEG | RESTART;
         // mely jelzők miatt hagyjuk ki az adott mennyiséget "tiszta" számításnál
         public const int Temp = Common | TEMP | SPIKE | SUN;
         public const int Dew = Common | TEMP | SPIKE | HUM;
         public const int Hum = Common | HUM;
         public const int Pres = Common | PRES;
-        public const int Wind = Common | WIND;
+        public const int Wind = Common | WIND | WINDFROZEN;
+        // a csapadékösszeg (halmozott érték) a csapadékugrásnál is megmarad; csak az intenzitás (rekord, felhőszakadás) esik ki
         public const int Rain = Common | RAIN;
+        public const int RainRate = Common | RAIN | RAINJUMP;
         public const int Solar = Common | SOLAR;
         public const int Uv = Common | UV | SOLAR;
 
-        public static readonly int[] Bits = { QC0, QCNEG, UV, TEMP, HUM, PRES, RAIN, WIND, SPIKE, SUN, RESTART, SOLAR };
+        public static readonly int[] Bits = { QC0, QCNEG, UV, TEMP, HUM, PRES, RAIN, WIND, SPIKE, SUN, RESTART, SOLAR, RAINJUMP, WINDFROZEN };
         public static readonly string[] Texts =
         {
             "A WU minőségellenőrzése bizonytalannak jelölte (qcStatus = 0)",
@@ -57,9 +59,11 @@ namespace Idojaras
             "Hirtelen hőmérséklet-ugrás (tüske)",
             "Napsütés miatti túlmelegedés gyanúja",
             "Első mérés egy hosszabb kiesés után",
-            "Lehetetlen napsugárzás"
+            "Lehetetlen napsugárzás",
+            "Csapadékugrás (túl sok eső pár perc alatt, vagy egyszerre elolvadt hó)",
+            "Befagyott szélmérő gyanúja (órákig pontosan 0 szél fagyban)"
         };
-        public static readonly string[] Codes = { "qc0", "qc-1", "uv", "temp", "hum", "pres", "rain", "wind", "spike", "sun", "restart", "solar" };
+        public static readonly string[] Codes = { "qc0", "qc-1", "uv", "temp", "hum", "pres", "rain", "wind", "spike", "sun", "restart", "solar", "rainjump", "windfrozen" };
 
         public static string Describe(int f)
         {
@@ -662,8 +666,63 @@ namespace Idojaras
 
         static bool Bad(float v, double min, double max) { return !float.IsNaN(v) && (v < min || v > max); }
 
+        // 30 perces átlagszél minden mérés körül (a napsütés miatti túlmelegedés szabályához: a pillanatnyi szél félrevezet)
+        static double[] WindAvg30(Dataset ds)
+        {
+            var res = new double[ds.N];
+            int a = 0, z = 0; double sum = 0; int cnt = 0;
+            for (int i = 0; i < ds.N; i++)
+            {
+                while (z < ds.N && ds.T[z] <= ds.T[i] + 900) { float w = ds.C[Col.WSA][z]; if (!float.IsNaN(w)) { sum += w; cnt++; } z++; }
+                while (a < z && ds.T[a] < ds.T[i] - 900) { float w = ds.C[Col.WSA][a]; if (!float.IsNaN(w)) { sum -= w; cnt--; } a++; }
+                res[i] = cnt > 0 ? sum / cnt : double.NaN;
+            }
+            return res;
+        }
+
+        // sorozatos szabályok (nem egy sorból dönthetők el): csapadékugrás és befagyott szélmérő
+        static int[] RunFlags(Dataset ds, Settings s)
+        {
+            var f = new int[ds.N];
+            var C = ds.C;
+            if (s.FlagRainJump)
+                for (int i = 1; i < ds.N; i++)
+                {
+                    if (ds.Day[i] != ds.Day[i - 1]) continue;
+                    long dt = ds.T[i] - ds.T[i - 1];
+                    float p0 = C[Col.PTOT][i - 1], p1 = C[Col.PTOT][i];
+                    if (dt <= 0 || dt > 900 || float.IsNaN(p0) || float.IsNaN(p1) || p1 <= p0) continue;
+                    double inc = p1 - p0, rate = inc / (dt / 3600.0);
+                    float t = C[Col.TA][i];
+                    bool melt = !float.IsNaN(t) && t <= s.MeltTemp && inc >= s.MeltMm;   // hó / jég olvadt el egyszerre a mérőben
+                    if (rate > s.RainJumpRate || melt)
+                    {
+                        f[i] |= Flag.RAINJUMP;
+                        // a követő percekben az állomás még a „bennragadt” intenzitást küldi, bár már nem esik: azok is gyanúsak
+                        for (int k = i + 1; k < ds.N && ds.T[k] - ds.T[i] <= 1200 && !(C[Col.PTOT][k] > C[Col.PTOT][k - 1] + 0.01f); k++)
+                            if (C[Col.PRATE][k] > 0) f[k] |= Flag.RAINJUMP;
+                    }
+                }
+            if (s.FlagFrozenWind)
+            {
+                int i = 0;
+                while (i < ds.N)
+                {
+                    bool zero = C[Col.WSA][i] == 0 && C[Col.WGH][i] == 0;
+                    if (!zero) { i++; continue; }
+                    int j = i; double tmin = double.MaxValue;
+                    while (j < ds.N && C[Col.WSA][j] == 0 && C[Col.WGH][j] == 0 && (j == i || ds.T[j] - ds.T[j - 1] <= 1800))
+                    { float t = C[Col.TA][j]; if (!float.IsNaN(t) && t < tmin) tmin = t; j++; }
+                    if (ds.T[j - 1] - ds.T[i] >= s.FrozenHours * 3600 && tmin <= s.FrozenTemp)
+                        for (int k = i; k < j; k++) f[k] |= Flag.WINDFROZEN;
+                    i = j;
+                }
+            }
+            return f;
+        }
+
         // egy sor jelzői a beállított (be/ki kapcsolható) szabályok szerint
-        static int FlagOf(Dataset ds, Settings s, int i)
+        static int FlagOf(Dataset ds, Settings s, int i, double[] wind30)
         {
             var C = ds.C;
             long gapSec = s.RestartMin * 60L;
@@ -687,8 +746,11 @@ namespace Idojaras
                 double d1 = C[Col.TA][i] - C[Col.TA][i - 1], d2 = C[Col.TA][i] - C[Col.TA][i + 1];
                 if (Math.Abs(d1) > s.SpikeDeg && Math.Abs(d2) > s.SpikeDeg && Math.Sign(d1) == Math.Sign(d2)) f |= Flag.SPIKE;
             }
+            // túlmelegedés: gyenge a szél pillanatnyilag VAGY a 30 perces átlagban (8.5 – egy-egy szellő ne mentse fel)
             float th = C[Col.TH][i], sol = C[Col.SOL][i], ws = C[Col.WSA][i];
-            if (s.FlagSun && !float.IsNaN(th) && th >= s.SunTemp && !float.IsNaN(sol) && sol >= s.SunSolar && (float.IsNaN(ws) || ws <= s.SunWind)) f |= Flag.SUN;
+            double w30 = wind30 != null ? wind30[i] : double.NaN;
+            bool calm = float.IsNaN(ws) || ws <= s.SunWind || (!double.IsNaN(w30) && w30 <= s.SunWind);
+            if (s.FlagSun && !float.IsNaN(th) && th >= s.SunTemp && !float.IsNaN(sol) && sol >= s.SunSolar && calm) f |= Flag.SUN;
             return f;
         }
 
@@ -696,9 +758,10 @@ namespace Idojaras
         public static int[] FlagPreview(Dataset ds, Settings s, out int rows)
         {
             var counts = new int[Flag.Bits.Length]; rows = 0;
+            var w30 = WindAvg30(ds); var run = RunFlags(ds, s);
             for (int i = 0; i < ds.N; i++)
             {
-                int f = FlagOf(ds, s, i);
+                int f = FlagOf(ds, s, i, w30) | run[i];
                 if (f == 0) continue;
                 rows++;
                 for (int b = 0; b < Flag.Bits.Length; b++) if ((f & Flag.Bits[b]) != 0) counts[b]++;
@@ -708,7 +771,8 @@ namespace Idojaras
 
         static void ComputeFlags(Dataset ds, Settings s)
         {
-            for (int i = 0; i < ds.N; i++) ds.Flags[i] = FlagOf(ds, s, i);
+            var w30 = WindAvg30(ds); var run = RunFlags(ds, s);
+            for (int i = 0; i < ds.N; i++) ds.Flags[i] = FlagOf(ds, s, i, w30) | run[i];
             ds.FlagCounts = new int[Flag.Bits.Length];
             ds.FlaggedRows = 0;
             for (int i = 0; i < ds.N; i++)
@@ -812,7 +876,7 @@ namespace Idojaras
                     if (double.IsNaN(segMax) || tot > segMax) segMax = tot;
                     prevTot = tot;
                 }
-                double rate = Val(ds, Col.PRATE, i, clean, Flag.Rain);
+                double rate = Val(ds, Col.PRATE, i, clean, Flag.RainRate);
                 if (!double.IsNaN(rate) && (double.IsNaN(d.RainRateMax) || rate > d.RainRateMax)) { d.RainRateMax = rate; d.RainRateMaxT = ds.T[i]; }
 
                 double sol = Val(ds, Col.SOL, i, clean, Flag.Solar);

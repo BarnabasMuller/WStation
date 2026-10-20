@@ -35,6 +35,10 @@ namespace Idojaras
         // gyanús mérések: melyik szabály jelöljön
         public bool FlagQc0 = true, FlagQcNeg = true, FlagRange = true, FlagSpike = true, FlagSun = true, FlagRestart = true;
         public int RestartMin = 60;         // ennél hosszabb kiesés utáni első mérés gyanús
+        public bool FlagRainJump = true, FlagFrozenWind = true;
+        public double RainJumpRate = 200;   // csapadékugrás: két mérés között ennél nagyobb (mm/h) növekedés
+        public double MeltTemp = 2, MeltMm = 5;   // olvadás: legalább ennyi mm egy lépésben, legfeljebb ennyi °C-on
+        public double FrozenHours = 3, FrozenTemp = 1;   // befagyott szélmérő: legalább ennyi órán át 0 szél és lökés, ennyi °C alatt
         // helyszín (Beállítások › Helyszín)
         public string PlaceName = "";       // üres: az állomás WU-helyneve (pl. Budaörs)
         public string TimeZone = "Europe/Budapest";
@@ -158,6 +162,16 @@ JelolNapsutes=true
 JelolKieses=true
 # Kiesés: ennél több perc szünet utáni első mérés gyanús
 KiesesPerc=60
+# Csapadékugrás: két mérés között ennél nagyobb növekedés (mm/h), vagy fagypont körül egyszerre sok (olvadó hó);
+# a napi összeg megmarad, csak az intenzitásrekordból és a felhőszakadásokból marad ki
+JelolCsapadekUgras=true
+CsapadekUgrasMmH=200
+OlvadasHomerseklet=2
+OlvadasMm=5
+# Befagyott szélmérő: legalább ennyi órán át pontosan 0 szél és lökés, legfeljebb ennyi °C-on
+JelolBefagyottSzel=true
+BefagyottOra=3
+BefagyottHomerseklet=1
 
 # --- Szél-statisztika ---
 # A „szeles délután” időablaka (óra) és határa: 20 km/h = 4 Bft (3 Bft fölött)
@@ -230,6 +244,10 @@ SzelesDelutanKmh=20
             s.FlagRange = Bool(d, "JelolLehetetlen", true); s.FlagSpike = Bool(d, "JelolUgras", true);
             s.FlagSun = Bool(d, "JelolNapsutes", true); s.FlagRestart = Bool(d, "JelolKieses", true);
             s.RestartMin = Math.Max(10, Math.Min(1440, (int)Num(d, "KiesesPerc", s.RestartMin, s)));
+            s.FlagRainJump = Bool(d, "JelolCsapadekUgras", true); s.FlagFrozenWind = Bool(d, "JelolBefagyottSzel", true);
+            s.RainJumpRate = Num(d, "CsapadekUgrasMmH", s.RainJumpRate, s);
+            s.MeltTemp = Num(d, "OlvadasHomerseklet", s.MeltTemp, s); s.MeltMm = Num(d, "OlvadasMm", s.MeltMm, s);
+            s.FrozenHours = Num(d, "BefagyottOra", s.FrozenHours, s); s.FrozenTemp = Num(d, "BefagyottHomerseklet", s.FrozenTemp, s);
             // helyszín
             if (d.TryGetValue("HelyNev", out v)) s.PlaceName = v.Trim().Length > 40 ? v.Trim().Substring(0, 40) : v.Trim();
             if (d.TryGetValue("Idozona", out v) && v.Trim().Length > 0)
@@ -284,6 +302,9 @@ SzelesDelutanKmh=20
             { "JelolWuBizonytalan", new double[] { 0, 1, 0, 1 } }, { "JelolWuHibas", new double[] { 0, 1, 0, 1 } }, { "JelolLehetetlen", new double[] { 0, 1, 0, 1 } },
             { "JelolUgras", new double[] { 0, 1, 0, 1 } }, { "JelolNapsutes", new double[] { 0, 1, 0, 1 } }, { "JelolKieses", new double[] { 0, 1, 0, 1 } },
             { "KiesesPerc", new double[] { 10, 1440, 1, 0 } }, { "GyanusKizarasa", new double[] { 0, 1, 0, 1 } },
+            { "JelolCsapadekUgras", new double[] { 0, 1, 0, 1 } }, { "CsapadekUgrasMmH", new double[] { 50, 1000, 0, 0 } },
+            { "OlvadasHomerseklet", new double[] { -5, 5, 0, 0 } }, { "OlvadasMm", new double[] { 1, 50, 0, 0 } },
+            { "JelolBefagyottSzel", new double[] { 0, 1, 0, 1 } }, { "BefagyottOra", new double[] { 1, 24, 0, 0 } }, { "BefagyottHomerseklet", new double[] { -10, 5, 0, 0 } },
             { "TartalekSzelesseg", new double[] { -90, 90, 0, 0 } }, { "TartalekHosszusag", new double[] { -180, 180, 0, 0 } },
             { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } },
             { "FelhoKRs", new double[] { 0.3, 2, 0, 0 } }, { "FelhoA", new double[] { 0.3, 1, 0, 0 } }, { "FelhoB", new double[] { 1, 6, 0, 0 } }, { "FelhoDerultK", new double[] { 0.5, 1.1, 0, 0 } },

@@ -476,7 +476,7 @@ namespace Idojaras
             for (int i = ds.LowerBound(ds.T[last] - 3600); i <= last; i++)
             {
                 if ((ds.Flags[i] & Flag.Wind) == 0 && !float.IsNaN(ds.C[Col.WGH][i]) && (double.IsNaN(g1) || ds.C[Col.WGH][i] > g1)) g1 = ds.C[Col.WGH][i];
-                if ((ds.Flags[i] & Flag.Rain) == 0 && !float.IsNaN(ds.C[Col.PRATE][i]) && (double.IsNaN(r1) || ds.C[Col.PRATE][i] > r1)) r1 = ds.C[Col.PRATE][i];
+                if ((ds.Flags[i] & Flag.RainRate) == 0 && !float.IsNaN(ds.C[Col.PRATE][i]) && (double.IsNaN(r1) || ds.C[Col.PRATE][i] > r1)) r1 = ds.C[Col.PRATE][i];
             }
             w.P("gust1h", g1, 1).P("rate1h", r1, 1);
             var prevDays = ds.Days.Where(d => d.Day < ds.Day[last] && d.Coverage >= 0.8).Reverse().Take(3).Select(d => d.Tavg).ToList();
@@ -568,7 +568,7 @@ namespace Idojaras
             Group(w, ds, segs, total, n, raw, "pres", pres, 1, new string[0], new Getter[0], new int[0]);
             Group(w, ds, segs, total, n, raw, "wind", G(Col.WSA, Flag.Wind), 1,
                 new[] { "gust", "dir" }, new[] { G(Col.WGH, Flag.Wind), G(Col.WDIR, Flag.Wind) }, new[] { 2, 3 });
-            Group(w, ds, segs, total, n, raw, "rain", G(Col.PRATE, Flag.Rain), 2,
+            Group(w, ds, segs, total, n, raw, "rain", G(Col.PRATE, Flag.RainRate), 2,
                 new[] { "tot" }, new[] { G(Col.PTOT, Flag.Rain) }, new[] { 2 });
             Group(w, ds, segs, total, n, raw, "sun", G(Col.SOL, Flag.Solar), 0,
                 new[] { "uv" }, new[] { G(Col.UV, Flag.Uv) }, new[] { 2 });

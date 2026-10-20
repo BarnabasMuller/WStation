@@ -38,7 +38,7 @@ async function renderWind() {
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line'), card = cssVar('--card');
 
   // összefoglaló kártyák
-  const di = d.date.map((s, i) => i).filter(i => d.start[i] >= a - D && d.start[i] < b);
+  const di = d.date.map((s, i) => i).filter(i => d.start[i] >= a - H && d.start[i] < b);   // (11.4: nem egy nappal korábbról)
   const gi = di.reduce((m, i) => d.gust[i] != null && (m == null || d.gust[i] > d.gust[m]) ? i : m, null);
   let vx = 0, vy = 0; di.forEach(i => { if (d.dir[i] != null && d.wind[i] != null) { vx += d.wind[i] * Math.sin(d.dir[i] * RAD); vy += d.wind[i] * Math.cos(d.dir[i] * RAD); } });
   const dom = vx || vy ? (Math.atan2(vx, vy) / RAD + 360) % 360 : null;

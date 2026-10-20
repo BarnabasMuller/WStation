@@ -16,6 +16,9 @@ namespace Idojaras
         static int ok, fail, skip;
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
+        // a mintaadat jelölt sorainak várt száma (2.2: + csapadékugrás, befagyott szélmérő, túlmelegedés 30 perces átlaggal)
+        const int SampleFlagged = 836;
+
         static void Ok(bool cond, string what, string detail = "")
         {
             if (cond) ok++; else fail++;
@@ -288,6 +291,16 @@ namespace Idojaras
                     try { var sc29 = new DSchedule { from = "02-29", to = "03-31", yearly = true }; on29 = Enumerable.Range(0, 365).Count(i => DroughtStore.ProgramOn(pg3, sc29, new DateTime(2026, 1, 1).AddDays(i))); }
                     catch (Exception ex) { err29 = ex.Message; }
                     Ok(err29 == null && on29 > 0, "Febr. 29-i éves időszak nem szökőévben (2.2)", err29 ?? on29 + " öntözési nap");
+                    // --- 2.2: csapadékugrás (júl. 17. 29,5 mm / 5 perc, febr. 15. olvadás) és befagyott szélmérő (jan. 7.)
+                    if (sample)
+                    {
+                        int iRate = -1; for (int i = 0; i < ds.N; i++) if ((ds.Flags[i] & Flag.RainRate) == 0 && !float.IsNaN(ds.C[Col.PRATE][i]) && (iRate < 0 || ds.C[Col.PRATE][i] > ds.C[Col.PRATE][iRate])) iRate = i;
+                        var feb15 = ds.Days.FirstOrDefault(x => x.Date == new DateTime(2026, 2, 15));
+                        var jan7 = ds.Days.FirstOrDefault(x => x.Date == new DateTime(2026, 1, 7));
+                        Ok(iRate >= 0 && ds.C[Col.PRATE][iRate] < 100 && feb15 != null && Math.Abs(feb15.Rain - 23.62) < 0.01 && jan7 != null && double.IsNaN(jan7.WindAvg),
+                           "Csapadékugrás és befagyott szélmérő jelölése (2.2)", "tiszta intenzitásrekord: " + (iRate >= 0 ? N(ds.C[Col.PRATE][iRate], 0) : "–") + " mm/h (a 177 kimarad), febr. 15. összege marad: " + (feb15 != null ? N(feb15.Rain) : "–") + " mm, jan. 7. szél: " + (jan7 != null ? N(jan7.WindAvg) : "–"));
+                    }
+                    else Skip("Csapadékugrás és befagyott szélmérő jelölése");
                     // --- 2.2: felhőzet-becslés (napállás, okta-képlet, futás a mintán)
                     long solstice = (long)(new DateTime(2026, 6, 21, 11, 0, 0, DateTimeKind.Utc) - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
                     double hs = Cloud.SunElevation(solstice, 47.46, 18.96);
@@ -309,7 +322,7 @@ namespace Idojaras
                     var s2x = Settings.FromDict(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "JelolWuBizonytalan", "false" }, { "JelolNapsutes", "false" } }, a, new Settings());
                     int rowsAll, rowsLess;
                     var cAll = Loader.FlagPreview(ds, s, out rowsAll); var cLess = Loader.FlagPreview(ds, s2x, out rowsLess);
-                    Ok(cLess[0] == 0 && cLess[9] == 0 && rowsLess < rowsAll && (!sample || rowsAll == 500), "Gyanús-mérés szabályok kapcsolhatók", "mind: " + rowsAll + ", qc0 és napsütés nélkül: " + rowsLess);
+                    Ok(cLess[0] == 0 && cLess[9] == 0 && rowsLess < rowsAll && (!sample || rowsAll == SampleFlagged), "Gyanús-mérés szabályok kapcsolhatók", "mind: " + rowsAll + ", qc0 és napsütés nélkül: " + rowsLess);
                 }
 
                 // --- 2.1: nyelvi fájlok (a beágyazott web/lang/*.json) és az írás-őr

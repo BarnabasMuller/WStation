@@ -150,8 +150,12 @@ const SUSPECT_RULES = [
     [['UvMax', 'UV legfeljebb', 'UV_max', ''], ['HomersekletMin', 'Hőmérséklet legalább', 'T_min', '°C'], ['HomersekletMax', 'Hőmérséklet legfeljebb', 'T_max', '°C'], ['LegnyomasMin', 'Légnyomás legalább', 'p_min', 'hPa'], ['LegnyomasMax', 'Légnyomás legfeljebb', 'p_max', 'hPa'],
       ['CsapadekIntenzitasMax', 'Csapadékintenzitás legfeljebb', 'I_max', 'mm/h'], ['SzellokesMax', 'Lökés legfeljebb', 'v_max', 'km/h'], ['NapsugarzasMax', 'Napsugárzás legfeljebb', 'S_max', 'W/m²']]],
   ['JelolUgras', 'program', 'Tüske: a hőmérséklet mindkét szomszédjától ugyanabba az irányba ugrik', ['spike'], [['UgrasFok', 'Ugrás legalább', 'ΔT', '°C']]],
-  ['JelolNapsutes', 'program', 'Napsütés miatti túlmelegedés: meleg + erős napsugárzás + szélcsend (a hőmérő árnyékolója felmelegszik)', ['sun'],
-    [['NapsutesHomerseklet', 'Hőmérséklet legalább', 'T_nap', '°C'], ['NapsutesSugarzas', 'Napsugárzás legalább', 'S_nap', 'W/m²'], ['NapsutesSzel', 'Szél legfeljebb', 'v_nap', 'km/h']]],
+  ['JelolNapsutes', 'program', 'Napsütés miatti túlmelegedés: meleg + erős napsugárzás + gyenge szél (30 perces átlag; a hőmérő árnyékolója felmelegszik)', ['sun'],
+    [['NapsutesHomerseklet', 'Hőmérséklet legalább', 'T_nap', '°C'], ['NapsutesSugarzas', 'Napsugárzás legalább', 'S_nap', 'W/m²'], ['NapsutesSzel', 'Szél (30 perces átlag) legfeljebb', 'v_nap', 'km/h']]],
+  ['JelolCsapadekUgras', 'program', 'Csapadékugrás: két mérés között irreálisan sok eső, vagy fagypont körül egyszerre sok (elolvadt hó). A napi összeg megmarad, csak az intenzitásrekordból és a felhőszakadásokból marad ki.', ['rainjump'],
+    [['CsapadekUgrasMmH', 'Növekedés legalább', 'I_ugrás', 'mm/h'], ['OlvadasMm', 'Olvadás: egy lépésben legalább', 'P_olv', 'mm'], ['OlvadasHomerseklet', 'Olvadás: hőmérséklet legfeljebb', 'T_olv', '°C']]],
+  ['JelolBefagyottSzel', 'program', 'Befagyott szélmérő: órákig pontosan 0 szél és 0 lökés fagyban (a szélstatisztikából kimarad)', ['windfrozen'],
+    [['BefagyottOra', 'Legalább ennyi ideig', 't_fagy', 'óra'], ['BefagyottHomerseklet', 'Hőmérséklet legfeljebb', 'T_fagy', '°C']]],
   ['JelolKieses', 'program', 'Kiesés utáni első mérés (az állomás újraindulása után az első érték gyakran pontatlan)', ['restart'], [['KiesesPerc', 'Kiesés, ha a szünet hosszabb', 't_k', 'perc']]]
 ];
 async function renderSuspect(box) {

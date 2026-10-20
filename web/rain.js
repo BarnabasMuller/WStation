@@ -20,22 +20,25 @@ async function renderRain() {
   const years = [...new Set(d.date.map(s => s.slice(0, 4)))];
   const ysel = $('rainYear');
   if (ysel.options.length !== years.length + 1) ysel.innerHTML = '<option value="">Minden év</option>' + years.map(y => '<option>' + y + '</option>').join('');
-  ysel.value = st.year; $('rainMonth').value = st.month; $('rainMin').value = +(rconv(st.min) || 0).toFixed(rdec(1)); $('rainMinU').textContent = rlabel(); $('rainMin').step = units().rain === 'in' ? 0.02 : 0.5; $('rainBurst').checked = !!st.burst;
+  ysel.value = st.year; $('rainMonth').value = st.month; $('rainMin').value = +(rconv(st.min) || 0).toFixed(rdec(1)); $('rainMinU').textContent = rlabel(); $('rainMin').step = units().rain === 'in' ? 0.01 : 0.1; $('rainBurst').checked = !!st.burst;   // a lépésköz illeszkedjen az alapértékhez (0,2) – 9.8
 
   const inSel = ms => { const s = F.ymd.format(ms); return (!st.year || s.startsWith(st.year)) && (!st.month || s.slice(5, 7) === st.month); };
   const list = ev.events.filter(e => inSel(e.start) && e.total >= (+st.min || 0) && (!st.burst || e.maxRate >= ev.cloudburst));
   const dIdx = d.date.map((s, i) => i).filter(i => (!st.year || d.date[i].startsWith(st.year)) && (!st.month || d.date[i].slice(5, 7) === st.month));
   const total = dIdx.reduce((a, i) => a + (d.rain[i] || 0), 0), rainy = dIdx.filter(i => d.rain[i] >= 1).length;
-  const biggest = list.slice().sort((a, b) => b.total - a.total)[0], fastest = list.slice().sort((a, b) => b.maxRate - a.maxRate)[0];
+  // a gyanús (csapadékugrásos) események a táblázatban látszanak, de rekordnak és felhőszakadásnak nem számítanak
+  const okList = list.filter(e => !e.suspect);
+  const biggest = okList.slice().sort((a, b) => b.total - a.total)[0], fastest = okList.slice().sort((a, b) => b.maxRate - a.maxRate)[0];
   const dur = e => (e.end - e.start) / 60000;
-  const fmtDur = m => m < 60 ? Math.round(m) + ' perc' : Math.floor(m / 60) + ' ó ' + String(Math.round(m % 60)).padStart(2, '0') + ' p';
+  const fmtDur = m => fmtDuration(m);
+  const nSus = list.length - okList.length;
 
   $('rainCards').innerHTML = [
-    ['Csapadék a kiválasztott időszakban', rtext(total, 1), rainy + ' nap ≥ ' + rthr(1)],
-    ['Esőesemények', list.length + ' db', 'egy esemény vége: ' + ev.gapMin + ' perc szünet'],
+    ['Csapadék a kiválasztott időszakban', rtext(total, 1), 'esős nap (legalább ' + rthr(1) + '): ' + rainy],
+    ['Esőesemények', list.length + ' db', 'két eső között legalább ' + ev.gapMin + ' perc szünet' + (nSus ? ' · ' + nSus + ' gyanús' : '')],
     ['Legnagyobb zápor', biggest ? rtext(biggest.total, 1) : '–', biggest ? F.full.format(biggest.start) + ', ' + fmtDur(dur(biggest)) : ''],
-    ['Legnagyobb intenzitás', fastest ? rrtext(fastest.maxRate, 0) : '–', fastest ? F.full.format(fastest.start) : ''],
-    ['Felhőszakadás (≥ ' + rrtext(ev.cloudburst, 0) + ')', list.filter(e => e.maxRate >= ev.cloudburst).length + ' db', '']
+    ['Legnagyobb intenzitás', fastest ? rrtext(fastest.maxRate, 0) : '–', fastest ? F.full.format(fastest.maxT || fastest.start) : ''],
+    ['Felhőszakadás (≥ ' + rrtext(ev.cloudburst, 0) + ')', okList.filter(e => e.maxRate >= ev.cloudburst).length + ' db', '']
   ].map(([a, b, c]) => '<div class="card mini"><h3>' + a + '</h3><div class="big">' + b + '</div><div class="line small">' + esc(c) + '</div></div>').join('');
 
   // havi csapadék + események
@@ -71,7 +74,7 @@ async function renderRain() {
   });
   const th = (k, l) => '<th data-k="' + k + '"' + (rainSort.k === k ? ' class="sorted"' : '') + '>' + l + (rainSort.k === k ? (rainSort.dir < 0 ? ' ▼' : ' ▲') : '') + '</th>';
   $('rainTable').innerHTML = '<table class="dtable"><thead><tr>' + th('start', 'Kezdete') + '<th>Vége</th>' + th('dur', 'Hossz') + th('total', 'Összeg') + th('maxRate', 'Max. intenzitás') + th('avgRate', 'Átl. intenzitás') + '</tr></thead><tbody>' +
-    sorted.map(e => '<tr data-a="' + e.start + '" data-b="' + e.end + '"' + (e.maxRate >= ev.cloudburst ? ' class="burst"' : '') + '><td>' + F.full.format(e.start) + '</td><td>' + F.time.format(e.end) + '</td><td>' + fmtDur(dur(e)) + '</td><td><b>' + rtext(e.total, 1) + '</b></td><td>' + rrtext(e.maxRate, 0) + (e.maxRate >= ev.cloudburst ? ' ⛈' : '') + '</td><td>' + rrtext(e.avgRate, 1) + '</td></tr>').join('') +
+    sorted.map(e => '<tr data-a="' + e.start + '" data-b="' + e.end + '"' + (e.maxRate >= ev.cloudburst ? ' class="burst"' : '') + '><td>' + F.full.format(e.start) + '</td><td>' + F.time.format(e.end) + '</td><td>' + fmtDur(dur(e)) + '</td><td><b>' + rtext(e.total, 1) + '</b></td><td>' + rrtext(e.maxRate, 0) + (e.suspect ? ' <span class="neg" title="Csapadékugrás: valószínűleg egyszerre elolvadt hó vagy mérési hiba – rekordnak nem számít">⚠ gyanús</span>' : e.maxRate >= ev.cloudburst ? ' <span title="felhőszakadás">⛈</span>' : '') + '</td><td>' + rrtext(e.avgRate, 1) + '</td></tr>').join('') +
     '</tbody></table>' + (sorted.length ? '' : '<div class="muted" style="padding:12px">Nincs a szűrésnek megfelelő esőesemény.</div>');
   $('rainTable').querySelectorAll('th[data-k]').forEach(h => h.addEventListener('click', () => { rainSort = { k: h.dataset.k, dir: rainSort.k === h.dataset.k ? -rainSort.dir : -1 }; renderRain(); }));
   $('rainTable').querySelectorAll('tr[data-a]').forEach(r => r.addEventListener('click', () => gotoRange(+r.dataset.a, +r.dataset.b, 3 * H)));

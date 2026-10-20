@@ -33,9 +33,19 @@ buildFormatters();
 
 function num(v, d = 1) {
   if (v === null || v === undefined || isNaN(v)) return '–';
-  return Number(v).toLocaleString(numLocale(), { minimumFractionDigits: d, maximumFractionDigits: d });
+  // valódi mínuszjel (−) a kötőjel helyett, mint a signed()-nál (7.23); a −0 helyett 0
+  const s = Number(v).toLocaleString(numLocale(), { minimumFractionDigits: d, maximumFractionDigits: d });
+  return /^-0([.,]0*)?$/.test(s) ? s.slice(1) : s.replace(/^-/, '−');
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+// időtartam egységesen (6.22): „55 perc”, „1 óra 49 perc”, 48 óra fölött „3 nap 4 óra”
+function fmtDuration(min) {
+  if (min == null || isNaN(min)) return '–';
+  const m = Math.round(min);
+  if (m < 60) return m + ' perc';
+  if (m < 48 * 60) { const h = Math.floor(m / 60), r = m % 60; return h + ' óra' + (r ? ' ' + r + ' perc' : ''); }
+  const d = Math.floor(m / 1440), h = Math.round((m % 1440) / 60); return d + ' nap' + (h ? ' ' + h + ' óra' : '');
+}
 function signed(v, d = 1) { if (v === null || isNaN(v)) return '–'; return (v > 0 ? '+' : v < 0 ? '−' : '±') + num(Math.abs(v), d); }
 
 function relTime(ms) {
@@ -862,9 +872,10 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 
 // rekordok (a szerver metrikusan küldi): érték és részletek a választott mértékegységben
 function recQ(r) { return r.key === 'range' || r.key === 'tdrop' ? 'tdiff' : /^pdrop/.test(r.key) ? 'presd' : UNIT_Q[r.unit]; }
-function recValue(r) { return qtext(recQ(r), r.value, r.unit === 'km/h' ? 1 : r.dec, r.unit); }
+function recValue(r) { return qtext(recQ(r), r.value, r.unit === 'km/h' ? 0 : r.dec, r.unit); }   // km/h egészre, mint a Szél fülön (10.9)
 function recDetail(r) {
-  const d = r.detail || '';
+  // a szerver ÉÉÉÉ.HH.NN dátumai helyi formában (pl. „2026. ápr. 1.”), mint a többi dátum (6.5)
+  const d = (r.detail || '').replace(/(\d{4})\.(\d{2})\.(\d{2})/g, (m, y, mo, da) => DS.fmt(y + '-' + mo + '-' + da, { year: 'numeric', month: 'short', day: 'numeric' }));
   if (r.key === 'range') { const m = d.match(/(-?[\d,]+) → (-?[\d,]+) °C/); if (m) return ttext(parseFloat(m[1].replace(',', '.'))) .replace(' ' + tlabel(), '') + ' → ' + ttext(parseFloat(m[2].replace(',', '.'))); }
   if (r.key === 'gust') return windUnit() === 'kn' ? num(beaufortF(r.value), 1) + ' Bft' : d;
   return d;

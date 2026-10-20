@@ -41,7 +41,7 @@ namespace Idojaras
         }
 
         // ------------------------------------------------------------------ esőesemények
-        public class RainEvent { public long Start, End; public double Total, MaxRate, AvgRate; }
+        public class RainEvent { public long Start, End, MaxT; public double Total, MaxRate, AvgRate; public bool Suspect; }
 
         public static List<RainEvent> RainEvents(Dataset ds, bool clean, int gapMin)
         {
@@ -61,11 +61,20 @@ namespace Idojaras
                     cur.Total += inc;
                     cur.End = ds.T[i];
                     lastWet = ds.T[i];
+                    if ((ds.Flags[i] & Flag.RAINJUMP) != 0) cur.Suspect = true;
+                    // a mérési lépés átlagos intenzitása is (az állomás precipRate-je néha kisebb, mint ami lehullott – 6.2)
+                    long dt = ds.T[i] - ds.T[i - 1];
+                    if (dt >= 120 && dt <= 900 && (!clean || (ds.Flags[i] & Flag.RainRate) == 0))
+                    {
+                        double stepRate = inc / (dt / 3600.0);
+                        if (stepRate > cur.MaxRate) { cur.MaxRate = stepRate; cur.MaxT = ds.T[i]; }
+                    }
                 }
                 if (cur != null && ds.T[i] >= cur.Start && ds.T[i] <= cur.End + 300)
                 {
-                    double rate = V(ds, Col.PRATE, i, clean, Flag.Rain);
-                    if (!double.IsNaN(rate) && rate > cur.MaxRate) cur.MaxRate = rate;
+                    double rate = V(ds, Col.PRATE, i, clean, Flag.RainRate);
+                    if (!double.IsNaN(rate) && rate > cur.MaxRate) { cur.MaxRate = rate; cur.MaxT = ds.T[i]; }
+                    if ((ds.Flags[i] & Flag.RAINJUMP) != 0) cur.Suspect = true;
                 }
             }
             if (cur != null) res.Add(cur);
@@ -79,7 +88,7 @@ namespace Idojaras
             var ev = RainEvents(ds, clean, s.RainGapMin);
             var w = new JW().Obj().P("gapMin", s.RainGapMin).P("cloudburst", s.CloudburstRate).Key("events").Arr();
             foreach (var e in ev)
-                w.Obj().Ms("start", e.Start).Ms("end", e.End).P("total", e.Total, 2).P("maxRate", e.MaxRate, 1).P("avgRate", e.AvgRate, 1).End();
+                w.Obj().Ms("start", e.Start).Ms("end", e.End).P("total", e.Total, 2).P("maxRate", e.MaxRate, 1).Ms("maxT", e.MaxT).P("avgRate", e.AvgRate, 1).P("suspect", e.Suspect).End();
             return w.EndArr().End().ToString();
         }
 
@@ -112,7 +121,7 @@ namespace Idojaras
                 for (int j = a; j < Math.Min(n, b); j++)
                 {
                     double g = V(ds, Col.WGH, j, true, Flag.Wind); if (g > gust) gust = g;
-                    double r = V(ds, Col.PRATE, j, true, Flag.Rain); if (r > rate) rate = r;
+                    double r = V(ds, Col.PRATE, j, true, Flag.RainRate); if (r > rate) rate = r;
                     rain += RainInc(ds, j, true);
                     double ws = V(ds, Col.WSA, j, true, Flag.Wind), dir = ds.C[Col.WDIR][j];
                     if (!double.IsNaN(ws) && !double.IsNaN(dir))
@@ -162,7 +171,9 @@ namespace Idojaras
         static void Rec(JW w, string key, string title, double v, string unit, int dec, long t, string detail)
         {
             if (double.IsNaN(v)) return;
-            w.Obj().P("key", key).P("title", title).P("value", v, dec).P("unit", unit).P("dec", dec).Ms("t", t).P("detail", detail ?? "").End();
+            // napi értékű rekordnál (legcsapadékosabb nap, sorozatok) az időpont nem értelmes: csak dátum (6.5)
+            bool dateOnly = key == "rainDay" || key.EndsWith("Streak");
+            w.Obj().P("key", key).P("title", title).P("value", v, dec).P("unit", unit).P("dec", dec).Ms("t", t).P("dateOnly", dateOnly).P("detail", detail ?? "").End();
         }
 
         // ------------------------------------------------------------------ időszak-szűrő
@@ -246,7 +257,7 @@ namespace Idojaras
             k = best(Col.WGH, Flag.Wind, 0, (a, b) => a > b); if (k >= 0) Rec(w, "gust", "Legnagyobb széllökés", ds.C[Col.WGH][k], "km/h", 1, ds.T[k], (ds.C[Col.WGH][k] / 1.852).ToString("0") + " csomó");
             var wet = days.Where(d => !double.IsNaN(d.Rain)).OrderByDescending(d => d.Rain).FirstOrDefault();
             if (wet != null) Rec(w, "rainDay", "Legcsapadékosabb nap", wet.Rain, "mm", 1, (wet.Start + wet.End) / 2, null);
-            k = best(Col.PRATE, Flag.Rain, 0, (a, b) => a > b); if (k >= 0) Rec(w, "rate", "Legnagyobb csapadékintenzitás", ds.C[Col.PRATE][k], "mm/h", 0, ds.T[k], null);
+            k = best(Col.PRATE, Flag.RainRate, 0, (a, b) => a > b); if (k >= 0) Rec(w, "rate", "Legnagyobb csapadékintenzitás", ds.C[Col.PRATE][k], "mm/h", 0, ds.T[k], null);
             k = best(Col.SOL, Flag.Solar, 0, (a, b) => a > b); if (k >= 0) Rec(w, "solar", "Legerősebb napsugárzás", ds.C[Col.SOL][k], "W/m²", 0, ds.T[k], null);
             k = best(Col.UV, Flag.Uv, 0, (a, b) => a > b); if (k >= 0) Rec(w, "uv", "Legmagasabb UV-index", ds.C[Col.UV][k], "", 0, ds.T[k], null);
             k = best(Col.DH, Flag.Dew, 0, (a, b) => a > b); if (k >= 0) Rec(w, "dew", "Legmagasabb harmatpont (legfülledtebb)", ds.C[Col.DH][k], "°C", 1, ds.T[k], null);
@@ -284,8 +295,10 @@ namespace Idojaras
                 .P("hotDay", s.HotDay).P("tropicalNight", s.TropicalNight).P("frostDay", s.FrostDay).P("iceDay", s.IceDay)
                 .End();
             var frost = good.Where(d => d.Tmin < 0).ToList();
-            var spring = frost.Where(d => d.Date.Month < 7).OrderBy(d => d.Date).LastOrDefault();
-            var autumn = frost.Where(d => d.Date.Month >= 7).OrderBy(d => d.Date).FirstOrDefault();
+            // több évnél a legutóbbi év tavasza és ősze (10.3 – különben a két dátum más-más évből jönne)
+            int fy = good.Count > 0 ? good.Max(d => d.Date.Year) : 0;
+            var spring = frost.Where(d => d.Date.Year == fy && d.Date.Month < 7).OrderBy(d => d.Date).LastOrDefault();
+            var autumn = frost.Where(d => d.Date.Year == fy && d.Date.Month >= 7).OrderBy(d => d.Date).FirstOrDefault();
             w.Key("frost").Obj();
             if (spring != null) w.P("last", spring.Date.ToString("yyyy-MM-dd", Inv)).P("lastT", spring.Tmin, 1);
             if (autumn != null) w.P("first", autumn.Date.ToString("yyyy-MM-dd", Inv)).P("firstT", autumn.Tmin, 1);
@@ -453,7 +466,7 @@ namespace Idojaras
                 var vals = new[]
                 {
                     t, V(ds, Col.TH, i, true, Flag.Temp), V(ds, Col.TL, i, true, Flag.Temp), V(ds, Col.DA, i, true, Flag.Dew), h, Pres(ds, i, true),
-                    V(ds, Col.WSA, i, true, Flag.Wind), V(ds, Col.WGH, i, true, Flag.Wind), ds.C[Col.WDIR][i], V(ds, Col.PRATE, i, true, Flag.Rain),
+                    V(ds, Col.WSA, i, true, Flag.Wind), V(ds, Col.WGH, i, true, Flag.Wind), ds.C[Col.WDIR][i], V(ds, Col.PRATE, i, true, Flag.RainRate),
                     RainInc(ds, i, true), V(ds, Col.SOL, i, true, Flag.Solar), V(ds, Col.UV, i, true, Flag.Uv),
                     double.IsNaN(t) || double.IsNaN(h) ? double.NaN : Drought.Es(t) * (1 - h / 100)
                 };

@@ -54,7 +54,7 @@ async function renderStats() {
     $('stRecords').innerHTML = rec.records.map(r =>
       '<div class="rec" data-t="' + r.t + '" title="Kattints: megnyitás az idővonalon"><div class="rec-t">' + esc(r.title) + '</div>' +
       '<div class="rec-v">' + recValue(r) + '</div>' +
-      '<div class="rec-d">' + (r.t ? F.full.format(r.t) : '') + (r.detail ? ' · ' + esc(recDetail(r)) : '') + '</div></div>').join('') || '<span class="muted">Ebben az időszakban nincs adat.</span>';
+      '<div class="rec-d">' + (r.t ? (r.dateOnly ? F.dayY.format(r.t) : F.full.format(r.t)) : '') + (r.detail ? ' · ' + esc(recDetail(r)) : '') + '</div></div>').join('') || '<span class="muted">Ebben az időszakban nincs adat.</span>';
     $('stRecords').querySelectorAll('.rec').forEach(el => el.addEventListener('click', () => { const r = rec.records.find(x => String(x.t) === el.dataset.t); highlightTime(+el.dataset.t, r ? r.title : ''); }));
     $('stCounts').innerHTML = countRows(rec).map(([k, v]) => '<div class="ws-item"><span>' + k + '</span><b>' + v + '</b></div>').join('');
   } else {
@@ -90,15 +90,16 @@ function renderMonthCompare(d) {
   d.date.forEach((s, i) => {
     if (!inR(s)) return;
     const m = s.slice(0, 7);
-    const o = months[m] = months[m] || { t: [], rain: 0, sun: 0, n: 0, days: new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)).getUTCDate() };
+    const o = months[m] = months[m] || { t: [], rain: 0, sun: 0, n: 0, nAll: 0, days: new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)).getUTCDate() };
     if (d.cov[i] >= 0.5) { if (d.tavg[i] != null) o.t.push(d.tavg[i]); o.n++; }
-    o.rain += d.rain[i] || 0; o.sun += d.sun[i] || 0;
+    // az összeg és a vetítés ugyanazokból a napokból (11.5): a csapadék / napsütés minden adatos napból
+    o.rain += d.rain[i] || 0; o.sun += d.sun[i] || 0; o.nAll += d.cov[i] || 0;
   });
   const keys = Object.keys(months).sort();
   const mq = k === 'tavg' ? 'temp' : k === 'rain' ? 'rain' : null;
   const val0 = m => { const o = months[m]; return k === 'tavg' ? (o.t.length ? o.t.reduce((a, b) => a + b, 0) / o.t.length : null) : k === 'rain' ? o.rain : o.sun; };
   const val = m => qv(mq, val0(m));
-  const proj = m => { const o = months[m]; if (m !== curM || k === 'tavg' || !o.n) return null; return val(m) / o.n * o.days; };
+  const proj = m => { const o = months[m]; if (m !== curM || k === 'tavg' || !(o.nAll > 0.5)) return null; return val(m) / o.nAll * o.days; };
   const ink = cssVar('--ink'), muted = cssVar('--muted'), line = cssVar('--line'), card = cssVar('--card');
   const col = k === 'tavg' ? cssVar('--c-temp') : k === 'rain' ? cssVar('--c-rain') : cssVar('--c-sun');
   const unit = qu(mq, 'h');
