@@ -232,7 +232,7 @@ function decorateFx() {
     if (!pg) return;
     pg.querySelectorAll(tag).forEach(h => {
       if (h.querySelector('.fx')) return;
-      const t = (h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild.textContent : h.textContent).trim();
+      const t = headText(h);   // az eredeti magyar szöveg, más nyelven is
       // a képernyőolvasónak egyedi név: melyik kártya képlete (7.8)
       if (re.test(t)) h.insertAdjacentHTML('beforeend', ' <button class="fx" data-fx="' + key + '" title="Képlet, magyarázat és beállítások" aria-label="' + esc(t.replace(/\s+/g, ' ')) + ' – képlet, magyarázat és beállítások">ƒx</button>');
     });

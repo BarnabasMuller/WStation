@@ -2217,5 +2217,17 @@
   "alacsony": "low",
   "magas": "high",
   "nagyon magas": "very high",
-  "képlet és beállítások": "formula and settings"
+  "képlet és beállítások": "formula and settings",
+  "kb. {d} (az utolsó 7 nap átlagos párolgásával: {e}/nap": "about {d} (at the average evaporation of the last 7 days: {e}/day",
+  "= hőérzet + 2 (napsugárzás > 500 W/m²) vagy + 1 (> 200 W/m²) − 2 (esik, > 0,5 mm/h) − 1 (szél > 20 km/h)": "= feels like + 2 (solar radiation > 500 W/m²) or + 1 (> 200 W/m²) − 2 (raining, > 0.5 mm/h) − 1 (wind > 20 km/h)",
+  "szabad ég: az esőt teljesen megkapja; félig fedett: kb. fele; fedett: semennyit (a párolgás is kisebb: 0,8 ill. 0,6": "open sky: gets all of the rain; partly covered: about half; covered: none (evaporation is lower too: 0.8 and 0.6",
+  "kb. 0,4–0,5": "about 0.4–0.5",
+  "fű": "grass",
+  "hiány": "gap",
+  "Más a vödör mérete. Ugyanaz a 10 mm eső a gyepnél a vödör {a}-a, a fánál csak {b}": "The bucket size differs. The same 10 mm of rain is {a} of the bucket for the lawn, but only {b} for the tree",
+  "A „{name}” most {pct}-on áll: a felvehető víz ennyi része fogyott el": "“{name}” is now at {pct}: this share of the available water has been used up",
+  "Sávok (ennek a profilnak a p = {p} értékéből": "Bands (from this profile’s value p = {p}",
+  "Derült-küszöb (tisztaégbolt-index": "Clear-sky threshold (clear-sky index",
+  "1 (érzékelő-eltérésnél módosítható": "1 (adjust if the sensor deviates",
+  "0,7 (a METAR-ellenőrzés javasolhat": "0.7 (the METAR check can suggest a value"
 }

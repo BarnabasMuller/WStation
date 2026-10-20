@@ -95,7 +95,7 @@ function decorateCalib() {
     const pg = document.querySelector('[data-page="' + page + '"]');
     if (!pg) return;
     pg.querySelectorAll(tag).forEach(h => {
-      const t = (h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild.textContent : h.textContent).trim();
+      const t = headText(h);   // az eredeti magyar szöveg, más nyelven is
       if (!re.test(t)) return;
       const b = h.querySelector('.cal-badge');
       if (on && !b) h.insertAdjacentHTML('beforeend', calibBadge());

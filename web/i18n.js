@@ -73,6 +73,9 @@ function tr(s) {
     // a kulcsból levágott záró pont a fordításban is ott van: ne legyen belőle „..” (pl. „Click for details..”)
     return s.replace(core, whole.endsWith('.') && t.slice(core.length) === '.' ? whole.slice(0, -1) : whole);
   }
+  // a gyűjtő formájában (szélső írásjelek nélkül) tárolt kulcs is egészben egyezzen, pl. „… (0,8 ill. 0,6)”
+  const edge = trEdge(t);
+  if (edge) return s.replace(t, edge);
   let out = I18N.re ? s.replace(I18N.re, trDot) : s;
   // a rövid szavak (pl. „perc”, „most”) csak rövid feliratokban (legfeljebb 4 szó), hogy ne keletkezzen félig fordított mondat
   if (I18N.reShort && (out.match(/\p{L}{2,}/gu) || []).length <= 4) out = out.replace(I18N.reShort, trDot);
@@ -106,6 +109,15 @@ function trWhole(s) {
 
 // ------------------------------------------------------------------ a DOM fordítása
 const I18N_SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE']);
+// egy címsor eredeti (magyar) szövege: a magyar mintákra illesztő kód (ƒx-gombok, kalibrációs jelvény)
+// így más nyelven is megtalálja a címsort (eddig angolul, németül, spanyolul nem jelentek meg az ƒx-gombok)
+function origText(n) {
+  if (n.nodeType === 3) return I18N_ORIG.get(n) || n.nodeValue;
+  let s = '';
+  for (let c = n.firstChild; c; c = c.nextSibling) if (c.nodeType === 3 || (c.nodeType === 1 && !I18N_SKIP.has(c.nodeName))) s += origText(c);
+  return s;
+}
+function headText(h) { return origText(h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild : h).trim(); }
 function trNode(n) {
   if (n.nodeType === 3) {
     const p = n.parentNode;

@@ -14,6 +14,9 @@
   Bildschirmen passen die Reiter Trockenheit, Laufen und Einstellungen.
 - Installer und Anzeige: antwortet die Windows-Aufgabenplanung nicht, geht es nach 20 Sekunden weiter (bisher
   konnte das minutenlang dauern).
+- Die Formel- und Einstellungsschaltflächen (ƒx) in den Reitern Übersicht, Zeitachse, Regen, Wind, Statistik
+  und Laufen erscheinen jetzt auch auf Englisch, Deutsch und Spanisch (bisher nur auf Ungarisch), und die
+  Formelfenster werden übersetzt.
 
 == 2.2.4 (2026-10-20) – Korrekturen nach Durchsicht ==
 - Verdächtige Messungen: neue Regeln für Niederschlagssprünge (auch Schneeschmelze) und eingefrorenen

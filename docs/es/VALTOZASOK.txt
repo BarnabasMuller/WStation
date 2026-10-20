@@ -14,6 +14,9 @@
   (320 px) caben las pestañas Sequía, Correr y Ajustes.
 - Instalador y Visor: si el Programador de tareas de Windows no responde, continúan tras 20 segundos (hasta
   ahora podían esperar minutos).
+- Los botones de fórmula y ajustes (ƒx) de las pestañas Resumen, Línea de tiempo, Lluvia, Viento, Estadísticas
+  y Correr aparecen ahora también en inglés, alemán y español (hasta ahora solo en húngaro), y las ventanas de
+  fórmulas se traducen.
 
 == 2.2.4 (2026-10-20) – correcciones tras revisión ==
 - Mediciones sospechosas: nuevas reglas para saltos de lluvia (también nieve fundida) y anemómetro congelado;

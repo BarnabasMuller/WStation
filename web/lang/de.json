@@ -2217,5 +2217,17 @@
   "alacsony": "niedrig",
   "magas": "hoch",
   "nagyon magas": "sehr hoch",
-  "képlet és beállítások": "Formel und Einstellungen"
+  "képlet és beállítások": "Formel und Einstellungen",
+  "kb. {d} (az utolsó 7 nap átlagos párolgásával: {e}/nap": "etwa {d} (bei der durchschnittlichen Verdunstung der letzten 7 Tage: {e}/Tag",
+  "= hőérzet + 2 (napsugárzás > 500 W/m²) vagy + 1 (> 200 W/m²) − 2 (esik, > 0,5 mm/h) − 1 (szél > 20 km/h)": "= gefühlte Temperatur + 2 (Sonneneinstrahlung > 500 W/m²) oder + 1 (> 200 W/m²) − 2 (Regen, > 0,5 mm/h) − 1 (Wind > 20 km/h)",
+  "szabad ég: az esőt teljesen megkapja; félig fedett: kb. fele; fedett: semennyit (a párolgás is kisebb: 0,8 ill. 0,6": "freier Himmel: bekommt den ganzen Regen; teilweise überdacht: etwa die Hälfte; überdacht: nichts (auch die Verdunstung ist geringer: 0,8 bzw. 0,6",
+  "kb. 0,4–0,5": "etwa 0,4–0,5",
+  "fű": "Gras",
+  "hiány": "Lücke",
+  "Más a vödör mérete. Ugyanaz a 10 mm eső a gyepnél a vödör {a}-a, a fánál csak {b}": "Die Eimergröße unterscheidet sich. Dieselben 10 mm Regen sind beim Rasen {a} des Eimers, beim Baum nur {b}",
+  "A „{name}” most {pct}-on áll: a felvehető víz ennyi része fogyott el": "„{name}“ steht jetzt bei {pct}: so viel vom pflanzenverfügbaren Wasser ist verbraucht",
+  "Sávok (ennek a profilnak a p = {p} értékéből": "Bänder (aus dem Wert p = {p} dieses Profils",
+  "Derült-küszöb (tisztaégbolt-index": "Klar-Schwelle (Klarhimmelindex",
+  "1 (érzékelő-eltérésnél módosítható": "1 (bei Sensorabweichung anpassen",
+  "0,7 (a METAR-ellenőrzés javasolhat": "0,7 (die METAR-Prüfung kann einen Wert vorschlagen"
 }

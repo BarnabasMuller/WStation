@@ -139,9 +139,9 @@ function deplBands(p) {
   const ksAt = x => x <= p ? 1 : Math.max(0, (1 - x) / (1 - p));
   const a = Math.min(s, 25), b = s, c = Math.max(b + 5, Math.round(100 - 0.6 * (100 - s))), d = Math.max(c + 5, 90);
   return [
-    ['0–' + a + '%', 'bőséges víz', '1,00', 'nem kell semmi', 'ok'],
-    [a + '–' + b + '% (stresszhatár, RAW)', 'fogy, de a növény még gond nélkül felveszi', '1,00', 'figyelni: a javaslat mutatja, hány nap múlva kell locsolni', 'ok'],
-    [b + '–' + c + '%', 'enyhe vízhiány: lassul a növekedés', '1,00 → ' + num(ksAt(c / 100), 2), 'locsolni', 'mild'],
+    ['0–' + a + '%', 'bőséges víz', num(1, 2), 'nem kell semmi', 'ok'],
+    [a + '–' + b + '% (stresszhatár, RAW)', 'fogy, de a növény még gond nélkül felveszi', num(1, 2), 'figyelni: a javaslat mutatja, hány nap múlva kell locsolni', 'ok'],
+    [b + '–' + c + '%', 'enyhe vízhiány: lassul a növekedés', num(1, 2) + ' → ' + num(ksAt(c / 100), 2), 'locsolni', 'mild'],
     [c + '–' + d + '%', 'erős vízhiány: a gyep sárgul, a lomb lankad', num(ksAt(c / 100), 2) + ' → ' + num(ksAt(d / 100), 2), 'locsolni, alaposan', 'strong'],
     [d + '–100%', 'súlyos: a hervadáspont közelében', '< ' + num(ksAt(d / 100), 2), 'sürgős; fáknál a következő évre is hatással lehet', 'severe']
   ];
@@ -160,8 +160,8 @@ function openDeplHelp(id) {
   openModal('<h2>Mit jelent a kiszáradás %?</h2>' +
     '<div class="bucket"><div class="bk-fill" style="height:' + Math.max(0, 100 - depl * 100) + '%"></div><div class="bk-raw" style="bottom:' + (100 - pf * 100) + '%"><span>stresszhatár</span></div></div>' +
     '<p><b>Képzeld el a gyökérzónát egy vödörként.</b> <b>0%</b> = tele van: a talaj a szántóföldi vízkapacitáson (amennyit a föld egy kiadós eső után megtart). <b>100%</b> = üres: a hervadásponton – a talajban még van víz, de a gyökér már nem tudja kiszívni.</p>' +
-    '<p>A „' + ut(p.name) + '” most <b style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '%</b>-on áll: a felvehető víz ennyi része fogyott el.</p>' +
-    '<h3>Sávok (ennek a profilnak a p = ' + num(pf, 2) + ' értékéből)</h3>' +
+    '<p>' + tf('A „{name}” most {pct}-on áll: a felvehető víz ennyi része fogyott el.', { name: ut(p.name), pct: '<b style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '%</b>' }) + '</p>' +
+    '<h3>' + tf('Sávok (ennek a profilnak a p = {p} értékéből)', { p: num(pf, 2) }) + '</h3>' +
     '<table class="dtable"><thead><tr><th>Kiszáradás</th><th>Jelentése</th><th>Ks</th><th>Teendő</th></tr></thead><tbody>' +
     deplBands(pf).map((b, j, all) => '<tr' + (j === all.map(x => parseFloat(x[0]) <= depl * 100).lastIndexOf(true) ? ' class="cur"' : '') + '><td><span class="tag ' + b[4] + '">' + b[0] + '</span></td><td>' + b[1] + '</td><td>' + b[2] + '</td><td>' + b[3] + '</td></tr>').join('') + '</tbody></table>' +
     '<h3>A profil saját számai</h3><dl class="kv">' +
@@ -169,8 +169,9 @@ function openDeplHelp(id) {
     '<dt>Stresszhatár (RAW)</dt><dd>' + rtext(raw, 0) + ' = ' + num(pf * 100, 0) + '%</dd>' +
     '<dt>Most hiányzik</dt><dd>' + rtext(dr, 1) + (lit != null ? ' ≈ ' + fmtL(lit) + (p.type === 'bokor' ? ' bokronként' : '') : '') + '</dd>' +
     '<dt>Ks most</dt><dd>' + num(ks, 2) + ' – a növény a szükséges víz ' + num(ks * 100, 0) + '%-át tudja felvenni (1 = mindet)</dd>' +
-    '<dt>Eső nélkül a stresszhatárig</dt><dd>' + (dr >= raw ? 'már elérte' : daysTo != null ? 'kb. ' + num(daysTo, daysTo < 10 ? 1 : 0) + ' nap (az utolsó 7 nap átlagos párolgásával: ' + rtext(etc, 1) + '/nap)' : '–') + '</dd></dl>' +
+    '<dt>Eső nélkül a stresszhatárig</dt><dd>' + (dr >= raw ? 'már elérte' : daysTo != null ? tf('kb. {d} (az utolsó 7 nap átlagos párolgásával: {e}/nap)', { d: tf('{d} nap', { d: num(daysTo, daysTo < 10 ? 1 : 0) }), e: rtext(etc, 1) }) : '–') + '</dd></dl>' +
     '<h3>Miért szárad ki gyorsabban a gyep, mint a fa?</h3>' +
-    '<p>Más a vödör mérete. Ugyanaz a 10 mm eső a gyepnél a vödör ' + (lawn ? pct10(lawn[1]) : '~20%') + '-a, a fánál csak ' + (tree ? pct10(tree[1]) : '~5%') + '. A gyep sekélyen gyökerezik (kis vödör): gyorsan kiürül, de egy kiadós eső fel is tölti. A fa mélyen gyökerezik (nagy vödör): lassan ürül, és sok víz kell a feltöltéséhez.</p>' +
+    '<p>' + tf('Más a vödör mérete. Ugyanaz a 10 mm eső a gyepnél a vödör {a}-a, a fánál csak {b}.', { a: lawn ? pct10(lawn[1]) : '~20%', b: tree ? pct10(tree[1]) : '~5%' }) +
+    ' ' + tf('A gyep sekélyen gyökerezik (kis vödör): gyorsan kiürül, de egy kiadós eső fel is tölti. A fa mélyen gyökerezik (nagy vödör): lassan ürül, és sok víz kell a feltöltéséhez.') + '</p>' +
     '<p class="hint">Ks (vízstressz-tényező): a stresszhatárig 1, onnan a hervadáspontig egyenesen 0-ra csökken (FAO-56, 84. egyenlet).</p>');
 }
