@@ -88,7 +88,7 @@ async function renderRun() {
   $('runTable').querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', async e => {
     e.preventDefault();
     const r0 = RUNS.find(r => String(r.id) === a.dataset.del);
-    if (!r0 || !confirm('Törlöd a(z) ' + F.full.format(r0.t) + ' futást (' + r0.who + ')? Ez nem vonható vissza.')) return;
+    if (!r0 || !(await askConfirm(tf('Törlöd a(z) {when} futást ({who})?', { when: F.full.format(r0.t), who: r0.who }), { sub: 'Ez nem vonható vissza.', ok: 'Futás törlése', cancel: 'Megtartom', danger: true }))) return;
     RUNS = RUNS.filter(r => String(r.id) !== a.dataset.del); await saveRuns(); renderRun();
   }));
 }

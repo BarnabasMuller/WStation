@@ -372,10 +372,10 @@ function renderWater() {
       DR.config.log.push({ date: card.querySelector('.w-date').value, zone: zoneEl.value, unit: unitSel.value, amount, note: '' });
       saveDroughtConfig('Locsolás rögzítve.');
     });
-    card.querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', e => {
+    card.querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', async e => {
       e.preventDefault();
       const l = DR.config.log[+a.dataset.del];
-      if (!l || !confirm('Törlöd a(z) ' + l.date + '-i locsolást?' + (l.diaryId ? ' A kerti naplóból is kikerül.' : ''))) return;
+      if (!l || !(await askConfirm(tf('Törlöd a(z) {date} locsolást?', { date: DS.fmt(l.date, { year: 'numeric', month: 'short', day: 'numeric' }) }), { sub: l.diaryId ? 'A kerti naplóból is kikerül.' : '', ok: 'Locsolás törlése', cancel: 'Megtartom', danger: true }))) return;
       DR.config.log.splice(+a.dataset.del, 1); saveDroughtConfig('Bejegyzés törölve.');
       // a kerti naplóból rögzített locsolás bejegyzése is törlődik
       if (l.diaryId && typeof getDiary === 'function') getDiary().then(list => { const i = list.findIndex(x => x.id === l.diaryId); if (i >= 0) { list.splice(i, 1); saveDiary(); } });
@@ -464,12 +464,12 @@ async function openHelp(q) {
   wireFajta();
   $('mapply').addEventListener('click', () => { if (readTable($('ptab'), defs, p)) { closeModal(); saveDroughtConfig('Mentve, újraszámolva.'); } });
   $('mreset').addEventListener('click', () => { const o = Object.assign({}, p, std, { id: p.id, name: p.name, enabled: p.enabled }); $('ptab').innerHTML = paramTable(defs, o, std); wireFajta(); check(); });
-  $('mdelete').addEventListener('click', () => {
+  $('mdelete').addEventListener('click', async () => {
     // a zóna öntözési programjai és azok időszakai is törlődnek (különben a szerver elutasítja a mentést: „ismeretlen zóna”)
     const pgs = (DR.config.programs || []).filter(pg => pg.zone === p.id), pgIds = pgs.map(pg => pg.id);
     const nLog = DR.config.log.filter(l => l.zone === p.id).length;
     const extra = [nLog ? nLog + ' rögzített locsolása' : '', pgs.length ? pgs.length + ' öntözési programja (' + pgs.map(pg => '„' + pg.name + '”').join(', ') + ')' : ''].filter(Boolean);
-    if (!confirm('Törlöd a(z) „' + p.name + '” profilt?' + (extra.length ? ' Vele együtt törlődik: ' + extra.join(' és ') + '.' : '') + ' Ez nem vonható vissza.')) return;
+    if (!(await askConfirm('Törlöd a(z) „' + p.name + '” profilt?', { sub: (extra.length ? 'Vele együtt törlődik: ' + extra.join(' és ') + '. ' : '') + 'A Beállítások › Változásnaplóból visszaállítható.', ok: 'Profil törlése', cancel: 'Megtartom', danger: true }))) return;
     DR.config.profiles = DR.config.profiles.filter(x => x.id !== p.id);
     DR.config.log = DR.config.log.filter(l => l.zone !== p.id);
     DR.config.programs = (DR.config.programs || []).filter(pg => pg.zone !== p.id);

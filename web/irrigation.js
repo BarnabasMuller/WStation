@@ -94,10 +94,10 @@ function renderIrrigation() {
       '<span id="scMd" class="hidden"><input class="inp" id="scFromMd" placeholder="HH-NN" maxlength="5" style="width:70px" value="05-01"> – <input class="inp" id="scToMd" placeholder="HH-NN" maxlength="5" style="width:70px" value="09-30"></span>' +
       '<button class="btn primary" id="scAdd">+ Időszak hozzáadása</button><span class="perr" id="scErr"></span></div>' : '');
 
-  box.querySelectorAll('[data-pdel]').forEach(b => b.addEventListener('click', () => {
+  box.querySelectorAll('[data-pdel]').forEach(b => b.addEventListener('click', async () => {
     const pg = c.programs[+b.dataset.pdel];
     const n = c.schedules.filter(s => s.program === pg.id).length;
-    if (!confirm('Törlöd a(z) „' + pg.name + '” programot' + (n ? ' és ' + n + ' időszakát' : '') + '?')) return;
+    if (!(await askConfirm('Törlöd a(z) „' + pg.name + '” programot' + (n ? ' és ' + n + ' időszakát' : '') + '?', { sub: 'Ez nem vonható vissza.', ok: 'Program törlése', cancel: 'Megtartom', danger: true }))) return;
     c.schedules = c.schedules.filter(s => s.program !== pg.id);
     c.programs.splice(+b.dataset.pdel, 1);
     saveDroughtConfig('Program törölve.');

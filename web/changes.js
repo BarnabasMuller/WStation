@@ -44,7 +44,7 @@ async function renderChanges() {
     items.push([rainSum >= 10 ? 9 : 6, '🌧️ <b>+' + rtext(rainSum, 1) + ' eső</b>' + (big ? ' (a legnagyobb ' + F.full.format(big.start) + ', ' + rtext(big.total, 1) + ')' : ''), big ? { a: big.start, b: big.end } : null]);
   } else if (dayIdx.length >= 2) items.push([2, '☀️ nem esett', null]);
   // front, zivatar
-  (ev.events || []).filter(e => e.t >= from).forEach(e => items.push([8, (e.type === 'zivatar' ? '⚡ ' : '❄ ') + '<b>' + esc(e.title) + '</b> ' + F.full.format(e.t) + ' (' + esc(e.detail) + ')', { t: e.t }]));
+  (ev.events || []).filter(e => e.t >= from).forEach(e => items.push([8, (e.type === 'zivatar' ? '⚡ ' : '❄ ') + '<b>' + esc(e.title) + '</b> ' + F.full.format(e.t) + ' (' + esc(evDetail(e)) + ')', { t: e.t }]));
   // fagy, legerősebb lökés, hőmérséklet-változás
   let gi = -1, fi = -1;
   dayIdx.forEach(i => { if (d.gust[i] != null && (gi < 0 || d.gust[i] > d.gust[gi])) gi = i; if (d.tmin[i] != null && d.tmin[i] < 0 && (fi < 0 || d.tmin[i] < d.tmin[fi])) fi = i; });

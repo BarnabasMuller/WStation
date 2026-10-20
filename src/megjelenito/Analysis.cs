@@ -156,7 +156,10 @@ namespace Idojaras
                 {
                     { "t", Ms(ds.T[i]) }, { "type", type },
                     { "title", type == "zivatar" ? "Zivatar" : "Frontátvonulás" },
-                    { "detail", string.Join(", ", parts) }
+                    { "detail", string.Join(", ", parts) },
+                    // a számok külön is, metrikusan – a felület a választott egységgel írja ki (11.8)
+                    { "drop", Math.Round(drop, 1) }, { "gust", Math.Round(gust, 1) }, { "turn", Math.Round(turn) }, { "rain", Math.Round(rain, 1) },
+                    { "presRise", !double.IsNaN(pMin) && !double.IsNaN(pAfter) && pAfter - pMin >= 1 ? Math.Round(pAfter - pMin, 1) : 0.0 }
                 });
                 skipUntil = ds.T[i] + 3 * 3600;
             }

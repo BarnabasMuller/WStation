@@ -1694,6 +1694,47 @@ MetarKod=LHBP
     {
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
+        // a Megjelenítőben választott mértékegységek (appdata_megjelenítő\felulet.json „units”), hogy az értesítés is azokat írja (11.8)
+        static string uT = "C", uR = "mm", uW = "kmh", uP = "hPa";
+        static CultureInfo Num0 = CultureInfo.GetCultureInfo("hu-HU");
+        static void LoadUnits(string appDir)
+        {
+            try
+            {
+                string f = Path.Combine(Path.GetDirectoryName(appDir.TrimEnd('\\')), "appdata_megjelenítő", "felulet.json");
+                if (File.Exists(f))
+                {
+                    var d = new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(File.ReadAllText(f, Encoding.UTF8)) as Dictionary<string, object>;
+                    object u;
+                    if (d != null && d.TryGetValue("units", out u) && u is Dictionary<string, object>)
+                    {
+                        var ud = (Dictionary<string, object>)u; object v;
+                        if (ud.TryGetValue("temp", out v) && v != null) uT = Convert.ToString(v);
+                        if (ud.TryGetValue("rain", out v) && v != null) uR = Convert.ToString(v);
+                        if (ud.TryGetValue("wind", out v) && v != null) uW = Convert.ToString(v);
+                        if (ud.TryGetValue("pres", out v) && v != null) uP = Convert.ToString(v);
+                    }
+                }
+            }
+            catch { }
+            try { var m = Langs.Meta(Langs.Current); object l; if (m != null && m.TryGetValue("locale", out l)) Num0 = CultureInfo.GetCultureInfo(Convert.ToString(l)); } catch { }
+        }
+        static string Fmt(double v, string f) { return v.ToString(f, Num0); }
+        static string TempText(double c) { return uT == "F" ? Fmt(c * 9 / 5 + 32, "0.0") + " °F" : Fmt(c, "0.0") + " °C"; }
+        static string PresDiff(double h) { return uP == "inHg" ? Fmt(h * 0.02953, "0.00") + " inHg" : Fmt(h, "0.0") + " hPa"; }
+        static string RateText(double mmh) { return uR == "in" ? Fmt(mmh / 25.4, "0.00") + " in/h" : Fmt(mmh, "0") + " mm/h"; }
+        static string WindText(double kmh)
+        {
+            switch (uW)
+            {
+                case "kn": return Fmt(kmh / 1.852, "0") + " csomó";
+                case "ms": return Fmt(kmh / 3.6, "0.0") + " m/s";
+                case "mph": return Fmt(kmh / 1.609344, "0") + " mph";
+                case "bft": return Fmt(Math.Min(12, Math.Pow(Math.Max(0, kmh / 3.6) / 0.836, 2.0 / 3)), "0.0") + " Bft";
+                default: return Fmt(kmh, "0") + " km/h";
+            }
+        }
+
         static double Num(Dictionary<string, string> r, string k)
         {
             string v; double x;
@@ -1712,12 +1753,13 @@ MetarKod=LHBP
             if (rows.Count == 0 || now - rows[rows.Count - 1].t > 2 * 3600) return;   // nincs friss adat
             var lastRow = rows[rows.Count - 1];
             var msgs = new List<string[]>();   // kulcs, cím, szöveg
+            LoadUnits(appDir);
 
             double tl = Num(lastRow.r, "tempLow"), th = Num(lastRow.r, "tempHigh");
             if (Cfg.AlFrost && !double.IsNaN(tl) && tl <= Cfg.FrostT)
-                msgs.Add(new[] { "fagy", "Fagyveszély", "A hőmérséklet most " + tl.ToString("0.0", Inv).Replace('.', ',') + " °C. Védd a fagyérzékeny növényeket!" });
+                msgs.Add(new[] { "fagy", "Fagyveszély", "A hőmérséklet most " + TempText(tl) + ". Védd a fagyérzékeny növényeket!" });
             if (Cfg.AlHeat && !double.IsNaN(th) && th >= Cfg.HeatT)
-                msgs.Add(new[] { "hoseg", "Hőség", "A hőmérséklet " + th.ToString("0.0", Inv).Replace('.', ',') + " °C. Locsolj, és figyelj a cserepes növényekre!" });
+                msgs.Add(new[] { "hoseg", "Hőség", "A hőmérséklet " + TempText(th) + ". Locsolj, és figyelj a cserepes növényekre!" });
 
             Func<Dictionary<string, string>, double> pres = r => (Num(r, "pressureMax") + Num(r, "pressureMin")) / 2;
             var ago = rows.Where(x => x.t <= lastRow.t - 3 * 3600 + 900).LastOrDefault();
@@ -1725,15 +1767,15 @@ MetarKod=LHBP
             {
                 double dp = pres(ago.r) - pres(lastRow.r);
                 if (!double.IsNaN(dp) && dp >= Cfg.PresDrop)
-                    msgs.Add(new[] { "nyomas", "Gyorsan esik a légnyomás", "−" + dp.ToString("0.0", Inv).Replace('.', ',') + " hPa 3 óra alatt: front vagy vihar közeledhet." });
+                    msgs.Add(new[] { "nyomas", "Gyorsan esik a légnyomás", "−" + PresDiff(dp) + " 3 óra alatt: front vagy vihar közeledhet." });
             }
             var hour = rows.Where(x => x.t >= lastRow.t - 3600).ToList();
             double gust = hour.Select(x => Num(x.r, "windgustHigh")).Where(v => !double.IsNaN(v)).DefaultIfEmpty(double.NaN).Max();
             if (Cfg.AlWind && !double.IsNaN(gust) && gust >= Cfg.GustT)
-                msgs.Add(new[] { "szel", "Erős szél", "Széllökés " + gust.ToString("0") + " km/h (" + (gust / 1.852).ToString("0") + " csomó) az utolsó órában." });
+                msgs.Add(new[] { "szel", "Erős szél", "Széllökés " + WindText(gust) + " az utolsó órában." });
             double rate = rows.Where(x => x.t >= lastRow.t - 1800).Select(x => Num(x.r, "precipRate")).Where(v => !double.IsNaN(v)).DefaultIfEmpty(double.NaN).Max();
             if (Cfg.AlRain && !double.IsNaN(rate) && rate >= Cfg.RainT)
-                msgs.Add(new[] { "eso", "Felhőszakadás", "Csapadékintenzitás " + rate.ToString("0") + " mm/h." });
+                msgs.Add(new[] { "eso", "Felhőszakadás", "Csapadékintenzitás " + RateText(rate) + "." });
 
             if (msgs.Count == 0) return;
             int h = DateTime.Now.Hour;

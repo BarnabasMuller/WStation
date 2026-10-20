@@ -119,14 +119,14 @@ function checkRows() {
 }
 
 document.querySelectorAll('#stRangeMode button').forEach(b => b.addEventListener('click', () => { stRanges(); UI.stat.rangeMode = b.dataset.v; saveUi(); renderRangePicker(); renderStats(); }));
-$('stFavSave').addEventListener('click', () => {
+$('stFavSave').addEventListener('click', async () => {
   const name = $('stFavName').value.trim();
   if (!name) { $('stFavName').classList.add('bad'); $('stFavName').focus(); return; }
   if (name.length > 40) { toast('A név legfeljebb 40 karakter.'); return; }
   if (!validRanges()) { toast('Előbb javítsd a hibás időszakot.'); return; }
   $('stFavName').classList.remove('bad');
   const S = UI.stat, i = S.favs.findIndex(f => f.name === name);
-  if (i >= 0 && !confirm('Már van „' + name + '” nevű kedvenc. Felülírod?')) return;
+  if (i >= 0 && !(await askConfirm('Már van „' + name + '” nevű kedvenc. Felülírod?', { ok: 'Felülírom', cancel: 'Mégse' }))) return;
   const fav = { name, rows: JSON.parse(JSON.stringify(stRanges())), mode: S.rangeMode };
   if (i >= 0) S.favs[i] = fav; else S.favs.push(fav);
   saveUi(); renderRangePicker(); $('stFavSel').value = String(i >= 0 ? i : S.favs.length - 1);
@@ -140,10 +140,10 @@ $('stFavSel').addEventListener('change', e => {
   $('stFavName').value = f.name;
   saveUi(); renderRangePicker(); $('stFavSel').value = e.target.value; renderStats();
 });
-$('stFavDel').addEventListener('click', () => {
+$('stFavDel').addEventListener('click', async () => {
   const v = $('stFavSel').value;
   if (v === '') { toast('Válaszd ki a törlendő kedvencet.'); return; }
   const f = UI.stat.favs[+v];
-  if (!confirm('Törlöd a(z) „' + f.name + '” kedvencet?')) return;
+  if (!(await askConfirm('Törlöd a(z) „' + f.name + '” kedvencet?', { ok: 'Kedvenc törlése', cancel: 'Megtartom', danger: true }))) return;
   UI.stat.favs.splice(+v, 1); saveUi(); renderRangePicker();
 });

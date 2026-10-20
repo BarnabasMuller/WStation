@@ -107,17 +107,21 @@ async function renderInsights() {
     const clear = sunFrac != null && sunFrac > 0.5, calm = n.wind != null && n.wind < 5;
     const pred = Math.min(n.temp, n.dew != null ? n.dew : n.temp) - (clear && calm ? 2 : clear || calm ? 1 : 0);
     const why = 'harmatpont ' + ttext(n.dew) + (clear ? ', derült' : '') + (calm ? ', szélcsendes' : '');
-    if (pred <= 0) L('❄️', '<b>Ma éjjel fagy valószínű</b>: ' + why + '. Védd a fagyérzékeny növényeket!', 'strong');
-    else if (pred <= 2) L('🥶', '<b>Ma éjjel fagy közeli</b> lehet: ' + why + '.', 'mild');
+    // hajnalban már nem „ma éjjel” (11.7)
+    const morning = hour < 8;
+    if (pred <= 0) L('❄️', (morning ? '<b>Reggelig fagy valószínű</b>: ' : '<b>Ma éjjel fagy valószínű</b>: ') + why + '. Védd a fagyérzékeny növényeket!', 'strong');
+    else if (pred <= 2) L('🥶', (morning ? '<b>Reggelig fagy közeli</b> lehet: ' : '<b>Ma éjjel fagy közeli</b> lehet: ') + why + '.', 'mild');
   }
   // hőség (a magyar hőségriasztási fokozatok logikája szerint, a napi középhőmérsékletből)
-  const means = (TODAY.now.tavgPrev || []).slice().reverse().concat(t.tavg != null ? [t.tavg] : []);
+  // az előző (egymást követő, teljes) napok és az utolsó 24 óra átlaga – nem a mai, reggel még csak éjszakai átlag (11.7)
+  const t24 = TODAY.now.tavg24 != null ? TODAY.now.tavg24 : null;
+  const means = (TODAY.now.tavgPrev || []).slice(0, 2).reverse().concat(t24 != null ? [t24] : []);
   const last3 = means.slice(-3);
   // a küszöbök a Beállítások › Helyszín részben (alapból a magyar hőségriasztás: 25 / 27 °C)
   const hw1 = META.settings.heatWarn1 != null ? META.settings.heatWarn1 : 25, hw3 = META.settings.heatWarn3 != null ? META.settings.heatWarn3 : 27;
   if (last3.length >= 3 && last3.every(x => x >= hw3)) L('🔥', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(hw3, 0) + ' (a hőségriasztás III. fokozatának megfelelő).', 'severe');
   else if (last3.length >= 3 && last3.every(x => x >= hw1)) L('🌡️', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(hw1, 0) + ' (II. fokozat).', 'strong');
-  else if (t.tavg != null && t.tavg >= hw1) L('🌡️', '<b>Meleg nap</b>: a napi középhőmérséklet ' + ttext(t.tavg) + ' (I. fokozat).', 'mild');
+  else if (t24 != null && t24 >= hw1) L('🌡️', '<b>Meleg nap</b>: az utolsó 24 óra középhőmérséklete ' + ttext(t24) + ' (I. fokozat).', 'mild');
   // nyomás
   const p3 = n.pres3h;
   if (p3 != null && p3 <= -3) L('📉', '<b>Gyorsan esik a légnyomás</b>: ' + psigned(p3) + ' / 3 óra – front közeledhet.', p3 <= -5 ? 'strong' : 'mild');
@@ -229,7 +233,7 @@ async function decorateTimeline() {
   let m;
   try { m = await loadMarks(); } catch (e) { return; }
   if (!chart) return;
-  const lineEv = m.ev.map(e => ({ xAxis: e.t, name: e.title + ': ' + e.detail, lineStyle: { color: e.type === 'zivatar' ? '#a855f7' : '#0ea5e9', type: 'dashed', width: 1.5 }, label: { formatter: e.type === 'zivatar' ? '⚡' : '❄', position: 'end', fontSize: fs(13) } }));
+  const lineEv = m.ev.map(e => ({ xAxis: e.t, name: e.title + ': ' + evDetail(e), lineStyle: { color: e.type === 'zivatar' ? '#a855f7' : '#0ea5e9', type: 'dashed', width: 1.5 }, label: { formatter: e.type === 'zivatar' ? '⚡' : '❄', position: 'end', fontSize: fs(13) } }));
   const lineDiary = m.diary.filter(x => x.date).map(x => ({ xAxis: DS.ms(x.date) + 10 * H, name: 'Kerti napló: ' + (x.tag || '') + (x.text ? ' – ' + x.text : ''), lineStyle: { color: '#16a34a', type: 'dotted', width: 1.5 }, label: { formatter: '📝', position: 'end', fontSize: fs(12) } }));
   const areaRain = m.rain.map(e => [{ xAxis: e.start, name: rtext(e.total, 1) + ', max ' + rrtext(e.maxRate, 0), itemStyle: { color: e.maxRate >= m.cloudburst ? 'rgba(124,58,237,.18)' : 'rgba(31,120,209,.14)' } }, { xAxis: e.end }]);
   chart.setOption({

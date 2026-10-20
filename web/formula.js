@@ -252,5 +252,5 @@ $('fSave').addEventListener('click', () => {
   if (fEdit >= 0) formulas()[fEdit] = f; else formulas().push(f);
   saveUi(); $('fEditor').classList.add('hidden'); renderFormulaPanel();
 });
-$('fDelete').addEventListener('click', () => { if (fEdit >= 0 && confirm('Törlöd a képletet?')) { formulas().splice(fEdit, 1); saveUi(); $('fEditor').classList.add('hidden'); renderFormulaPanel(); } });
+$('fDelete').addEventListener('click', async () => { if (fEdit >= 0 && await askConfirm('Törlöd a képletet?', { sub: 'Ez nem vonható vissza.', ok: 'Képlet törlése', cancel: 'Megtartom', danger: true })) { formulas().splice(fEdit, 1); saveUi(); $('fEditor').classList.add('hidden'); renderFormulaPanel(); } });
 window.addEventListener('resize', () => { if (fChart && currentTab === 'idovonal') fChart.resize(); });

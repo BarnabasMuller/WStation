@@ -44,6 +44,13 @@ function droughtPathLabel(path, cfg) {
     return lbl ? lbl.label + (SYM[p] ? ' (' + SYM[p] + ')' : '') : ({ global: 'közös', soil: 'talaj', runoff: 'lefolyás', fwi: 'FWI', vpd: 'VPD', gdd: 'GDD', profiles: 'profilok', log: 'öntözésnapló', programs: 'öntözési programok', calib: 'csapadék-kalibráció', water: 'vízigény' })[p] || p;
   }).join(' › ');
 }
+// egy törölt profillal együtt törölt locsolások, programok és időszakok – a visszaállításhoz (11.9)
+function deletedProfileExtra(d, before) {
+  if (d.path.length !== 2 || d.path[0] !== 'profiles' || !d.obj) return undefined;
+  const id = d.obj.id, pgs = (before.programs || []).filter(pg => pg.zone === id), pgIds = pgs.map(pg => pg.id);
+  const log = (before.log || []).filter(l => l.zone === id), sch = (before.schedules || []).filter(sc => pgIds.includes(sc.program));
+  return log.length || pgs.length ? { log, programs: pgs, schedules: sch } : undefined;
+}
 function logDroughtDiff(before, after) {
   if (!before) return;
   const out = [];
@@ -52,7 +59,7 @@ function logDroughtDiff(before, after) {
     area: 'Szárazság', key: droughtPathLabel(d.path, after),
     from: d.from == null ? null : typeof d.from === 'number' ? num(d.from, d.from % 1 ? 3 : 0) : String(d.from),
     to: d.to == null ? null : typeof d.to === 'number' ? num(d.to, d.to % 1 ? 3 : 0) : String(d.to),
-    revert: d.path[0] === 'log' ? null : { type: 'drought', path: d.path, value: d.obj || (d.raw === undefined ? null : d.raw) }
+    revert: d.path[0] === 'log' ? null : { type: 'drought', path: d.path, value: d.obj || (d.raw === undefined ? null : d.raw), extra: deletedProfileExtra(d, before) }
   }));
   if (entries.length) post('/api/changelog', entries).catch(() => { });
 }
@@ -199,7 +206,10 @@ $('schedApply').addEventListener('click', async () => {
 
 // ------------------------------------------------------------------ biztonsági mentés
 function renderBackup(b) {
-  $('bkDays').value = [0, 1, 7, 14, 30].includes(b.days) ? String(b.days) : '7';
+  // a kézzel beírt, nem szabványos gyakoriság (pl. 3 nap) egy saját elemként megmarad, nem íródik át hetentére (11.10)
+  const sel = $('bkDays'); sel.querySelectorAll('option[data-custom]').forEach(o => o.remove());
+  if (b.days > 0 && ![0, 1, 7, 14, 30].includes(b.days)) { const o = document.createElement('option'); o.value = String(b.days); o.dataset.custom = '1'; o.textContent = tf('egyedi ({n} naponta)', { n: b.days }); sel.appendChild(o); }
+  sel.value = String(b.days >= 0 ? b.days : 7);
   $('bkKeep').value = b.keep;
   $('bkLast').textContent = b.last ? b.last + ' (' + num(b.lastSize / 1024, 1) + ' MB, összesen ' + b.count + ' mentés)' + (b.due ? ' – esedékes' : '') : 'még nincs mentés';
 }
@@ -241,7 +251,7 @@ $('clFilter').addEventListener('input', renderChangelog);
 
 async function revertChange(e) {
   const r = e.revert;
-  if (!r || !confirm('Visszaállítod: „' + e.key + '” → ' + (e.from == null ? '(alap)' : e.from) + '?')) return;
+  if (!r || !(await askConfirm('Visszaállítod: „' + e.key + '” → ' + (e.from == null ? '(alap)' : e.from) + '?', { ok: 'Visszaállítás', cancel: 'Mégse' }))) return;
   if (r.type === 'ui') {
     const parts = r.key.split('.');
     if (parts.length === 2) { UI[parts[0]] = Object.assign({}, UI[parts[0]] || {}); if (r.value == null) delete UI[parts[0]][parts[1]]; else UI[parts[0]][parts[1]] = r.value; }
@@ -270,7 +280,11 @@ async function revertChange(e) {
     if (last[0] === '#') {
       // profil visszaállítása (törölt profil vissza / új profil törlése)
       const id = last.slice(1), arr = o, idx = arr.findIndex(x => x.id === id);
-      if (r.value && idx < 0) arr.push(r.value); else if (!r.value && idx >= 0) arr.splice(idx, 1);
+      if (r.value && idx < 0) {
+        arr.push(r.value);
+        // a profillal együtt törölt locsolások, programok és időszakok is visszajönnek (11.9)
+        if (r.extra) ['log', 'programs', 'schedules'].forEach(k => { cfg[k] = cfg[k] || []; (r.extra[k] || []).forEach(x => { if (!x.id || !cfg[k].some(y => y.id === x.id)) cfg[k].push(x); }); });
+      } else if (!r.value && idx >= 0) arr.splice(idx, 1);
     } else o[last] = r.value;
     DR.config = cfg;
     await saveDroughtConfig('Visszaállítva.');
@@ -288,7 +302,7 @@ async function checkUpdate() {
     b.innerHTML = '⬆ Elérhető a <b>' + esc(u.version) + '</b> verzió (most: ' + esc(u.current) + '). <button class="btn primary small" id="updNow">Telepítés most</button> <span class="muted">A program bezárul, a telepítő frissíti; az adatok és a beállítások megmaradnak.</span>';
     b.classList.remove('hidden');
     $('updNow').addEventListener('click', async () => {
-      if (!confirm('Bezárod a programot, és elindítod a ' + u.version + '-es telepítőt?')) return;
+      if (!(await askConfirm(tf('Bezárod a programot, és elindítod a(z) {v} verzió telepítőjét?', { v: u.version }), { sub: 'Az adatok és a beállítások megmaradnak.', ok: 'Telepítés most', cancel: 'Később' }))) return;
       await post('/api/update');
     });
   } catch (e) { }

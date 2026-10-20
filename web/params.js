@@ -2,16 +2,77 @@
 /* Közös paraméterkezelés a ? és ƒx ablakokhoz: táblázat, szimbólumok, ellenőrzés, presetek */
 
 // ------------------------------------------------------------------ ablak
+// valódi párbeszédablak (7.5): a fókusz bekerül és bent marad, a háttér nem érhető el, bezáráskor visszatér a megnyitóra
+let MODAL_OPENER = null, MODAL_DIRTY = false, MODAL_VALIDATE = null;
+function setBackgroundInert(on) { document.querySelectorAll('body > header, body > main, body > footer').forEach(el => { if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert'); }); }
 function openModal(html) {
+  if ($('modal').classList.contains('hidden')) MODAL_OPENER = document.activeElement;
   $('modalBody').innerHTML = html;
+  MODAL_DIRTY = false; MODAL_VALIDATE = null;
+  const h = $('modalBody').querySelector('h2, h3');
+  if (h) { h.id = 'modalTitle'; h.tabIndex = -1; $('modal').setAttribute('aria-labelledby', 'modalTitle'); } else $('modal').removeAttribute('aria-labelledby');
   $('modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+  setBackgroundInert(true);
   $('modal').scrollTop = 0;
+  (h || $('modalClose')).focus();
 }
-function closeModal() { $('modal').classList.add('hidden'); document.body.style.overflow = ''; }
-$('modalClose').addEventListener('click', closeModal);
-$('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modal').classList.contains('hidden')) closeModal(); });
+function closeModal() {
+  $('modal').classList.add('hidden'); document.body.style.overflow = '';
+  setBackgroundInert(false);
+  MODAL_DIRTY = false; MODAL_VALIDATE = null;
+  if (MODAL_OPENER && document.contains(MODAL_OPENER)) MODAL_OPENER.focus();
+  MODAL_OPENER = null;
+}
+// a ✕, az Esc és a háttérre kattintás: ha a táblában átírtál valamit, előbb rákérdez (7.19)
+async function requestCloseModal() {
+  if (MODAL_DIRTY && !(await askConfirm('Elveted a változásokat?', { sub: 'Az ablakban átírt értékek nincsenek elmentve.', ok: 'Elvetem', cancel: 'Folytatom a szerkesztést' }))) return;
+  closeModal();
+}
+$('modalClose').addEventListener('click', requestCloseModal);
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') requestCloseModal(); });
+// egyetlen figyelő a modálon (11.11: korábban minden megnyitás újabbat tett fel)
+['input', 'change'].forEach(ev => $('modalBody').addEventListener(ev, e => {
+  if (e.target.matches('input, select, textarea') && !e.target.closest('.preset-bar')) MODAL_DIRTY = true;
+  if (MODAL_VALIDATE) MODAL_VALIDATE();
+}));
+document.addEventListener('keydown', e => {
+  if (!$('cdlg').classList.contains('hidden')) { if (e.key === 'Escape') { e.preventDefault(); $('cdlgNo').click(); } else if (e.key === 'Tab') trapTab(e, $('cdlg')); return; }
+  if ($('modal').classList.contains('hidden')) return;
+  if (e.key === 'Escape') { e.preventDefault(); requestCloseModal(); }
+  else if (e.key === 'Tab') trapTab(e, $('modal'));
+});
+// Tab / Shift+Tab körbe a párbeszédablakon belül
+function trapTab(e, box) {
+  const f = [...box.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(el => !el.disabled && el.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !box.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (document.activeElement === last || !box.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+}
+
+// saját megerősítő ablak a böngésző „OK / Mégse” helyett (7.30): cselekvő gomb és a következmény kiírva
+function askConfirm(msg, o) {
+  o = o || {};
+  return new Promise(resolve => {
+    const box = $('cdlg'), opener = document.activeElement, wasInert = $('modal').classList.contains('hidden');
+    $('cdlgMsg').textContent = msg;
+    $('cdlgSub').textContent = o.sub || ''; $('cdlgSub').classList.toggle('hidden', !o.sub);
+    $('cdlgOk').textContent = o.ok || 'Igen'; $('cdlgOk').className = 'btn ' + (o.danger ? 'danger' : 'primary');
+    $('cdlgNo').textContent = o.cancel || 'Mégse';
+    box.classList.remove('hidden');
+    if (wasInert) setBackgroundInert(true); else $('modal').setAttribute('inert', '');
+    const done = v => {
+      box.classList.add('hidden'); $('cdlgOk').onclick = $('cdlgNo').onclick = null;
+      if (wasInert) setBackgroundInert(false); else $('modal').removeAttribute('inert');
+      if (opener && document.contains(opener)) opener.focus();
+      resolve(v);
+    };
+    $('cdlgOk').onclick = () => done(true); $('cdlgNo').onclick = () => done(false);
+    box.onclick = e => { if (e.target === box) done(false); };
+    $('cdlgNo').focus();
+  });
+}
 
 // ------------------------------------------------------------------ szabályok (megengedett tartomány) és képletbeli szimbólumok
 const MD = { md: true };
@@ -166,8 +227,7 @@ function liveValidate(pairsFn) {
     ['mapply', 'psave'].forEach(id => { const b = $(id); if (b) { b.disabled = !ok; b.title = ok ? '' : 'Előbb javítsd a pirossal jelölt mezőket.'; } });
     return ok;
   };
-  $('modalBody').addEventListener('input', run);
-  $('modalBody').addEventListener('change', run);
+  MODAL_VALIDATE = run;   // a modál közös figyelője hívja (11.11)
   run();
   return run;
 }
@@ -178,12 +238,12 @@ async function getPresets(force) { if (!PRESETS || force) PRESETS = await api('/
 
 function presetBar(kind) {
   const list = (PRESETS || []).filter(p => p.kind === kind);
-  return '<div class="preset-bar"><b>Presetek:</b>' +
+  return '<div class="preset-bar"><b>Mentett beállítások:</b>' +
     '<select class="sel" id="psel">' + presetOptions(list) + '</select>' +
     '<button class="btn" id="pload"' + (list.length ? '' : ' disabled') + '>Betöltés</button>' +
     '<button class="btn" id="pdel"' + (list.length ? '' : ' disabled') + '>Törlés</button>' +
-    '<input class="inp" id="pname" placeholder="új preset neve" maxlength="60">' +
-    '<button class="btn" id="psave">Mentés presetként</button><span class="pmsg" id="pmsg"></span></div>';
+    '<input class="inp" id="pname" placeholder="név, pl. Nyári beállítás" aria-label="Az új mentett beállítás neve" maxlength="60">' +
+    '<button class="btn" id="psave">Mentés ezen a néven</button><span class="pmsg" id="pmsg" role="status"></span></div>';
 }
 function presetOptions(list) { return list.length ? list.map(p => '<option class="ut">' + esc(p.name) + '</option>').join('') : '<option value="">(még nincs mentett)</option>'; }
 
@@ -194,13 +254,14 @@ function wirePresets(kind, getData, setData) {
     if (sel) $('psel').value = sel;
     $('pload').disabled = $('pdel').disabled = !list().length;
   };
-  const flash = t => { $('pmsg').textContent = t; clearTimeout(window._pm); window._pm = setTimeout(() => { if ($('pmsg')) $('pmsg').textContent = ''; }, 3500); };
+  // az üzenet a következő műveletig marad (7.11: 3,5 másodperc kevés volt), és a képernyőolvasó is felolvassa (role=status)
+  const flash = t => { $('pmsg').textContent = t; };
   $('psave').addEventListener('click', async () => {
     const name = $('pname').value.trim();
-    if (!name) { flash('⚠ Adj nevet a presetnek.'); $('pname').focus(); return; }
+    if (!name) { flash('⚠ Adj nevet a mentett beállításnak.'); $('pname').focus(); return; }
     const data = getData();
     if (data === false) { flash('⚠ Előbb javítsd a pirossal jelölt mezőket.'); return; }
-    if (list().some(p => p.name === name) && !confirm('Már van „' + name + '” nevű preset. Felülírod?')) return;
+    if (list().some(p => p.name === name) && !(await askConfirm('Már van „' + name + '” nevű mentett beállítás. Felülírod?', { ok: 'Felülírom', cancel: 'Mégse' }))) return;
     try {
       await post('/api/drought/preset?kind=' + encodeURIComponent(kind) + '&name=' + encodeURIComponent(name), data);
       await getPresets(true);
@@ -215,7 +276,7 @@ function wirePresets(kind, getData, setData) {
   });
   $('pdel').addEventListener('click', async () => {
     const name = $('psel').value;
-    if (!name || !confirm('Törlöd a(z) „' + name + '” presetet?')) return;
+    if (!name || !(await askConfirm('Törlöd a(z) „' + name + '” mentett beállítást?', { sub: 'Ez nem vonható vissza.', ok: 'Törlöm', cancel: 'Megtartom', danger: true }))) return;
     await post('/api/drought/preset-delete?kind=' + encodeURIComponent(kind) + '&name=' + encodeURIComponent(name));
     await getPresets(true);
     refresh(); flash('✔ Törölve.');

@@ -916,6 +916,16 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 // rekordok (a szerver metrikusan küldi): érték és részletek a választott mértékegységben
 function recQ(r) { return r.key === 'range' || r.key === 'tdrop' ? 'tdiff' : /^pdrop/.test(r.key) ? 'presd' : UNIT_Q[r.unit]; }
 function recValue(r) { return qtext(recQ(r), r.value, r.unit === 'km/h' ? 0 : r.dec, r.unit); }   // km/h egészre, mint a Szél fülön (10.9)
+// front / zivatar részletei a választott egységekben (11.8: a szerver szövege fixen metrikus)
+function evDetail(e) {
+  if (e.drop == null) return e.detail || '';
+  const p = [tdtext(-e.drop) + ' 1 óra alatt'];
+  if (e.gust > 0) p.push('lökés ' + wtext(e.gust));
+  if (e.turn >= 30) p.push('szélfordulás ' + num(e.turn, 0) + '°');
+  if (e.rain >= 0.2) p.push(rtext(e.rain, 1) + ' eső');
+  if (e.presRise >= 1) p.push('utána nyomásemelkedés ' + psigned(e.presRise));
+  return p.join(', ');
+}
 // a rekord címe a küszöbbel a választott egységben (9.5: a szerver csak a számot küldi)
 function recTitle(r) {
   if (r.thrQ === 'rainLt') return r.title + ' (< ' + rthr(r.thr) + '/nap)';

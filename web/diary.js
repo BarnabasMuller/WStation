@@ -29,7 +29,7 @@ async function renderDiary() {
     e.preventDefault();
     const x = DIARY[+a.dataset.del];
     const linked = x && x.id && typeof DR !== 'undefined' && DR ? DR.config.log.filter(l => l.diaryId === x.id).length : 0;
-    if (!confirm('Törlöd a bejegyzést?' + (linked ? ' A talajvíz-mérlegből is kikerül ez a locsolás.' : ''))) return;
+    if (!(await askConfirm('Törlöd a bejegyzést?', { sub: (linked ? 'A talajvíz-mérlegből is kikerül ez a locsolás. ' : '') + 'Ez nem vonható vissza.', ok: 'Bejegyzés törlése', cancel: 'Megtartom', danger: true }))) return;
     DIARY.splice(+a.dataset.del, 1); await saveDiary();
     if (linked) { DR.config.log = DR.config.log.filter(l => l.diaryId !== x.id); await saveDroughtConfig(); }
     renderDiary(); renderCalendar();

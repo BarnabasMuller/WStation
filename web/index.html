@@ -489,7 +489,8 @@
     </div>
   </section>
 </main>
-<div id="modal" class="modal hidden"><div class="modal-card"><button class="modal-x" id="modalClose" title="Bezárás (Esc)">✕</button><div id="modalBody"></div></div></div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card"><button class="modal-x" id="modalClose" title="Bezárás (Esc)" aria-label="Bezárás">✕</button><div id="modalBody"></div></div></div>
+<div id="cdlg" class="modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="cdlgMsg" aria-describedby="cdlgSub"><div class="modal-card cdlg-card"><p id="cdlgMsg" class="cdlg-msg"></p><p id="cdlgSub" class="muted"></p><div class="row2 cdlg-btns"><button class="btn primary" id="cdlgOk">Igen</button><button class="btn" id="cdlgNo">Mégse</button></div></div></div>
 
 <footer id="foot"></footer>
 <div id="toast" class="toast"></div>

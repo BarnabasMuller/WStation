@@ -114,7 +114,8 @@ function trNode(n) {
 function trAttrs(el) {
   for (const a of ['title', 'placeholder', 'aria-label']) {
     if (!el.hasAttribute || !el.hasAttribute(a)) continue;
-    const key = 'i18n' + a, cur = el.getAttribute(a);
+    // a dataset kulcsban nem lehet kötőjel: aria-label → i18nAriaLabel
+    const key = 'i18n' + a.replace(/(^|-)(\w)/g, (m, d, c) => c.toUpperCase()), cur = el.getAttribute(a);
     let orig = el.dataset[key];
     if (orig === undefined || el.dataset[key + 'Out'] !== cur) { orig = cur; el.dataset[key] = orig; }
     else if (el.dataset[key + 'L'] === (I18N ? I18N.L : 'hu')) continue;
@@ -142,7 +143,7 @@ function i18nWatch() {
       else m.addedNodes.forEach(trNode);
     }
   });
-  I18N_MO.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['title', 'placeholder'] });
+  I18N_MO.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['title', 'placeholder', 'aria-label'] });   // a később hozzáadott aria-label is forduljon (12.8)
 }
 
 // ------------------------------------------------------------------ grafikonok: feliratok és buboréksúgók

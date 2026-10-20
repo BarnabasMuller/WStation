@@ -481,8 +481,20 @@ namespace Idojaras
                 if ((ds.Flags[i] & Flag.RainRate) == 0 && !float.IsNaN(ds.C[Col.PRATE][i]) && (double.IsNaN(r1) || ds.C[Col.PRATE][i] > r1)) r1 = ds.C[Col.PRATE][i];
             }
             w.P("gust1h", g1, 1).P("rate1h", r1, 1);
-            var prevDays = ds.Days.Where(d => d.Day < ds.Day[last] && d.Coverage >= DayStat.FullCoverage).Reverse().Take(3).Select(d => d.Tavg).ToList();
+            // a hőség-figyelőhöz: az előző napok középhőmérséklete csak egymást követő, teljes napokból (11.7) …
+            var prevDays = new List<double>();
+            for (int dn = ds.Day[last] - 1; prevDays.Count < 3; dn--)
+            {
+                DayStat pd;
+                if (!ds.DayMap.TryGetValue(dn, out pd) || pd.Coverage < DayStat.FullCoverage || double.IsNaN(pd.Tavg)) break;
+                prevDays.Add(pd.Tavg);
+            }
             w.Key("tavgPrev").Arr(); foreach (var x in prevDays) w.Num(x, 1); w.EndArr();
+            // … és a mai, még részleges nap helyett az utolsó 24 óra átlaga (reggel nem csak az éjszakából számol)
+            double s24 = 0; int n24 = 0;
+            for (int i = ds.LowerBound(ds.T[last] - 86400 + 1); i <= last; i++)
+                if ((ds.Flags[i] & Flag.Temp) == 0 && !float.IsNaN(ds.C[Col.TA][i])) { s24 += ds.C[Col.TA][i]; n24++; }
+            w.P("tavg24", n24 >= 200 ? s24 / n24 : double.NaN, 1);
             int y = Nearest(ds, ds.T[last] - 86400, 900);
             w.P("tempYesterday", y >= 0 && (ds.Flags[y] & Flag.Temp) == 0 ? ds.C[Col.TA][y] : double.NaN, 1);
             w.End();
