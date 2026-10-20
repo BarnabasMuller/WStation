@@ -168,12 +168,16 @@ namespace Idojaras
         }
 
         // ------------------------------------------------------------------ rekordok
-        static void Rec(JW w, string key, string title, double v, string unit, int dec, long t, string detail)
+        // thr / thrQ: a címben szereplő küszöb metrikusan és a mennyisége – a felület a választott egységgel írja ki (9.5)
+        static void Rec(JW w, string key, string title, double v, string unit, int dec, long t, string detail, double thr = double.NaN, string thrQ = null, bool unverified = false)
         {
             if (double.IsNaN(v)) return;
             // napi értékű rekordnál (legcsapadékosabb nap, sorozatok) az időpont nem értelmes: csak dátum (6.5)
             bool dateOnly = key == "rainDay" || key.EndsWith("Streak");
-            w.Obj().P("key", key).P("title", title).P("value", v, dec).P("unit", unit).P("dec", dec).Ms("t", t).P("dateOnly", dateOnly).P("detail", detail ?? "").End();
+            w.Obj().P("key", key).P("title", title).P("value", v, dec).P("unit", unit).P("dec", dec).Ms("t", t).P("dateOnly", dateOnly).P("detail", detail ?? "");
+            if (!double.IsNaN(thr)) w.P("thr", thr, 2).P("thrQ", thrQ);
+            if (unverified) w.P("unverified", true);
+            w.End();
         }
 
         // ------------------------------------------------------------------ időszak-szűrő
@@ -212,7 +216,7 @@ namespace Idojaras
                 return bi;
             };
             int k;
-            k = best(Col.TH, Flag.Temp, 0, (a, b) => a > b); if (k >= 0) Rec(w, "tmax", "Legmagasabb hőmérséklet", ds.C[Col.TH][k], "°C", 1, ds.T[k], null);
+            k = best(Col.TH, Flag.Temp, 0, (a, b) => a > b); if (k >= 0) Rec(w, "tmax", "Legmagasabb hőmérséklet", ds.C[Col.TH][k], "°C", 1, ds.T[k], null, s.PlausibleTmax, "temp", ds.C[Col.TH][k] > s.PlausibleTmax);   // a hihetőségi határ fölött „ellenőrizetlen” (8.5)
             k = best(Col.TL, Flag.Temp, 0, (a, b) => a < b); if (k >= 0) Rec(w, "tmin", "Legalacsonyabb hőmérséklet", ds.C[Col.TL][k], "°C", 1, ds.T[k], null);
             var wn = good.Where(d => !double.IsNaN(d.Tmin)).OrderByDescending(d => d.Tmin).FirstOrDefault();
             if (wn != null) Rec(w, "warmNight", "Legmelegebb éjszaka (napi minimum)", wn.Tmin, "°C", 1, wn.TminT, null);
@@ -279,11 +283,11 @@ namespace Idojaras
                 return Tuple.Create(bestLen, bs, be);
             };
             var dry = streak(d => !(d.Rain >= 0.2));
-            if (dry.Item1 > 0) Rec(w, "dryStreak", "Leghosszabb száraz időszak (< 0,2 mm/nap)", dry.Item1, "nap", 0, (dry.Item3.Start + dry.Item3.End) / 2, dry.Item2.Date.ToString("yyyy.MM.dd") + " – " + dry.Item3.Date.ToString("yyyy.MM.dd"));
+            if (dry.Item1 > 0) Rec(w, "dryStreak", "Leghosszabb száraz időszak", dry.Item1, "nap", 0, (dry.Item3.Start + dry.Item3.End) / 2, dry.Item2.Date.ToString("yyyy.MM.dd", Inv) + " – " + dry.Item3.Date.ToString("yyyy.MM.dd", Inv), 0.2, "rainLt");
             var rainy = streak(d => d.Rain >= 1);
-            if (rainy.Item1 > 0) Rec(w, "wetStreak", "Leghosszabb esős sorozat (≥ 1 mm/nap)", rainy.Item1, "nap", 0, (rainy.Item3.Start + rainy.Item3.End) / 2, rainy.Item2.Date.ToString("yyyy.MM.dd") + " – " + rainy.Item3.Date.ToString("yyyy.MM.dd"));
+            if (rainy.Item1 > 0) Rec(w, "wetStreak", "Leghosszabb esős sorozat", rainy.Item1, "nap", 0, (rainy.Item3.Start + rainy.Item3.End) / 2, rainy.Item2.Date.ToString("yyyy.MM.dd", Inv) + " – " + rainy.Item3.Date.ToString("yyyy.MM.dd", Inv), 1, "rainGe");
             var hot = streak(d => d.Tmax >= s.HotDay);
-            if (hot.Item1 > 0) Rec(w, "hotStreak", "Leghosszabb hőhullám (egymást követő hőségnapok)", hot.Item1, "nap", 0, (hot.Item3.Start + hot.Item3.End) / 2, hot.Item2.Date.ToString("yyyy.MM.dd") + " – " + hot.Item3.Date.ToString("yyyy.MM.dd"));
+            if (hot.Item1 > 0) Rec(w, "hotStreak", "Leghosszabb hőhullám (egymást követő hőségnapok)", hot.Item1, "nap", 0, (hot.Item3.Start + hot.Item3.End) / 2, hot.Item2.Date.ToString("yyyy.MM.dd", Inv) + " – " + hot.Item3.Date.ToString("yyyy.MM.dd", Inv));
             w.EndArr();
 
             // számlálók, fagy

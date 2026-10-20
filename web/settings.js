@@ -310,8 +310,14 @@ async function renderPlace() {
     f('plLat', 'Tartalék koordináták', numIn('plLat', v.TartalekSzelesseg) + ' É  ' + numIn('plLon', v.TartalekHosszusag) + ' K',
       fromData ? 'Most nem használt: az adatokban van koordináta (' + num(META.lat, 4) + '; ' + num(META.lon, 4) + ').' : '<b>Most ez számít</b>: az adatokban nincs koordináta (napkelte, hold, párolgás).') +
     f('plElev', 'Tengerszint feletti magasság', numIn('plElev', elev, 80) + ' m', 'A párolgás (ET₀) számításához.') +
+    // a hőséggel kapcsolatos küszöbök egy helyen, megnevezve (6.30)
+    '<h4 class="pl-sub">Hőség-küszöbök</h4>' +
+    f('plHot', 'Hőségnap (napi maximum legalább)', numIn('plHot', +tconv(parseFloat(String(v.HosegNap || 30).replace(',', '.'))).toFixed(1), 70) + ' ' + tlabel(),
+      'A Statisztika és a Jelentés hőségnapjai, a hőhullám.') +
     f('plH1', 'Hőség-figyelő (napi középhőmérséklet)', numIn('plH1', +t1.toFixed(1), 70) + ' ' + tlabel() + ' (I–II.)  ' + numIn('plH3', +t3.toFixed(1), 70) + ' ' + tlabel() + ' (III.)',
       'A magyar hőségriasztás szerint 25 és 27 °C. A „Hőség” jelzés az Áttekintés Figyelő kártyáján.') +
+    f('plPlaus', 'Hihetőségi határ', numIn('plPlaus', +tconv(parseFloat(String(v.HihetoMaxHomerseklet || 41.9).replace(',', '.'))).toFixed(1), 70) + ' ' + tlabel(),
+      'E fölötti hőmérséklet-csúcs a rekordoknál „ellenőrizetlen” jelzést kap (alapból az országos rekord, 41,9 °C). A Windows-értesítés hőség-küszöbe a Riasztások résznél állítható.') +
     f('plCur', 'Pénznem', '<input class="inp" id="plCur" maxlength="6" style="width:70px" value="' + esc(v.Penznem || 'Ft') + '">', 'A Víz alfül költségeihez.');
 }
 function plNum(id, lo, hi) {
@@ -325,14 +331,15 @@ function plNum(id, lo, hi) {
 $('placeSave').addEventListener('click', async () => {
   document.querySelectorAll('#placeBox .perr').forEach(e => e.textContent = '');
   const lat = plNum('plLat', -90, 90), lon = plNum('plLon', -180, 180), elev = plNum('plElev', -500, 9000);
-  const h1 = plNum('plH1', units().temp === 'F' ? 59 : 15, units().temp === 'F' ? 104 : 40), h3 = plNum('plH3', units().temp === 'F' ? 59 : 15, units().temp === 'F' ? 104 : 40);
+  const tF = units().temp === 'F', tb = (lo, hi) => tF ? [lo * 1.8 + 32, hi * 1.8 + 32] : [lo, hi];
+  const h1 = plNum('plH1', ...tb(15, 40)), h3 = plNum('plH3', ...tb(15, 40)), hot = plNum('plHot', ...tb(20, 45)), plaus = plNum('plPlaus', ...tb(25, 60));
   const name = $('plName').value.trim(), curc = $('plCur').value.trim();
   if (/[=#]/.test(name)) { $('plNameErr').textContent = '⚠ „=” és „#” nem lehet benne'; return; }
   if (!curc || /[=#]/.test(curc)) { $('plCurErr').textContent = '⚠ 1–6 karakter, pl. Ft, €, EUR'; return; }
-  if ([lat, lon, elev, h1, h3].some(x => x == null)) { $('placeMsg').className = 'msg err'; $('placeMsg').textContent = 'Javítsd a pirossal jelölt mezőket – nem mentettem.'; return; }
+  if ([lat, lon, elev, h1, h3, hot, plaus].some(x => x == null)) { $('placeMsg').className = 'msg err'; $('placeMsg').textContent = 'Javítsd a pirossal jelölt mezőket – nem mentettem.'; return; }
   const msg = $('placeMsg'); msg.className = 'msg'; msg.textContent = 'Mentés…';
   try {
-    await post('/api/ini', { HelyNev: name, Idozona: $('plTz').value, TartalekSzelesseg: lat, TartalekHosszusag: lon, HosegFigyelo1: +qback('temp', h1).toFixed(1), HosegFigyelo3: +qback('temp', h3).toFixed(1), Penznem: curc });
+    await post('/api/ini', { HelyNev: name, Idozona: $('plTz').value, TartalekSzelesseg: lat, TartalekHosszusag: lon, HosegFigyelo1: +qback('temp', h1).toFixed(1), HosegFigyelo3: +qback('temp', h3).toFixed(1), HosegNap: +qback('temp', hot).toFixed(1), HihetoMaxHomerseklet: +qback('temp', plaus).toFixed(1), Penznem: curc });
     if (typeof DR !== 'undefined' && DR && DR.config.global.elevation !== elev) { DR.config.global.elevation = elev; await saveDroughtConfig(); }
     if (typeof waitReload === 'function') await waitReload();
     msg.className = 'msg ok'; msg.textContent = '✔ Mentve és újraszámolva.';

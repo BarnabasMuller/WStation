@@ -13,14 +13,14 @@ static class Guard
 
     public static void SetRoot(string dir)
     {
-        root = Path.GetFullPath(dir).TrimEnd('\\');
+        root = Path.GetFullPath(dir).TrimEnd(Path.DirectorySeparatorChar);
     }
 
     public static string P(string path)
     {
         if (root == null) throw new InvalidOperationException("Guard: nincs beállítva a programmappa.");
         string full = Path.GetFullPath(path);
-        if (!(full.Equals(root, StringComparison.OrdinalIgnoreCase) || full.StartsWith(root + "\\", StringComparison.OrdinalIgnoreCase)))
+        if (!(full.Equals(root, StringComparison.OrdinalIgnoreCase) || full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)))
             throw new UnauthorizedAccessException("Biztonsági őr: a program csak a saját mappájába írhat (" + root + "), ide nem: " + full);
         return full;
     }

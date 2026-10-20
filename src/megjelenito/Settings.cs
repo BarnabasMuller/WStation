@@ -44,6 +44,7 @@ namespace Idojaras
         public string TimeZone = "Europe/Budapest";
         public double FallbackLat = 47.46, FallbackLon = 18.96;   // csak ha az adatokban nincs koordináta
         public double HeatWarn1 = 25, HeatWarn3 = 27;              // hőség-figyelő: napi középhőmérséklet (I., ill. III. fokozat)
+        public double PlausibleTmax = 41.9;                        // e fölötti hőmérséklet-csúcs „ellenőrizetlen rekord” (alapból az országos rekord)
         public string Currency = "Ft";
         // felhőzet-becslés (ƒx ablak)
         public double CloudKrs = 1.0;       // a mért sugárzás szorzója (érzékelő / 5 perces csúcsérték korrekciója)
@@ -75,6 +76,8 @@ TartalekHosszusag=18.96
 # Hőség-figyelő: napi középhőmérséklet (°C) – I. fokozat 1 napig, II. 3 napig, III. 3 napig
 HosegFigyelo1=25
 HosegFigyelo3=27
+# Hihetőségi határ (°C): e fölötti csúcs a rekordoknál „ellenőrizetlen” jelzést kap (alapból az országos rekord, 41,9 °C)
+HihetoMaxHomerseklet=41.9
 # Pénznem a vízdíjhoz
 Penznem=Ft
 
@@ -259,6 +262,7 @@ SzelesDelutanKmh=20
             s.FallbackLon = Math.Max(-180, Math.Min(180, Num(d, "TartalekHosszusag", s.FallbackLon, s)));
             s.HeatWarn1 = Num(d, "HosegFigyelo1", s.HeatWarn1, s);
             s.HeatWarn3 = Num(d, "HosegFigyelo3", s.HeatWarn3, s);
+            s.PlausibleTmax = Num(d, "HihetoMaxHomerseklet", s.PlausibleTmax, s);
             if (d.TryGetValue("Penznem", out v) && v.Trim().Length > 0) s.Currency = v.Trim().Length > 6 ? v.Trim().Substring(0, 6) : v.Trim();
             // felhőzet
             s.CloudKrs = Math.Max(0.3, Math.Min(2, Num(d, "FelhoKRs", s.CloudKrs, s)));
@@ -306,7 +310,7 @@ SzelesDelutanKmh=20
             { "OlvadasHomerseklet", new double[] { -5, 5, 0, 0 } }, { "OlvadasMm", new double[] { 1, 50, 0, 0 } },
             { "JelolBefagyottSzel", new double[] { 0, 1, 0, 1 } }, { "BefagyottOra", new double[] { 1, 24, 0, 0 } }, { "BefagyottHomerseklet", new double[] { -10, 5, 0, 0 } },
             { "TartalekSzelesseg", new double[] { -90, 90, 0, 0 } }, { "TartalekHosszusag", new double[] { -180, 180, 0, 0 } },
-            { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } },
+            { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } }, { "HihetoMaxHomerseklet", new double[] { 25, 60, 0, 0 } },
             { "FelhoKRs", new double[] { 0.3, 2, 0, 0 } }, { "FelhoA", new double[] { 0.3, 1, 0, 0 } }, { "FelhoB", new double[] { 1, 6, 0, 0 } }, { "FelhoDerultK", new double[] { 0.5, 1.1, 0, 0 } },
             { "FelhoNapMin", new double[] { 5, 40, 0, 0 } }, { "FelhoAblakPerc", new double[] { 10, 120, 1, 0 } }, { "FelhoGomolySzoras", new double[] { 0.03, 0.5, 0, 0 } },
             { "FelhoEjDerult", new double[] { 0.2, 4, 0, 0 } }, { "FelhoEjReszben", new double[] { 0, 2, 0, 0 } }, { "FelhoEjSzelMax", new double[] { 1, 30, 0, 0 } }

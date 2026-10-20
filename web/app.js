@@ -873,6 +873,16 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 // rekordok (a szerver metrikusan küldi): érték és részletek a választott mértékegységben
 function recQ(r) { return r.key === 'range' || r.key === 'tdrop' ? 'tdiff' : /^pdrop/.test(r.key) ? 'presd' : UNIT_Q[r.unit]; }
 function recValue(r) { return qtext(recQ(r), r.value, r.unit === 'km/h' ? 0 : r.dec, r.unit); }   // km/h egészre, mint a Szél fülön (10.9)
+// a rekord címe a küszöbbel a választott egységben (9.5: a szerver csak a számot küldi)
+function recTitle(r) {
+  if (r.thrQ === 'rainLt') return r.title + ' (< ' + rthr(r.thr) + '/nap)';
+  if (r.thrQ === 'rainGe') return r.title + ' (≥ ' + rthr(r.thr) + '/nap)';
+  return r.title;
+}
+// a hihetőségi határ fölötti hőmérséklet-csúcs jelzése (8.5)
+function recWarn(r) {
+  return r.unverified ? ' <span class="neg small" title="' + esc('A hihetőségi határ (' + ttext(r.thr) + ') fölött: valószínűleg a napsütés melegítette fel a hőmérő árnyékolóját. Beállítások › Helyszín') + '">⚠ ellenőrizetlen</span>' : '';
+}
 function recDetail(r) {
   // a szerver ÉÉÉÉ.HH.NN dátumai helyi formában (pl. „2026. ápr. 1.”), mint a többi dátum (6.5)
   const d = (r.detail || '').replace(/(\d{4})\.(\d{2})\.(\d{2})/g, (m, y, mo, da) => DS.fmt(y + '-' + mo + '-' + da, { year: 'numeric', month: 'short', day: 'numeric' }));

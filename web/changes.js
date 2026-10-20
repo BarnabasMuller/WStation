@@ -58,7 +58,7 @@ async function renderChanges() {
   // új rekordok
   if (recNow && recBefore) recNow.records.forEach(r => {
     const o = recBefore.records.find(x => x.key === r.key);
-    if (r.t >= from && (!o || o.value !== r.value)) items.push([7, '🏆 új rekord: <b>' + esc(r.title.toLowerCase()) + '</b> ' + recValue(r), { t: r.t }]);
+    if (r.t >= from && (!o || o.value !== r.value)) items.push([7, '🏆 új rekord: <b>' + esc(recTitle(r).toLowerCase()) + '</b> ' + recValue(r), { t: r.t }]);
   });
   // adathiány
   const gaps = (META.gaps || []).filter(g => g.to >= from && g.to - g.from >= 3 * H);

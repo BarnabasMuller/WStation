@@ -524,3 +524,4 @@ ol.steps li { margin: 6px 0; line-height: 1.5; }
 .pl-row { margin: 8px 0 12px; }
 .pl-row > label { display: block; font-weight: 600; margin-bottom: 4px; font-size: max(13.5px, var(--minf)); }
 .pl-row .hint { margin-top: 3px; }
+.pl-sub { margin: 16px 0 4px; font-size: max(14px, var(--minf)); color: var(--muted); }
