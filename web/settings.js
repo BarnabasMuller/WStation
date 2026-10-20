@@ -340,11 +340,54 @@ $('placeSave').addEventListener('click', async () => {
   } catch (e) { msg.className = 'msg err'; msg.textContent = '⚠ ' + e.message; }
 });
 
+// ------------------------------------------------------------------ felhőzet-ellenőrzés (METAR)
+async function renderMetar() {
+  const dl = await api('/api/dlsettings');
+  const m = await api('/api/cloud/metar').catch(() => null);
+  const on = String(dl.MetarEllenorzes || '').toLowerCase() === 'true';
+  const code = dl.MetarKod || 'LHBP';
+  const cat = ['derült', 'részben felhős', 'borult'];
+  let res;
+  if (!m || !m.pairs) {
+    res = '<p class="muted">Még nincs összevethető adat. ' + (on ? 'A következő letöltéskor (vagy a „Letöltés most” gombbal) megjönnek a jelentések; a repülőtér kb. az utolsó 8–15 napot adja vissza.' : 'Kapcsold be, és a következő letöltéskor megjönnek a jelentések.') + '</p>';
+  } else {
+    const mx = m.matrix || [];
+    res = '<p><b>' + num(m.pairs, 0) + '</b> összevetés (' + esc(m.icao) + ', ' + F.dayY.format(m.from) + ' – ' + F.dayY.format(m.to) + '): ' +
+      'a kategória (derült / részben felhős / borult) <b>' + num(m.agree, 0) + ' %</b>-ban egyezik, átlagosan <b>' + num(m.meanAbsOkta, 1) + ' okta</b> az eltérés.</p>' +
+      '<p class="small">Nappal: ' + num(m.dayPairs, 0) + ' összevetés, ' + num(m.dayAgree, 0) + ' % egyezés · éjjel: ' + num(m.nightPairs, 0) + ' összevetés, ' + num(m.nightAgree, 0) + ' % egyezés.</p>' +
+      '<div class="tablewrap"><table class="dtable small"><caption class="muted">Sor: a repülőtér szerint · oszlop: a becslés szerint (darab)</caption><thead><tr><th></th>' + cat.map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>' +
+      mx.map((r, i) => '<tr><th>' + cat[i] + '</th>' + r.map(x => '<td>' + x + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>' +
+      (m.suggestClearK != null && Math.abs(m.suggestClearK - m.curClearK) >= 0.02 ? '<p>Javaslat: a <b>derült-küszöb</b> legyen <b>' + num(m.suggestClearK, 2) + '</b> (most ' + num(m.curClearK, 2) + '; ' + num(m.clearN, 0) + ' derült időpont alapján). <button class="btn small" id="metarApply">Alkalmaz</button></p>' : '') +
+      '<p class="hint">A repülőtér kb. 20 km-re lehet: a felhőzet helyben eltérhet, ezért ez statisztikai ellenőrzés, nem pillanatnyi.</p>';
+  }
+  $('metarBox').innerHTML =
+    '<div class="row2"><label class="switch"><input type="checkbox" id="metarOn"' + (on ? ' checked' : '') + '><span class="slider"></span><span>Ellenőrzés a repülőtér jelentéseivel</span></label></div>' +
+    '<div class="pl-row"><label for="metarCode">Repülőtér ICAO-kódja</label><input class="inp" id="metarCode" maxlength="4" style="width:80px;text-transform:uppercase" value="' + esc(code) + '"> <span class="hint">pl. LHBP (Budapest), LOWW (Bécs), LHDC (Debrecen)</span><div class="perr" id="metarCodeErr"></div></div>' +
+    '<div class="row2"><button class="btn primary" id="metarSave">Mentés</button><button class="btn" id="metarNow">Letöltés most</button></div>' + res;
+  $('metarSave').addEventListener('click', async () => {
+    const c = $('metarCode').value.trim().toUpperCase();
+    if (!/^[A-Z]{4}$/.test(c)) { $('metarCodeErr').textContent = '⚠ 4 betű, pl. LHBP'; return; }
+    try { await post('/api/dlsettings', { MetarEllenorzes: $('metarOn').checked ? 'true' : 'false', MetarKod: c }); $('metarMsg').className = 'msg ok'; $('metarMsg').textContent = '✔ Mentve.'; renderMetar(); }
+    catch (e) { $('metarMsg').className = 'msg err'; $('metarMsg').textContent = '⚠ ' + e.message; }
+  });
+  $('metarNow').addEventListener('click', async () => {
+    $('metarMsg').className = 'msg'; $('metarMsg').textContent = 'Letöltés…'; $('metarNow').disabled = true;
+    try { await post('/api/cloud/metar'); $('metarMsg').className = 'msg ok'; $('metarMsg').textContent = '✔ Kész.'; renderMetar(); }
+    catch (e) { $('metarMsg').className = 'msg err'; $('metarMsg').textContent = '⚠ ' + e.message; }
+    finally { if ($('metarNow')) $('metarNow').disabled = false; }
+  });
+  if ($('metarApply')) $('metarApply').addEventListener('click', async () => {
+    try { await post('/api/ini', { FelhoDerultK: m.suggestClearK }); if (typeof waitReload === 'function') await waitReload(); $('metarMsg').className = 'msg ok'; $('metarMsg').textContent = '✔ Alkalmazva, újraszámolva.'; renderMetar(); }
+    catch (e) { $('metarMsg').className = 'msg err'; $('metarMsg').textContent = '⚠ ' + e.message; }
+  });
+}
+
 // ------------------------------------------------------------------ a Beállítások fül megnyitásakor
 async function renderSettingsV2() {
   applyFont(); syncUnitButtons(); $('langSel').value = lang();
   try { renderScheduleV2(await api('/api/schedule')); } catch (e) { $('schedNow').textContent = 'nem lekérdezhető'; }
   loadBackup(); loadChangelog(); renderPlace().catch(e => { $('placeBox').textContent = 'Nem tölthető be: ' + e.message; });
+  renderMetar().catch(e => { $('metarBox').textContent = 'Nem tölthető be: ' + e.message; });
   if (typeof renderCalib === 'function') renderCalib();
   if (typeof renderSuspect === 'function') renderSuspect($('suCard')).catch(e => { $('suCard').textContent = 'Nem tölthető be: ' + e.message; });
 }

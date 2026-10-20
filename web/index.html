@@ -426,6 +426,14 @@
       </div>
 
       <div class="card">
+        <h3>Felhőzet-ellenőrzés (METAR)</h3>
+        <p>A program a saját mérésekből becsli a felhőzetet. Ez a rész – ha bekapcsolod – a legközelebbi repülőtér óránkénti
+          jelentéseivel hasonlítja össze a becslést (NOAA Aviation Weather Center, ingyenes). Kikapcsolva vagy internet nélkül minden más ugyanúgy működik.</p>
+        <div id="metarBox"></div>
+        <div class="msg" id="metarMsg" role="status"></div>
+      </div>
+
+      <div class="card">
         <h3>Biztonsági mentés</h3>
         <p>Zip a mérésekről és az összes beállításról (presetek, kerti napló, futónapló is) az <code>appdata_letöltő\mentesek</code> mappába. A Letöltő minden futáskor, a Megjelenítő pedig induláskor ellenőrzi, esedékes-e – így ütemezett letöltés nélkül is működik.</p>
         <div class="row2">

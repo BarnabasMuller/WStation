@@ -142,9 +142,24 @@ Futás: komfortindex és futóruházat-tanácsadó; futás után 5 adatból tanu
 érzet, ki futott). Jelentés: havi időjárás-jelentés és éves évkönyv, nyomtatható / PDF.
 
 
+FELHŐZET (BECSLÉS)
+------------------
+
+A program a saját mérésekből becsli a felhőzetet (%-ban és oktában), és a valószínű felhőtípust:
+nappal a napsugárzásból (mennyivel gyengébb, mint egy derült napon ugyanilyen napállásnál – ebben
+benne van a fák, házak árnyéka is; ha ugrál: gomolyfelhő, ha sima és kissé gyenge: fátyolfelhő),
+éjjel a lehűlés üteméből (derült éjjel gyorsan hűl). Az Áttekintés Égbolt kártyáján, az Idővonal
+Napsugárzás paneljén (szaggatott szürke vonal), a heti összesítőben és a havi jelentésben látszik.
+Pontosság: magas napnál kb. ±1–2 okta, alacsony napnál, párában, télen gyengébb; éjjel csak
+3 kategória. A paraméterek az ƒx ablakban állíthatók. A Beállítások › Felhőzet-ellenőrzés (alapból
+kikapcsolva) a legközelebbi repülőtér jelentéseivel hasonlítja össze, és javasol küszöböt.
+
+
 BEÁLLÍTÁSOK
 -----------
 
+- Helyszín: a hely neve, időzóna, tartalék koordináták (csak ha az adatokban nincs), tengerszint
+  feletti magasság, a hőség-figyelő küszöbei, pénznem.
 - Automatikus letöltés: 15/30/60/180 percenként, egyedi gyakoriság (X perc/óra/nap), naponta adott
   időpontban, vagy hetente kiválasztott napokon (Windows Feladatütemező).
 - Biztonsági mentés: gyakoriság, megtartott darabszám, „Mentés most”; a Megjelenítő induláskor is ellenőrzi.

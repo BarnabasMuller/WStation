@@ -288,6 +288,15 @@ namespace Idojaras
                     try { var sc29 = new DSchedule { from = "02-29", to = "03-31", yearly = true }; on29 = Enumerable.Range(0, 365).Count(i => DroughtStore.ProgramOn(pg3, sc29, new DateTime(2026, 1, 1).AddDays(i))); }
                     catch (Exception ex) { err29 = ex.Message; }
                     Ok(err29 == null && on29 > 0, "Febr. 29-i éves időszak nem szökőévben (2.2)", err29 ?? on29 + " öntözési nap");
+                    // --- 2.2: felhőzet-becslés (napállás, okta-képlet, futás a mintán)
+                    long solstice = (long)(new DateTime(2026, 6, 21, 11, 0, 0, DateTimeKind.Utc) - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                    double hs = Cloud.SunElevation(solstice, 47.46, 18.96);
+                    var cs = new Settings();
+                    double o1 = Cloud.OktaFromK(cs.CloudClearK * 1.0, cs), o0 = Cloud.OktaFromK(0.05, cs);
+                    var cb = Cloud.Estimate(ds, s, ds.T[ds.N - 1] - 86400, ds.T[ds.N - 1]);
+                    int est = cb.Count(x => !double.IsNaN(x.Pct));
+                    Ok(Math.Abs(hs - 65.6) < 1 && o1 == 0 && o0 > 7.5 && est > 50, "Felhőzet-becslés (2.2)",
+                       "napmagasság jún. 21. 13:00 helyi: " + N(hs, 1) + "° (várt ~65,6), okta k_derültnél: " + N(o1, 1) + ", nagyon gyenge sugárzásnál: " + N(o0, 1) + ", becsült 10 perces lépés az utolsó napon: " + est);
                     // --- 2.2: hibás program javításkor csak az az egy esik ki
                     var rc = DConfig.Defaults();
                     rc.programs.Add(new DProgram { id = "jo", name = "Jó", zone = rc.profiles[0].id, days = "1", unit = "mm", amount = 5 });

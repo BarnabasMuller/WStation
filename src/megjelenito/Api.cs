@@ -125,7 +125,7 @@ namespace Idojaras
     }
     static class Api
     {
-        public const string Version = "2.2.2";
+        public const string Version = "2.2.3";
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
         delegate double Getter(int i);
 
@@ -185,6 +185,21 @@ namespace Idojaras
                 case "/api/events": return Analysis.EventsJson(ds, AppState.S);
                 case "/api/records": { int y; int.TryParse(q["year"] ?? "0", out y); return Analysis.RecordsJson(ds, AppState.S, q["clean"] != "0", y, q["ranges"]); }
                 case "/api/wind": return Analysis.WindJson(ds, AppState.S, QLong(q, "from", ds.T[0] * 1000), QLong(q, "to", ds.T[ds.N - 1] * 1000));
+                // felhőzet-becslés (TERV_4 5. pont)
+                case "/api/cloud": return Cloud.SeriesJson(ds, AppState.S, QLong(q, "from", (ds.T[ds.N - 1] - 7 * 86400) * 1000), QLong(q, "to", (ds.T[ds.N - 1] + 1) * 1000));
+                case "/api/cloud/now": return Cloud.NowJson(ds, AppState.S);
+                case "/api/cloud/days": return Cloud.DaysJson(ds, AppState.S);
+                case "/api/cloud/metar":
+                    if (method == "POST")
+                    {
+                        // „Letöltés most”: a Letöltő csak a METAR-t kéri le (rövid időkorláttal; a fő letöltéshez nem nyúl)
+                        string exe = AppState.L.FindDownloader();
+                        if (exe == null) return "{\"error\":\"Nem találom a Letöltőt a programmappában.\"}";
+                        var p = Process.Start(new ProcessStartInfo(exe, "--metar --nowait") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base });
+                        if (!p.WaitForExit(40000)) { try { p.Kill(); } catch { } return "{\"error\":\"A METAR-letöltés nem fejeződött be 40 másodperc alatt.\"}"; }
+                        if (p.ExitCode != 0) return "{\"error\":\"A METAR nem érhető el (nincs internet, vagy hibás a repülőtér kódja). Részletek: appdata_letöltő\\\\lekerdezes_naplo.log\"}";
+                    }
+                    return Cloud.MetarJson(ds, AppState.S, AppState.L);
                 case "/api/hourly": return Analysis.HourlyJson(ds, q["metric"] ?? "temp", q["ranges"]);
                 case "/api/quality": return Analysis.QualityJson(ds, q["ranges"]);
                 case "/api/vars": return Analysis.VarsJson(ds, q);

@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.2.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.2.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.3.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.3.0")]
 
 namespace WuLetolto
 {
@@ -186,6 +186,12 @@ HosegHatar=33
 RiasztasIsmetlesOra=6
 CsendesTol=22
 CsendesIg=7
+
+# --- Felhőzet-ellenőrzés (opcionális) ---
+# A legközelebbi repülőtér METAR-jelentései (NOAA Aviation Weather Center, ingyenes, kulcs nélkül),
+# csak a Megjelenítő felhőzet-becslésének ellenőrzéséhez. Kikapcsolva (vagy internet nélkül) semmi nem áll le.
+MetarEllenorzes=false
+MetarKod=LHBP
 ";
 
         public static void Load(string path, bool interactive)
@@ -991,7 +997,14 @@ CsendesIg=7
                     Log.Warn("A másik letöltés 15 perc alatt sem fejeződött be. Ez a példány kilép.");
                     code = 4;
                 }
-                else code = Run(appDir, dataDir, !noWait);
+                else if (args.Any(a => a.Equals("--metar", StringComparison.OrdinalIgnoreCase)))
+                    code = MetarFetch.Run(appDir, dataDir, true) ? 0 : 6;   // csak a METAR (kézi próba)
+                else
+                {
+                    code = Run(appDir, dataDir, !noWait);
+                    // a felhőzet-ellenőrzés soha nem befolyásolja a kilépési kódot és a fő letöltést
+                    try { MetarFetch.Run(appDir, dataDir, false); } catch (Exception ex) { Log.Warn("METAR: " + ex.Message); }
+                }
             }
             catch (FatalException fe) { Log.Error(fe.Message); code = fe.Code; }
             catch (SaveException se) { Log.Error(se.Message); code = 3; }
@@ -1535,6 +1548,101 @@ CsendesIg=7
     }
 
     // ------------------------------------------------------------------ Heti biztonsági mentés
+
+    // ------------------------------------------------------------------ METAR (opcionális felhőzet-ellenőrzés a Megjelenítőhöz)
+    // NOAA Aviation Weather Center: https://aviationweather.gov/api/data/metar (ingyenes, kulcs nélkül, kb. 15 nap visszamenőleg)
+    // Eredmény: data\metar_<ICAO>.csv (epoch;obsTimeUtc;icao;cover;okta;cb;raw). Minden hiba csak figyelmeztetés.
+    static class MetarFetch
+    {
+        static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+
+        public static bool Run(string appDir, string dataDir, bool force)
+        {
+            var ini = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            string iniPath = Path.Combine(appDir, "beallitasok.ini");
+            if (File.Exists(iniPath))
+                foreach (var raw in File.ReadAllLines(iniPath, Encoding.UTF8))
+                {
+                    string l = raw.Trim(); int eq = l.IndexOf('=');
+                    if (l.Length > 0 && l[0] != '#' && eq > 0) ini[l.Substring(0, eq).Trim()] = l.Substring(eq + 1).Trim();
+                }
+            string v;
+            bool on = ini.TryGetValue("MetarEllenorzes", out v) && (v.ToLowerInvariant() == "true" || v == "1");
+            if (!on && !force) return true;
+            string icao = ini.TryGetValue("MetarKod", out v) ? v.Trim().ToUpperInvariant() : "LHBP";
+            if (!System.Text.RegularExpressions.Regex.IsMatch(icao, "^[A-Z]{4}$")) { Log.Warn("METAR: érvénytelen repülőtér-kód (" + icao + "), 4 betű kell, pl. LHBP."); return false; }
+            string path = Path.Combine(dataDir, "metar_" + icao + ".csv");
+            // a meglévő sorok (epoch szerint)
+            var rows = new SortedDictionary<long, string>();
+            if (File.Exists(path))
+                foreach (var l in File.ReadAllLines(path, Encoding.UTF8).Skip(1))
+                {
+                    long t; int sc = l.IndexOf(';');
+                    if (sc > 0 && long.TryParse(l.Substring(0, sc), NumberStyles.Integer, Inv, out t)) rows[t] = l;
+                }
+            int hours = rows.Count == 0 ? 360 : 72;   // először 15 nap, utána az utolsó 3 nap
+            string body;
+            try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | (SecurityProtocolType)12288; }
+            catch { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
+            try
+            {
+                var req = (HttpWebRequest)WebRequest.Create("https://aviationweather.gov/api/data/metar?ids=" + icao + "&format=json&hours=" + hours);
+                req.Timeout = 15000; req.ReadWriteTimeout = 15000; req.UserAgent = "WStation";
+                req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                using (var resp = (HttpWebResponse)req.GetResponse())
+                using (var sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8)) body = sr.ReadToEnd();
+            }
+            catch (Exception ex) { Log.Warn("METAR (" + icao + "): nem elérhető (" + ex.Message + "). A felhőzet-ellenőrzés most kimarad, minden más rendben."); return false; }
+            int added = 0;
+            try
+            {
+                var js = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+                var arr = js.DeserializeObject(body) as object[];
+                if (arr == null) { Log.Warn("METAR (" + icao + "): nincs adat (ismeretlen repülőtér?)."); return false; }
+                foreach (var o in arr.OfType<Dictionary<string, object>>())
+                {
+                    object ot, raw, cover, clouds;
+                    if (!o.TryGetValue("obsTime", out ot)) continue;
+                    long t = Convert.ToInt64(ot, Inv);
+                    string rawOb = o.TryGetValue("rawOb", out raw) ? Convert.ToString(raw) : "";
+                    string cov = o.TryGetValue("cover", out cover) ? Convert.ToString(cover) : "";
+                    double okta = OktaOf(cov);
+                    if (o.TryGetValue("clouds", out clouds) && clouds is object[])
+                        foreach (var c in ((object[])clouds).OfType<Dictionary<string, object>>())
+                        { object cc; if (c.TryGetValue("cover", out cc)) okta = Math.Max(okta, OktaOf(Convert.ToString(cc))); }
+                    if (double.IsNaN(okta)) continue;
+                    bool cb = System.Text.RegularExpressions.Regex.IsMatch(rawOb, @"\b(FEW|SCT|BKN|OVC)\d{3}(CB|TCU)\b");
+                    string line = t.ToString(Inv) + ";" + DateTimeOffset.FromUnixTimeSeconds(t).UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", Inv) + ";" + icao + ";" + cov + ";" +
+                                  okta.ToString("0.0", Inv) + ";" + (cb ? "1" : "0") + ";" + rawOb.Replace(";", ",");
+                    if (!rows.ContainsKey(t)) added++;
+                    rows[t] = line;
+                }
+            }
+            catch (Exception ex) { Log.Warn("METAR (" + icao + "): értelmezhetetlen válasz (" + ex.Message + ")."); return false; }
+            // legfeljebb kb. 400 nap marad meg
+            long keepFrom = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 400L * 86400;
+            var sb = new StringBuilder("epoch;obsTimeUtc;icao;cover;okta;cb;raw\r\n");
+            foreach (var kv in rows.Where(x => x.Key >= keepFrom)) sb.Append(kv.Value).Append("\r\n");
+            Guard.WriteAllText(path + ".tmp", sb.ToString(), new UTF8Encoding(true));
+            if (File.Exists(path)) Guard.Replace(path + ".tmp", path, null); else Guard.Move(path + ".tmp", path);
+            Log.Ok("METAR (" + icao + "): " + added + " új jelentés, összesen " + rows.Count + ".");
+            return true;
+        }
+
+        // a borultság oktában a METAR fedettségi kódjából (a rétegek közül a legnagyobb számít)
+        static double OktaOf(string c)
+        {
+            switch ((c ?? "").Trim().ToUpperInvariant())
+            {
+                case "CAVOK": case "SKC": case "CLR": case "NSC": case "NCD": return 0;
+                case "FEW": return 1.5;
+                case "SCT": return 3.5;
+                case "BKN": return 6;
+                case "OVC": case "OVX": case "VV": return 8;
+                default: return double.NaN;
+            }
+        }
+    }
 
     static class Backup
     {

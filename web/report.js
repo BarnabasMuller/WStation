@@ -65,6 +65,9 @@ async function monthReport(d, m) {
   const s = monthStats(d, m);
   const ev = await getRainEvents();
   const evs = ev.events.filter(e => F.ymd.format(e.start).startsWith(m)).sort((a, b) => b.total - a.total);
+  const cdays = typeof getCloudDays === 'function' ? await getCloudDays().catch(() => null) : null;
+  const cvals = cdays && cdays.date ? cdays.date.map((x, i) => x.startsWith(m) ? cdays.pct[i] : null).filter(x => x != null) : [];
+  const cloudAvg = cvals.length ? cvals.reduce((a, b) => a + b, 0) / cvals.length : null;
   const dr = typeof getDrought === 'function' ? await getDrought().catch(() => null) : null;
   const title = m.slice(0, 4) + '. ' + MONTHS_FULL[+m.slice(5) - 1];
   const day = i => i == null ? '' : ' (' + DS.fmt(d.date[i], { month: 'short', day: 'numeric' }) + ')';
@@ -81,7 +84,7 @@ async function monthReport(d, m) {
     '<div class="rep-grid"><div>' + '<h3>Hőmérséklet</h3>' + repTable([
       ['Átlag', ttext(s.tavg)], ['Legmagasabb', (s.imax != null ? ttext(d.tmax[s.imax]) + day(s.imax) : '–')], ['Legalacsonyabb', (s.imin != null ? ttext(d.tmin[s.imin]) + day(s.imin) : '–')],
       ['Hőségnapok / trópusi éjszakák', s.hot + ' / ' + s.trop], ['Fagyos napok', s.frost]]) +
-    '<h3>Szél és napsütés</h3>' + repTable([['Legerősebb lökés', s.igust != null ? wtext(d.gust[s.igust]) + day(s.igust) : '–'], ['Napsütés', num(s.sun, 0) + ' óra'], ['Napenergia', num(s.energy, 0) + ' kWh/m²']]) +
+    '<h3>Szél és napsütés</h3>' + repTable([['Legerősebb lökés', s.igust != null ? wtext(d.gust[s.igust]) + day(s.igust) : '–'], ['Napsütés', num(s.sun, 0) + ' óra'], ['Napenergia', num(s.energy, 0) + ' kWh/m²']].concat(cloudAvg != null ? [['Felhőzet (becslés, nappal)', num(cloudAvg, 0) + ' %']] : [])) +
     '</div><div><h3>Csapadék</h3>' + repTable([['Összesen', rtext(s.rain, 1)], ['Esős napok (≥ ' + rthr(1) + ')', s.rainy], ['Legcsapadékosabb nap', s.iwet != null && d.rain[s.iwet] > 0 ? rtext(d.rain[s.iwet], 1) + day(s.iwet) : '–']]) +
     '<h3>Legnagyobb esők</h3>' + (evs.length ? repTable(evs.slice(0, 6).map(e => [F.full.format(e.start), rtext(e.total, 1) + ', max ' + rrtext(e.maxRate, 0)])) : '<p class="muted">Nem volt esőesemény.</p>') +
     drHtml + '</div></div>' +

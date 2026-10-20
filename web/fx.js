@@ -64,6 +64,18 @@ const FX = {
     f: 'T<sub>hat</sub> = hőérzet − 0,3·max(0, v − 10) − 2·[esik] + 1,5·[napsütés]<br>érzet = β₀ + β₁·T<sub>hat</sub> + β₂·rétegek + β₃·intenzitás (lineáris modell, legkisebb négyzetek)',
     text: 'A futás után megadott érzetből (−3 fázott … +3 melege volt) tanul: kevés adatnál az ökölszabály a súlyosabb („öltözz úgy, mintha 10 °C-kal melegebb lenne”), több futás után egyre inkább a saját adatod. A javasolt rétegszám az, ahol a becsült érzet a legközelebb van a 0-hoz.'
   },
+  cloud: {
+    title: '☁️ Felhőzet (becslés a saját mérésekből)',
+    f: 'nappal: k = G<sub>mért</sub> · k<sub>Rs</sub> / G<sub>derült</sub>(napmagasság, irány) &nbsp;·&nbsp; N = 8 · ((1 − k / k<sub>derült</sub>) / A)<sup>1/B</sup> okta (Kasten–Czeplak)<br>' +
+       'jelleg: a k ' + '<i>t</i><sub>ablak</sub> perces átlaga és szórása (nagy szórás: gomolyfelhő; sima, kissé gyengített: fátyolfelhő; tartósan gyenge: réteg) · eső → felhős<br>' +
+       'éjjel: lehűlés szélcsendben ≥ ΔT<sub>derült</sub> °C/óra → derült, ≥ ΔT<sub>részben</sub> → részben felhős, alatta felhős; párás, ködös, ha a pára ≥ 97 % és T − T<sub>d</sub> &lt; 1 °C',
+    text: 'A becslés a napsugárzásból számol: derült időben a mért érték közel van ahhoz, amit az állomás a legtisztább napokon ugyanilyen napállásnál mér (ebben benne van a fák, házak árnyéka is). Minél gyengébb a mért sugárzás ehhez képest, annál több a felhő. A felhő típusa csak valószínűség. Magas napnál kb. ±1–2 okta pontos; alacsony napnál, télen, párában, vékony magas felhőnél gyengébb, éjjel csak durva (3 kategória). Az eredmény %-ban is (8 okta = 100 %). A Beállítások › Felhőzet-ellenőrzés a legközelebbi repülőtér jelentéseivel hasonlítja össze, és javasol küszöböt.',
+    params: [['FelhoKRs', 'A mért sugárzás szorzója', 'k_Rs', '', '1 (érzékelő-eltérésnél módosítható)'], ['FelhoDerultK', 'Derült-küszöb (tisztaégbolt-index)', 'k_derült', '', '0,7 (a METAR-ellenőrzés javasolhat)'],
+      ['FelhoA', 'Kasten–Czeplak A', 'A', '', '0,75'], ['FelhoB', 'Kasten–Czeplak B', 'B', '', '3,4'], ['FelhoNapMin', 'Nappal legalább ekkora napmagasság', 'h_min', '°', '20°'],
+      ['FelhoAblakPerc', 'Átlag és szórás ablaka', 't_ablak', 'perc', '30 perc'], ['FelhoGomolySzoras', 'Gomolyfelhő: a k szórása legalább', 'σ_gomoly', '', '0,15'],
+      ['FelhoEjDerult', 'Éjjel derült: lehűlés legalább', 'ΔT_derült', '°C/óra', '0,3'], ['FelhoEjReszben', 'Éjjel részben felhős: lehűlés legalább', 'ΔT_részben', '°C/óra', '0,1'],
+      ['FelhoEjSzelMax', 'Éjjel legfeljebb ekkora szél', 'v_max', 'km/h', '5 km/h (szélben a lehűlés nem a felhőzettől függ)']]
+  },
   suspect: { title: '🔎 Gyanús mérések', custom: true }
 };
 
@@ -202,7 +214,7 @@ const FX_PLACES = [
   ['futas', 'h3', /^Komfort most$/, 'comfort'], ['futas', 'h3', /^Mit vegyek fel/, 'runmodel'],
   ['eso', 'h2', /^Eső$/, 'rainevent'], ['szel', 'h2', /^Szél$/, 'windy'], ['szel', 'h3', /^Átlagszél$/i, 'beaufort'],
   ['stat', 'h2', /^Rekordok$/, 'thresholds'], ['stat', 'h2', /^Ez a hónap/, 'projection'], ['stat', 'h2', /^Adatminőség$/, 'suspect'],
-  ['idovonal', 'h2', /^Idővonal$/, 'front']
+  ['idovonal', 'h2', /^Idővonal$/, 'front'], ['attekintes', 'h3', /^Égbolt/, 'cloud']
 ];
 function decorateFx() {
   if (typeof decorateCalib === 'function') decorateCalib();
@@ -212,7 +224,8 @@ function decorateFx() {
     pg.querySelectorAll(tag).forEach(h => {
       if (h.querySelector('.fx')) return;
       const t = (h.firstChild && h.firstChild.nodeType === 3 ? h.firstChild.textContent : h.textContent).trim();
-      if (re.test(t)) h.insertAdjacentHTML('beforeend', ' <button class="fx" data-fx="' + key + '" title="Képlet, magyarázat és beállítások">ƒx</button>');
+      // a képernyőolvasónak egyedi név: melyik kártya képlete (7.8)
+      if (re.test(t)) h.insertAdjacentHTML('beforeend', ' <button class="fx" data-fx="' + key + '" title="Képlet, magyarázat és beállítások" aria-label="' + esc(t.replace(/\s+/g, ' ')) + ' – képlet, magyarázat és beállítások">ƒx</button>');
     });
   });
 }

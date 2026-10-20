@@ -1,6 +1,17 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.3 (2026-10-20) – felhőzet-becslés ==
+- Új: a felhőzet becslése a saját mérésekből, %-ban és oktában, a valószínű felhőtípussal (pl. „gomolyfelhők –
+  hol süt, hol nem”, „vékony magas felhő – fátyolos napsütés”) és megbízhatósággal. Nappal a napsugárzásból,
+  az állomás saját „derült égbolt” görbéjéhez mérve (ebben az árnyékolás is benne van), éjjel a lehűlés üteméből.
+  Látszik az Áttekintés Égbolt kártyáján, az Idővonal Napsugárzás paneljén, a heti összesítőben és a havi jelentésben;
+  a paraméterek az ƒx ablakban állíthatók.
+- Opcionális felhőzet-ellenőrzés a legközelebbi repülőtér METAR-jelentéseivel (Beállítások › Felhőzet-ellenőrzés,
+  alapból kikapcsolva): egyezés kategóriánként, nappal / éjjel, eltérés oktában, javaslat a derült-küszöbre.
+  Internet nélkül vagy kikapcsolva semmi nem áll le.
+- Égbolt kártya: a hold ugyanarra a napra szól, mint a napkelte; régi adatnál kiírja a dátumot.
+
 == 2.2.2 (2026-10-20) – WStation, helyszín, nyelvfüggő fájlnevek ==
 - Új név: WStation (ablak, telepítő: WStation_setup_v*.exe, parancsikon, ütemezett feladat, értesítések).
   Frissítéskor a régi „Időjárás” mappa, a régi parancsikon és a régi nevű ütemezett feladat is rendben átáll.

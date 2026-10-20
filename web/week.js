@@ -5,6 +5,7 @@ const WEEK_ROWS = [
   { k: 'temp', name: 'Hőmérséklet (min / max / átlag)' },
   { k: 'rain', name: 'Csapadék és max. intenzitás' },
   { k: 'sun', name: 'Napsütéses órák' },
+  { k: 'cloud', name: 'Felhőzet (becslés, nappal)' },
   { k: 'energy', name: 'Napenergia (kWh/m²)' },
   { k: 'wind', name: 'Átlagszél és max. lökés' },
   { k: 'dir', name: 'Uralkodó szélirány' },
@@ -19,7 +20,9 @@ function weekState() {
   UI.week = UI.week || {};
   const w = UI.week;
   if (!WEEK_MODES[w.mode]) w.mode = 'prev';
-  if (!Array.isArray(w.rows)) w.rows = ['temp', 'rain', 'sun', 'wind', 'dir'];
+  if (!Array.isArray(w.rows)) w.rows = ['temp', 'rain', 'sun', 'cloud', 'wind', 'dir'];
+  // 2.2: a felhőzet sora egyszer bekerül a meglévő beállításba is (utána ki-be kapcsolható)
+  if (!w.cloudAdded) { w.cloudAdded = true; if (!w.rows.includes('cloud')) w.rows.splice(Math.max(0, w.rows.indexOf('sun') + 1), 0, 'cloud'); }
   if (!['kmh', 'kn', 'bft'].includes(w.wind)) w.wind = (META && META.settings.windUnit === 'csomo') ? 'kn' : (META && META.settings.windUnit === 'beaufort') ? 'bft' : 'kmh';
   return w;
 }
@@ -87,6 +90,7 @@ async function renderWeek() {
   const w = weekState();
   const d = await getDays(true);
   const dates = weekDates();
+  const cd = w.rows.includes('cloud') && typeof getCloudDays === 'function' ? await getCloudDays().catch(() => null) : null;
   const today = DS.today();
   document.querySelectorAll('#weekMode button').forEach(b => b.classList.toggle('on', b.dataset.v === w.mode));
   $('weekTitle').textContent = DS.fmt(dates[0], { month: 'short', day: 'numeric' }) + ' – ' + DS.fmt(dates[6], { year: 'numeric', month: 'short', day: 'numeric' });
@@ -108,6 +112,7 @@ async function renderWeek() {
         '<div class="wk-sub">átlag ' + ttext(d.tavg[i], 1) + '</div>';
       if (rows.has('rain')) body += R('Csapadék', (d.rain[i] > 0 ? rtext(d.rain[i], 1) : '–') + (d.rate[i] > 0 ? '<small> · max ' + rrtext(d.rate[i], 0) + '</small>' : ''));
       if (rows.has('sun')) body += R('Napsütés', num(d.sun[i], 1) + ' h');
+      if (rows.has('cloud')) { const ci = cd && cd.idx[s]; body += R('Felhőzet', ci != null && cd.pct[ci] != null ? num(cd.pct[ci], 0) + ' %' : '–'); }
       if (rows.has('energy')) body += R('Napenergia', num(d.energy[i], 2) + ' kWh/m²');
       if (rows.has('wind')) body += R('Szél', windText(d.wind[i], w.wind, w.wind === 'kmh' ? 1 : 0) + '<small> · lökés ' + windText(d.gust[i], w.wind) + '</small>');
       if (rows.has('dir')) body += R('Irány', dirArrow(d.dir[i], 16) + ' ' + dirText(d.dir[i]));
@@ -177,6 +182,7 @@ initWeekControls();
 // új adat betöltésekor (indulás, Frissítés)
 function onDataLoaded() {
   DAYS = {};
+  if (typeof CLOUD_NOW !== 'undefined') { CLOUD_NOW = null; CLOUD_DAYS = null; CLOUD_SER = {}; }
   if (typeof RAIN !== 'undefined') RAIN = null;
   if (typeof MARKS !== 'undefined') MARKS = null;
   if (typeof renderChanges === 'function') setTimeout(() => renderChanges().catch(e => console.error(e)), 300);

@@ -437,7 +437,7 @@ const PANELS = [
   { title: 'Légnyomás', unit: 'hPa' },
   { title: 'Szél és széllökés', unit: 'km/h' },
   { title: 'Csapadék', unit: 'mm/h · mm' },
-  { title: 'Napsugárzás és UV-index', unit: 'W/m² · UV' }
+  { title: 'Napsugárzás, UV-index és felhőzet (becslés)', unit: 'W/m² · UV · %' }
 ];
 const SERIES_INFO = {}; // id -> { unit, dec }
 
@@ -472,7 +472,7 @@ function buildChart() {
 
   const C = {
     temp: cssVar('--c-temp'), dew: cssVar('--c-dew'), hum: cssVar('--c-hum'), pres: cssVar('--c-pres'),
-    wind: cssVar('--c-wind'), gust: cssVar('--c-gust'), rain: cssVar('--c-rain'), sun: cssVar('--c-sun'), uv: cssVar('--c-uv'), flag: cssVar('--c-flag')
+    wind: cssVar('--c-wind'), gust: cssVar('--c-gust'), rain: cssVar('--c-rain'), sun: cssVar('--c-sun'), uv: cssVar('--c-uv'), flag: cssVar('--c-flag'), cloud: cssVar('--muted')
   };
   const ln = (id, name, xi, yi, color, unit, dec, extra) => {
     SERIES_INFO[id] = { unit, dec };
@@ -502,7 +502,9 @@ function buildChart() {
       yBase(4, rlabel(), { min: 0, scale: false, position: 'right', splitLine: { show: false } }),
       yBase(5, 'W/m²', { min: 0, scale: false }),
       // az UV-skála legfeljebb 15 – egy lehetetlen tüske (pl. 130) ne lapítsa el a valódi görbét
-      yBase(5, 'UV', { min: 0, max: v => Math.max(1, Math.min(Math.ceil(v.max), 15)), scale: false, position: 'right', splitLine: { show: false } })
+      yBase(5, 'UV', { min: 0, max: v => Math.max(1, Math.min(Math.ceil(v.max), 15)), scale: false, position: 'right', splitLine: { show: false } }),
+      // a felhőzet-becslés saját, rejtett 0–100 %-os tengelye
+      yBase(5, '', { min: 0, max: 100, scale: false, show: false })
     ],
     axisPointer: { link: [{ xAxisIndex: 'all' }], lineStyle: { color: muted, type: 'dashed' } },
     tooltip: {
@@ -537,6 +539,7 @@ function buildChart() {
       flags('fRain', 4, 4),
       ln('sol', 'Napsugárzás', 5, 6, C.sun, 'W/m²', 0, { areaStyle: { color: C.sun, opacity: .18 }, markArea: gapAreas() }),
       ln('uv', 'UV-index', 5, 7, C.uv, '', 0, { lineStyle: { width: 1.3, color: C.uv } }),
+      ln('cloud', 'Felhőzet (becslés)', 5, 8, C.cloud, '%', 0, { lineStyle: { width: 1.2, color: C.cloud, type: 'dashed' }, areaStyle: { color: C.cloud, opacity: .10 }, z: 1 }),
       flags('fSun', 5, 6),
       flags('fUv', 5, 7)
     ]
@@ -580,6 +583,7 @@ function tooltipFmt(params) {
       html += p.marker + ' ' + p.seriesName + ': <b>' + wtext(d[3] != null ? d[3] : d[1]) + '</b>' + (windUnit() !== 'kmh' ? ' (' + num(d[3] != null ? d[3] : d[1], 1) + ' km/h)' : '') + (windUnit() !== 'bft' ? ' · ' + num(beaufortF(d[3] != null ? d[3] : d[1]), 1) + ' Bft' : '') + (p.seriesId === 'wind' && d[2] != null ? ' · ' + dirText(d[2]) + ' felől' : '') + '<br>';
       continue;
     }
+    if (p.seriesId === 'cloud') { html += p.marker + ' Felhőzet (becslés): <b>' + num(d[1], 0) + ' %</b>' + (d[3] != null ? ' (' + num(d[3], 0) + ' okta)' : ' (nappali átlag)') + (d[2] ? ' – ' + esc(d[2]) : '') + '<br>'; continue; }
     if (p.seriesId === 'rainDay') html += p.marker + ' ' + p.seriesName + ' (' + F.dayY.format(d[0]) + '): <b>' + num(d[1], rdec(1)) + ' ' + rlabel() + '</b><br>';
     else html += p.marker + ' ' + p.seriesName + ': <b>' + num(d[1], dec) + (u ? ' ' + u : '') + '</b>' + extra + '<br>';
   }
@@ -643,7 +647,8 @@ function applyData() {
       { id: 'sol', data: pts(g.sun, 'v') },
       { id: 'uv', data: pts(g.sun, 'uv') },
       { id: 'fSun', data: f.sun || [] },
-      { id: 'fUv', data: f.uv || [] }
+      { id: 'fUv', data: f.uv || [] },
+      { id: 'cloud', data: cloudPts() }
     ],
     yAxis: [{ name: tlabel() }, {}, { name: plabel() }, { name: wlabel() }, { name: rrlabel() }, { name: rlabel() }]
   });
@@ -685,7 +690,26 @@ async function refreshDetail() {
   const res = await api('/api/series?from=' + a + '&to=' + b + '&n=' + n + '&clean=' + (hideSuspect ? 1 : 0));
   if (token !== detailToken) return; // közben újabb zoom jött
   DETAIL = res;
+  // felhőzet-becslés: 45 napig 10 perces lépésekben, azon túl a napi (nappali) átlag
+  if (b - a <= 45 * D) {
+    const c = await api('/api/cloud?from=' + a + '&to=' + b).catch(() => null);
+    if (token !== detailToken) return;
+    CLOUD_SER.cur = c;
+  } else {
+    CLOUD_SER.cur = null;
+    if (typeof getCloudDays === 'function') await getCloudDays().catch(() => null);
+    if (token !== detailToken) return;
+  }
   applyData();
+}
+
+// felhőzet-becslés pontjai az idővonalhoz: [idő, %, jelleg, okta]
+let CLOUD_SER = {};
+function cloudPts() {
+  const c = CLOUD_SER.cur;
+  if (c && c.t) return c.t.map((t, i) => [t, c.pct[i], c.type[i], c.okta[i]]);
+  if (typeof CLOUD_DAYS !== 'undefined' && CLOUD_DAYS && CLOUD_DAYS.date) return CLOUD_DAYS.date.map((s, i) => [DS.ms(s) + 11 * H, CLOUD_DAYS.pct[i], CLOUD_DAYS.type[i], null]);
+  return [];
 }
 
 const rangeOf = {

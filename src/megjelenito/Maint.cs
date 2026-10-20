@@ -212,7 +212,10 @@ namespace Idojaras
         {
             { "MentesNaponta", v => { int n; return int.TryParse(v, out n) && n >= 0 && n <= 365; } },
             { "MentesekSzama", v => { int n; return int.TryParse(v, out n) && n >= 1 && n <= 1000; } },
-            { "Nyelv", v => v == "hu" || Langs.Exists(v) }
+            { "Nyelv", v => v == "hu" || Langs.Exists(v) },
+            // felhőzet-ellenőrzés a repülőtér METAR-jelentéseivel (opcionális)
+            { "MetarEllenorzes", v => v == "true" || v == "false" },
+            { "MetarKod", v => System.Text.RegularExpressions.Regex.IsMatch(v ?? "", "^[A-Z]{4}$") }
         };
 
         public static string Handle(string method, string body, out int status)

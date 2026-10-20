@@ -41,6 +41,15 @@ namespace Idojaras
         public double FallbackLat = 47.46, FallbackLon = 18.96;   // csak ha az adatokban nincs koordináta
         public double HeatWarn1 = 25, HeatWarn3 = 27;              // hőség-figyelő: napi középhőmérséklet (I., ill. III. fokozat)
         public string Currency = "Ft";
+        // felhőzet-becslés (ƒx ablak)
+        public double CloudKrs = 1.0;       // a mért sugárzás szorzója (érzékelő / 5 perces csúcsérték korrekciója)
+        public double CloudA = 0.75, CloudB = 3.4;   // Kasten–Czeplak állandók
+        public double CloudClearK = 0.7;    // e fölötti (sima) tisztaégbolt-index derültnek számít
+        public double CloudHmin = 20;       // ennél alacsonyabb napnál nappal nem becsül (°)
+        public int CloudWindowMin = 30;     // az átlag és a szórás ablaka (perc)
+        public double CloudCuStd = 0.15;    // a k szórása e fölött: gomolyfelhős
+        public double CloudNightClear = 0.3, CloudNightPart = 0.1;   // éjjeli lehűlés (°C/óra): derült / részben felhős határa
+        public double CloudNightWind = 5;   // éjjel e fölötti szélnél (km/h) nem becsül
 
         public List<string> Warnings = new List<string>();
 
@@ -64,6 +73,26 @@ HosegFigyelo1=25
 HosegFigyelo3=27
 # Pénznem a vízdíjhoz
 Penznem=Ft
+
+# --- Felhőzet becslése (a ƒx ablakban is állítható) ---
+# A mért napsugárzás szorzója (érzékelő-eltérés; a METAR-ellenőrzés javasolhat értéket)
+FelhoKRs=1.0
+# Kasten–Czeplak állandók: k = 1 - A * (N/8)^B
+FelhoA=0.75
+FelhoB=3.4
+# Derült-küszöb: a tisztaégbolt-index e fölött derült (a burkoló a legtisztább napokat adja)
+FelhoDerultK=0.7
+# Nappal csak ennél magasabb napnál becsül (fok)
+FelhoNapMin=20
+# Az átlag és a szórás ablaka (perc)
+FelhoAblakPerc=30
+# A tisztaégbolt-index szórása e fölött: gomolyfelhős (hol süt, hol nem)
+FelhoGomolySzoras=0.15
+# Éjjel: lehűlés °C/óra szélcsendben – e fölött derült, e fölött részben felhős, alatta felhős
+FelhoEjDerult=0.3
+FelhoEjReszben=0.1
+# Éjjel ennél erősebb szélnél (km/h) nem becsül
+FelhoEjSzelMax=5
 
 # --- Statisztikai küszöbök (°C) ---
 # Hőségnap: a napi maximum legalább ennyi
@@ -213,6 +242,17 @@ SzelesDelutanKmh=20
             s.HeatWarn1 = Num(d, "HosegFigyelo1", s.HeatWarn1, s);
             s.HeatWarn3 = Num(d, "HosegFigyelo3", s.HeatWarn3, s);
             if (d.TryGetValue("Penznem", out v) && v.Trim().Length > 0) s.Currency = v.Trim().Length > 6 ? v.Trim().Substring(0, 6) : v.Trim();
+            // felhőzet
+            s.CloudKrs = Math.Max(0.3, Math.Min(2, Num(d, "FelhoKRs", s.CloudKrs, s)));
+            s.CloudA = Math.Max(0.3, Math.Min(1, Num(d, "FelhoA", s.CloudA, s)));
+            s.CloudB = Math.Max(1, Math.Min(6, Num(d, "FelhoB", s.CloudB, s)));
+            s.CloudClearK = Math.Max(0.5, Math.Min(1.1, Num(d, "FelhoDerultK", s.CloudClearK, s)));
+            s.CloudHmin = Math.Max(5, Math.Min(40, Num(d, "FelhoNapMin", s.CloudHmin, s)));
+            s.CloudWindowMin = (int)Math.Max(10, Math.Min(120, Num(d, "FelhoAblakPerc", s.CloudWindowMin, s)));
+            s.CloudCuStd = Math.Max(0.03, Math.Min(0.5, Num(d, "FelhoGomolySzoras", s.CloudCuStd, s)));
+            s.CloudNightClear = Num(d, "FelhoEjDerult", s.CloudNightClear, s);
+            s.CloudNightPart = Num(d, "FelhoEjReszben", s.CloudNightPart, s);
+            s.CloudNightWind = Num(d, "FelhoEjSzelMax", s.CloudNightWind, s);
 
             // a letöltő beállításából az állomás
             var dl = ReadIni(L.DlIni);
@@ -245,7 +285,10 @@ SzelesDelutanKmh=20
             { "JelolUgras", new double[] { 0, 1, 0, 1 } }, { "JelolNapsutes", new double[] { 0, 1, 0, 1 } }, { "JelolKieses", new double[] { 0, 1, 0, 1 } },
             { "KiesesPerc", new double[] { 10, 1440, 1, 0 } }, { "GyanusKizarasa", new double[] { 0, 1, 0, 1 } },
             { "TartalekSzelesseg", new double[] { -90, 90, 0, 0 } }, { "TartalekHosszusag", new double[] { -180, 180, 0, 0 } },
-            { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } }
+            { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } },
+            { "FelhoKRs", new double[] { 0.3, 2, 0, 0 } }, { "FelhoA", new double[] { 0.3, 1, 0, 0 } }, { "FelhoB", new double[] { 1, 6, 0, 0 } }, { "FelhoDerultK", new double[] { 0.5, 1.1, 0, 0 } },
+            { "FelhoNapMin", new double[] { 5, 40, 0, 0 } }, { "FelhoAblakPerc", new double[] { 10, 120, 1, 0 } }, { "FelhoGomolySzoras", new double[] { 0.03, 0.5, 0, 0 } },
+            { "FelhoEjDerult", new double[] { 0.2, 4, 0, 0 } }, { "FelhoEjReszben", new double[] { 0, 2, 0, 0 } }, { "FelhoEjSzelMax", new double[] { 1, 30, 0, 0 } }
         };
         // szöveges, szerkeszthető kulcsok (a helyszínhez)
         public static readonly HashSet<string> TextKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "HelyNev", "Idozona", "Penznem" };

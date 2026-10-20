@@ -63,6 +63,16 @@ Beállítás: a Megjelenítő Beállítások fülén (gyakoriság, megtartott da
 MentesNaponta, MentesekSzama sorokban az appdata_letöltő\beallitasok.ini-ben.
 
 
+FELHŐZET-ELLENŐRZÉS (METAR, OPCIONÁLIS)
+---------------------------------------
+
+Ha a Megjelenítő Beállítások › Felhőzet-ellenőrzés részében bekapcsolod (MetarEllenorzes=true, MetarKod=LHBP),
+a Letöltő minden futás végén letölti a repülőtér METAR-jelentéseit (NOAA Aviation Weather Center, ingyenes,
+kulcs nélkül) a data\metar_<KÓD>.csv fájlba. Ez csak a felhőzet-becslés ellenőrzésére szolgál: ha nincs
+internet vagy a szolgáltatás nem elérhető, csak egy figyelmeztetés kerül a naplóba, a fő letöltés és a
+kilépési kód nem változik. Kézi próba: Letöltő.exe --metar
+
+
 NYELV
 -----
 
@@ -84,4 +94,5 @@ KILÉPÉSI KÓDOK
 --------------
 
 0 rendben · 1 beállítási hiba (pl. nincs API kulcs) · 2 API kulcs hiba · 3 fájl olvasási/mentési hiba ·
-4 már fut egy példány · 5 nincs írási jog · 9 váratlan hiba
+4 már fut egy példány · 5 nincs írási jog · 6 kész, de hálózati hiba miatt néhány lekérdezés elmaradt ·
+9 váratlan hiba

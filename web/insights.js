@@ -148,7 +148,8 @@ async function renderInsights() {
 
   // égbolt
   const ys = sunTimes(DS.add(t.date || DS.today(), -1), lat, lon);
-  const mp = moonPhase(now);
+  // a hold ugyanarra a napra, mint a napkelte (régi adatnál az utolsó adatnap dele) – 9.2
+  const mp = moonPhase(isToday || !t.date ? now : DS.ms(t.date) + 12 * H);
   const sky = sun.rise ? 'Napkelte <b>' + F.time.format(sun.rise) + '</b> · napnyugta <b>' + F.time.format(sun.set) + '</b><br>Nappal: <b>' + hm(sun.len) + '</b> (' + (sun.len >= ys.len ? '+' : '−') + Math.round(Math.abs(sun.len - ys.len) * 60) + ' perc tegnaphoz képest)' : '';
 
   let card = document.getElementById('watchCard');
@@ -165,12 +166,27 @@ async function renderInsights() {
 
   let skyCard = document.getElementById('skyCard');
   if (!skyCard) { skyCard = document.createElement('div'); skyCard.id = 'skyCard'; skyCard.className = 'card'; $('today').appendChild(skyCard); }
-  skyCard.innerHTML = '<h3>Égbolt</h3><div class="moon">' + mp.icon + '</div>' +
-    '<div class="line">' + sky + '</div>' +
+  // felhőzet-becslés (TERV_4 5. pont)
+  const cl = await getCloudNow().catch(() => null);
+  const cn = cl && cl.now;
+  const cloudLine = cn ? '<div class="line cloud-line">Felhőzet (becslés): <b>' + num(cn.pct, 0) + ' %</b> (' + num(cn.okta, 0) + ' okta) – ' + esc(cn.type) +
+      ' <span class="muted small">· ' + (cn.src === 'éjjel' ? 'éjjeli becslés, ' : '') + 'megbízhatóság: ' + esc(cn.conf || '–') + (isToday ? '' : ', ' + F.full.format(cn.t)) + '</span></div>' +
+      (cl.dayPct != null ? '<div class="line small">Nappal átlagosan ' + num(cl.dayPct, 0) + ' % – ' + esc(cl.dayType || '') + '</div>' : '')
+    : '<div class="line small muted">Felhőzet: most nem becsülhető (alacsony nap, szürkület vagy szél).</div>';
+  skyCard.innerHTML = '<h3>Égbolt' + (isToday ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0">(' + DS.fmt(t.date, { month: 'short', day: 'numeric' }) + ')</span>') + '</h3><div class="moon">' + mp.icon + '</div>' +
+    '<div class="line">' + sky + '</div>' + cloudLine +
     '<div class="line">Hold: <b>' + mp.name + '</b>, ' + num(mp.illum * 100, 0) + '% megvilágított</div>' +
     '<div class="line small">Telihold: ' + F.day.format(mp.nextFull) + ' · újhold: ' + F.day.format(mp.nextNew) + '</div>';
 
   renderOnThisDay(d);
+}
+
+// felhőzet-becslés: a legutóbbi és a napi átlagok (új adatnál ürül, lásd onDataLoaded)
+let CLOUD_NOW = null, CLOUD_DAYS = null;
+async function getCloudNow() { if (!CLOUD_NOW) CLOUD_NOW = await api('/api/cloud/now'); return CLOUD_NOW; }
+async function getCloudDays() {
+  if (!CLOUD_DAYS) { const d = await api('/api/cloud/days'); d.idx = {}; (d.date || []).forEach((s, i) => d.idx[s] = i); CLOUD_DAYS = d; }
+  return CLOUD_DAYS;
 }
 
 // „Ezen a napon” több év adatánál; egy évnél „A hónap legjei eddig”
