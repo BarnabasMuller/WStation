@@ -36,7 +36,7 @@ AUTOMATIKUS FUTTATÁS
 --------------------
 
 A telepítő (vagy a Megjelenítő Beállítások füle) a Windows Feladatütemezőjében beállítja
-a „Budaörsi időjárás – letöltés” feladatot: 15 / 30 / 60 percenként, 3 óránként, egyedi gyakorisággal,
+a „WStation – letöltés” feladatot: 15 / 30 / 60 percenként, 3 óránként, egyedi gyakorisággal,
 naponta adott időpontban vagy hetente kiválasztott napokon.
 Ütemezve a Letöltő nem nyit ablakot. Ha épp fut egy letöltés (pl. a Frissítés gombtól),
 a következő megvárja.

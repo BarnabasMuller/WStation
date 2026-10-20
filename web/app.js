@@ -1,5 +1,5 @@
 'use strict';
-/* Budaörsi időjárás – felület */
+/* WStation – felület */
 
 let TZ = 'Europe/Budapest';   // a META-ból felülíródik (Beállítások › Helyszín › Időzóna)
 // a hely neve a felületen (Beállítások › Helyszín; alapból az állomás WU-helyneve)

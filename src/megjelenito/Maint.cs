@@ -90,7 +90,8 @@ namespace Idojaras
             try { var parent = Directory.GetParent(AppState.L.Base); if (parent != null) dirs.Add(parent.FullName); } catch { }
             var res = new List<string>();
             foreach (var d in dirs)
-                try { res.AddRange(Directory.GetFiles(d, "Idojaras_telepito*.exe")); } catch { }
+                foreach (var pat in new[] { "WStation_setup*.exe", "Idojaras_telepito*.exe" })   // új és régi (2.2.1-ig) név
+                    try { res.AddRange(Directory.GetFiles(d, pat)); } catch { }
             return res;
         }
 

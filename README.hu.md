@@ -15,7 +15,7 @@ Egy budaörsi állomáshoz készült, de bármely Weather Underground házi áll
 |---|---|---|
 | **Letöltő** | `Letöltő.exe` | A WU PWS API-ból CSV-be tölti az állomás adatait; maga dönti el, mit érdemes lekérdezni (pillanatnyi állapot, napi összesítő, hiányzó napok 5 perces részletességgel), naplóz, figyel az API-limitekre, ütemezhető a Feladatütemezővel, és Windows-riasztásokat küld (fagy, nyomásesés, erős szél, felhőszakadás, hőség). |
 | **Megjelenítő** | `Megjelenítő.exe` | Internet nélkül is működő felület (WebView2 + Apache ECharts): idővonal hat összekapcsolt grafikonnal, naptár-hőtérkép, szárazság-modul, eső- és szélstatisztika, rekordok, jelentések. |
-| **Telepítő** | `Idojaras_telepito_v2.1.exe` | Egyetlen exe, benne mindkét program és a leírások; kezeli az új telepítést, a frissítést, a régi mappaszerkezetet és a futó programot; a nyelvet a Windowsból ajánlja. |
+| **Telepítő** | `WStation_setup_v2.2.x.exe` | Egyetlen exe, benne mindkét program és a leírások; kezeli az új telepítést, a frissítést, a régi mappaszerkezetet és a futó programot; a nyelvet a Windowsból ajánlja. |
 
 Főbb tudnivalók a Megjelenítőről:
 
@@ -44,7 +44,7 @@ build.bat
 dist\bin\Megjelenito.exe --teszt --mappa <mappa, benne data\>
 ```
 
-Eredmény: `dist\Idojaras_telepito_v2.1.exe`, valamint `dist\bin\Megjelenito.exe` és `dist\bin\Letolto.exe`.
+Eredmény: `dist\WStation_setup_v2.2.x.exe`, valamint `dist\bin\Megjelenito.exe` és `dist\bin\Letolto.exe`.
 
 ## Fejlesztőknek
 

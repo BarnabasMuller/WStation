@@ -158,7 +158,7 @@ AJUSTES
   sobrecalentamiento por el sol, primera medición tras una interrupción) se activan por separado, con
   parámetros; el número de mediciones marcadas se ve al instante.
 - Registro de cambios: cuándo, qué y a qué cambiaste; un clic restaura el valor anterior.
-- Actualización: si en la carpeta del programa o junto a ella hay un Idojaras_telepito_v*.exe más nuevo, una
+- Actualización: si en la carpeta del programa o junto a ella hay un WStation_setup_v*.exe más nuevo, una
   barra lo ofrece.
 - Exportación a Excel: el resumen diario en CSV, en las unidades elegidas.
 

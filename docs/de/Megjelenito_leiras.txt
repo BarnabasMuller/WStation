@@ -159,7 +159,7 @@ EINSTELLUNGEN
   Wert, Spitze, Überhitzung durch Sonne, erste Messung nach Ausfall) getrennt schaltbar, mit Parametern;
   die Zahl der markierten Messungen erscheint sofort.
 - Änderungsprotokoll: wann, was und worauf du geändert hast; ein Klick stellt den alten Wert wieder her.
-- Update: liegt im Programmordner oder daneben ein neueres Idojaras_telepito_v*.exe, bietet eine Leiste es an.
+- Update: liegt im Programmordner oder daneben ein neueres WStation_setup_v*.exe, bietet eine Leiste es an.
 - Excel-Export: die Tagesübersicht als CSV, in den gewählten Einheiten.
 
 Sicherheit: die Programme schreiben nur in ihren eigenen Ordner (Ausnahmen: Verknüpfung und geplante

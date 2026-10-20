@@ -31,7 +31,7 @@ ERSTER START
 
    (Wenn das Installationsprogramm frühere Daten und den API-Schlüssel übernommen hat, entfällt dieser Schritt.)
 
-2. Starte Megjelenítő.exe (oder die Desktop-Verknüpfung „Budaörsi időjárás“).
+2. Starte Megjelenítő.exe (oder die Desktop-Verknüpfung „WStation“).
 
 
 TÄGLICHE NUTZUNG

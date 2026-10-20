@@ -31,7 +31,7 @@ ELSŐ INDÍTÁS
 
    (Ha a telepítő átvette a korábbi adatokat és az API kulcsot, ez a lépés kimaradhat.)
 
-2. Indítsd el a Megjelenítő.exe-t (vagy az asztali „Budaörsi időjárás” parancsikont).
+2. Indítsd el a Megjelenítő.exe-t (vagy az asztali „WStation” parancsikont).
 
 
 MINDENNAPI HASZNÁLAT

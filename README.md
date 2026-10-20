@@ -18,7 +18,7 @@ Three Windows programs, built from this repository with one command:
 |---|---|---|
 | **Downloader** | `Letöltő.exe` | Downloads the station's data from the WU PWS API into CSV files. Decides itself what is worth querying (current conditions, daily summary, missing days in 5-minute detail), keeps a log, respects the API limits, can run from Windows Task Scheduler and sends Windows notifications (frost, pressure drop, strong wind, cloudburst, heat). |
 | **Viewer** | `Megjelenítő.exe` | A local app (WebView2 + Apache ECharts) that works without internet: timeline with six linked charts, calendar heatmap, drought module, rain and wind statistics, records, reports. |
-| **Installer** | `Idojaras_telepito_v2.1.exe` | A single exe containing both programs and the guides. Handles fresh installs, updates, old folder layouts and running programs; suggests the language from Windows. |
+| **Installer** | `WStation_setup_v2.2.x.exe` | A single exe containing both programs and the guides. Handles fresh installs, updates, old folder layouts and running programs; suggests the language from Windows. |
 
 ### Viewer highlights
 
@@ -32,7 +32,7 @@ Three Windows programs, built from this repository with one command:
 
 ## Quick start (users)
 
-1. Build the installer (see below) or get `Idojaras_telepito_v2.1.exe` from a release.
+1. Build the installer (see below) or get `WStation_setup_v2.2.x.exe` from a release.
 2. Run it and choose a folder; it creates an `Időjárás` folder with both programs.
 3. Start `Letöltő.exe` once: it asks for your Weather Underground **API key** and **station ID**
    (a PWS API key works with your own station that is actively sending data).
@@ -51,7 +51,7 @@ build.bat
 
 Output:
 
-- `dist\Idojaras_telepito_v2.1.exe` – the installer,
+- `dist\WStation_setup_v2.2.x.exe` – the installer,
 - `dist\bin\Megjelenito.exe`, `dist\bin\Letolto.exe` – the two programs, for testing.
 
 `build.bat` uses the C# compiler that ships with Windows (`csc.exe`, C# 5). All web files, language files and

@@ -1,4 +1,4 @@
-﻿// Budaörsi időjárás – telepítő
+﻿// WStation – telepítő
 // Abba a mappába telepít, ahonnan elindították (<ott>\Időjárás\), vagy helyben frissít, ha egy telepítésen belül indul.
 using System;
 using System.Collections.Generic;
@@ -15,8 +15,8 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Kozos;
 
-[assembly: AssemblyTitle("Budaörsi időjárás – telepítő")]
-[assembly: AssemblyProduct("Budaörsi időjárás")]
+[assembly: AssemblyTitle("WStation – telepítő")]
+[assembly: AssemblyProduct("WStation")]
 [assembly: AssemblyVersion("2.2.1.0")]
 [assembly: AssemblyFileVersion("2.2.1.0")]
 
@@ -24,13 +24,15 @@ namespace Telepito
 {
     static class Names
     {
-        public const string Root = "Időjárás";
+        public const string Root = "WStation";
+        public const string LegacyRoot = "Időjárás";                  // 2.2.1-ig ez volt az alapmappa neve
+        public const string LegacyShortcut = "Budaörsi időjárás.lnk"; // 2.2.1-ig ez volt a parancsikon neve
         public const string Downloader = "Letöltő.exe";
         public const string Viewer = "Megjelenítő.exe";
         public const string Data = "data";
         public const string DlApp = "appdata_letöltő";
         public const string ViewApp = "appdata_megjelenítő";
-        public const string Shortcut = "Budaörsi időjárás.lnk";
+        public const string Shortcut = "WStation.lnk";
         public const string Changelog = "Változások.txt";
 
         // beágyazott erőforrás -> fájlnév a telepített mappában
@@ -278,6 +280,9 @@ namespace Telepito
                         string desk = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                         CreateShortcut(Path.Combine(desk, Names.Shortcut), Path.Combine(target, Names.Viewer), target);
                         r.Log.Add("asztali parancsikon");
+                        // a régi nevű (2.2.1-ig „Budaörsi időjárás”) parancsikon törlése – csak ha ebbe a mappába mutat
+                        string oldLnk = Path.Combine(desk, Names.LegacyShortcut);
+                        if (File.Exists(oldLnk) && ShortcutTargetsDir(oldLnk, target)) { File.Delete(oldLnk); r.Log.Add("a régi nevű parancsikon törölve"); }
                     }
                     catch (Exception ex) { r.Log.Add("A parancsikon nem jött létre: " + ex.Message); }
                 }
@@ -499,12 +504,31 @@ namespace Telepito
                 var st = sc.GetType();
                 st.InvokeMember("TargetPath", BindingFlags.SetProperty, null, sc, new object[] { target });
                 st.InvokeMember("WorkingDirectory", BindingFlags.SetProperty, null, sc, new object[] { workDir });
-                st.InvokeMember("Description", BindingFlags.SetProperty, null, sc, new object[] { "Budaörsi időjárás – megjelenítő" });
+                st.InvokeMember("Description", BindingFlags.SetProperty, null, sc, new object[] { "WStation – Megjelenítő" });
                 st.InvokeMember("IconLocation", BindingFlags.SetProperty, null, sc, new object[] { target + ",0" });
                 st.InvokeMember("Save", BindingFlags.InvokeMethod, null, sc, null);
                 Marshal.FinalReleaseComObject(sc);
             }
             finally { Marshal.FinalReleaseComObject(sh); }
+        }
+
+        // a parancsikon a megadott mappába mutat-e (a régi nevű csak akkor törlődik)
+        static bool ShortcutTargetsDir(string lnk, string dir)
+        {
+            try
+            {
+                var t = Type.GetTypeFromProgID("WScript.Shell");
+                object sh = Activator.CreateInstance(t);
+                try
+                {
+                    object sc = t.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, sh, new object[] { lnk });
+                    string tp = Convert.ToString(sc.GetType().InvokeMember("TargetPath", BindingFlags.GetProperty, null, sc, null));
+                    Marshal.FinalReleaseComObject(sc);
+                    return tp.Length > 0 && Norm(Path.GetDirectoryName(tp)) == Norm(dir);
+                }
+                finally { Marshal.FinalReleaseComObject(sh); }
+            }
+            catch { return false; }
         }
     }
 
@@ -542,7 +566,7 @@ namespace Telepito
             using (var g = CreateGraphics()) k = g.DpiX / 96f;
             SuspendLayout();
             AutoScaleMode = AutoScaleMode.None;
-            Text = "Budaörsi időjárás – telepítő " + Installer.VersionText(Installer.Me);
+            Text = "WStation – telepítő " + Installer.VersionText(Installer.Me);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             Font = new Font("Segoe UI", 9.75f);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -563,7 +587,7 @@ namespace Telepito
                 using (var f1 = new Font("Segoe UI Semibold", 17f))
                 using (var f2 = new Font("Segoe UI", 9.75f))
                 {
-                    g.DrawString(T("Budaörsi időjárás"), f1, Brushes.White, S(92), S(16));
+                    g.DrawString(T("WStation"), f1, Brushes.White, S(92), S(16));
                     using (var b2 = new SolidBrush(Color.FromArgb(215, 228, 255)))
                         g.DrawString(T("Letöltő és megjelenítő a házi meteorológiai állomáshoz") + " · " + Installer.VersionText(Installer.Me), f2, b2, S(94), S(52));
                 }
@@ -606,7 +630,7 @@ namespace Telepito
             chkImport.CheckedChanged += (s, e) => { txtImport.Enabled = btnImport.Enabled = chkImport.Checked; };
             y += 38;
 
-            chkShortcut = new CheckBox { Text = "Parancsikon az asztalra (Budaörsi időjárás)", Location = P(24, y), AutoSize = true, Checked = true };
+            chkShortcut = new CheckBox { Text = "Parancsikon az asztalra (WStation)", Location = P(24, y), AutoSize = true, Checked = true };
             body.Controls.Add(chkShortcut);
             y += 30;
             chkSchedule = new CheckBox { Text = "Automatikus letöltés a háttérben (Feladatütemező):", Location = P(24, y), AutoSize = true, Checked = true };
@@ -646,7 +670,7 @@ namespace Telepito
         // a feliratok fordítása az eredeti (magyar) szövegből
         void ApplyLang()
         {
-            Text = T("Budaörsi időjárás – telepítő") + " " + Installer.VersionText(Installer.Me);
+            Text = T("WStation – telepítő") + " " + Installer.VersionText(Installer.Me);
             Action<Control> walk = null;
             walk = c =>
             {
@@ -735,7 +759,7 @@ namespace Telepito
             {
                 lblStatus.ForeColor = Color.Firebrick;
                 lblStatus.Text = T("Nem sikerült") + ": " + T(result.Error).Replace("\n", " ");
-                MessageBox.Show(this, T(result.Error), T("Budaörsi időjárás – telepítő"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, T(result.Error), T("WStation – telepítő"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 foreach (Control c in body.Controls) c.Enabled = true;
                 txtImport.Enabled = btnImport.Enabled = chkImport.Checked;
                 cmbSchedule.Enabled = chkSchedule.Checked;
@@ -802,7 +826,9 @@ namespace Telepito
         {
             string startDir = Path.GetDirectoryName(Application.ExecutablePath);
             // egy meglévő telepítésen belül indítva helyben frissít
-            string defaultTarget = Installer.IsInstallDir(startDir) ? startDir : Path.Combine(startDir, Names.Root);
+            // (ha mellette egy régi, „Időjárás” nevű telepítés van, azt frissíti, nem telepít újat „WStation” néven)
+            string legacyDir = Path.Combine(startDir, Names.LegacyRoot);
+            string defaultTarget = Installer.IsInstallDir(startDir) ? startDir : Installer.IsInstallDir(legacyDir) ? legacyDir : Path.Combine(startDir, Names.Root);
             // a Megjelenítő frissítés-ellenőrzője a telepített mappát adja át
             int ci = Array.FindIndex(args, a => a.Equals("--cel", StringComparison.OrdinalIgnoreCase));
             if (ci >= 0 && ci + 1 < args.Length && Installer.IsInstallDir(args[ci + 1])) defaultTarget = Path.GetFullPath(args[ci + 1]);

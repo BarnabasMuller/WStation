@@ -31,7 +31,7 @@ PRIMER INICIO
 
    (Si el instalador importó los datos anteriores y la clave API, puedes saltar este paso.)
 
-2. Abre Megjelenítő.exe (o el acceso directo «Budaörsi időjárás» del escritorio).
+2. Abre Megjelenítő.exe (o el acceso directo «WStation» del escritorio).
 
 
 USO DIARIO

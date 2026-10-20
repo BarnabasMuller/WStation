@@ -1,4 +1,4 @@
-﻿// Budaörsi időjárás-megjelenítő – főprogram és ablakok
+﻿// WStation – Megjelenítő – főprogram és ablakok
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -12,8 +12,8 @@ using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
-[assembly: System.Reflection.AssemblyTitle("Budaörsi időjárás")]
-[assembly: System.Reflection.AssemblyProduct("Budaörsi időjárás-megjelenítő")]
+[assembly: System.Reflection.AssemblyTitle("WStation")]
+[assembly: System.Reflection.AssemblyProduct("WStation – Megjelenítő")]
 [assembly: System.Reflection.AssemblyVersion("2.2.1.0")]
 [assembly: System.Reflection.AssemblyFileVersion("2.2.1.0")]
 
@@ -57,7 +57,7 @@ namespace Idojaras
             var mutex = new Mutex(true, "BudaorsIdojaras_" + Hash(dir.ToLowerInvariant()), out created);
             if (!created)
             {
-                MessageBox.Show("A program már fut.", "Budaörsi időjárás", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("A program már fut.", "WStation", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return 4;
             }
 
@@ -74,7 +74,7 @@ namespace Idojaras
             catch (Exception ex)
             {
                 MessageBox.Show("A program nem tud írni ebbe a mappába:\n" + dir + "\n\n" + ex.Message + "\n\nTedd a programot egy saját mappába (pl. Dokumentumok\\Időjárás).",
-                    "Budaörsi időjárás", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "WStation", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 5;
             }
             try { EmbeddedLibs.Init(L.Lib); }
@@ -86,7 +86,7 @@ namespace Idojaras
             try { server.Start(port); }
             catch (Exception ex)
             {
-                MessageBox.Show("A program nem tudott elindulni:\n" + ex.Message, "Budaörsi időjárás", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("A program nem tudott elindulni:\n" + ex.Message, "WStation", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 2;
             }
 
@@ -153,7 +153,7 @@ namespace Idojaras
         public MainForm(string url)
         {
             this.url = url;
-            Text = "Budaörsi időjárás";
+            Text = "WStation";
             Icon = AppIcon.Create();
             BackColor = Color.FromArgb(243, 245, 249);
             MinimumSize = new Size(900, 600);
@@ -203,7 +203,7 @@ namespace Idojaras
         {
             using (var g = CreateGraphics()) k = g.DpiX / 96f;
             AutoScaleMode = AutoScaleMode.None;
-            Text = "Budaörsi időjárás";
+            Text = "WStation";
             Icon = AppIcon.Create();
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;

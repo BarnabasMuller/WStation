@@ -114,7 +114,7 @@ async function applyI18n() {
   await i18nLoad(lang());
   i18nBuild();
   if (typeof buildFormatters === 'function') buildFormatters();
-  document.title = I18N ? tr('Budaörsi időjárás') : 'Budaörsi időjárás';
+  document.title = 'WStation';   // márkanév: nem fordul
   trNode(document.body);
 }
 let I18N_MO = null;

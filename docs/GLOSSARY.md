@@ -8,7 +8,7 @@ The code, file names and comments are in Hungarian. These are the terms you will
 |---|---|---|
 | Letöltő | Downloader | `Letöltő.exe`, `src/letolto` |
 | Megjelenítő | Viewer | `Megjelenítő.exe`, `src/megjelenito` |
-| Telepítő | Installer | `Idojaras_telepito_v*.exe`, `src/telepito` |
+| Telepítő | Installer | `WStation_setup_v*.exe`, `src/telepito` |
 | közös | shared | `src/kozos` |
 | Időjárás | Weather | installed root folder |
 | appdata_letöltő / appdata_megjelenítő | Downloader / Viewer app data | settings, state, logs |

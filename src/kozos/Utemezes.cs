@@ -11,7 +11,9 @@ namespace Kozos
     // A Letöltő automatikus futtatása a Windows Feladatütemezőjével (schtasks, a felhasználó nevében, rendszergazda nélkül)
     static class Utemezes
     {
-        public const string TaskName = "Budaörsi időjárás – letöltés";
+        public const string TaskName = "WStation – letöltés";
+        // a korábbi verziók feladatneve: felismerjük, és az új beállításakor töröljük
+        static readonly string[] LegacyTaskNames = { "Budaörsi időjárás – letöltés" };
         public static readonly int[] Choices = { 15, 30, 60, 180 };
         public static readonly string[] DayCodes = { "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN" };
         static readonly string[] DayXml = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
@@ -55,9 +57,24 @@ namespace Kozos
 
         public static Spec QuerySpec()
         {
+            // az új nevű feladat, ha nincs, a régi nevű (frissítés előtti) feladat
+            var s = QuerySpecFor(TaskName);
+            foreach (var n in LegacyTaskNames) if (s.kind == "off") s = QuerySpecFor(n);
+            return s;
+        }
+
+        static void RemoveLegacy()
+        {
+            string o;
+            foreach (var n in LegacyTaskNames)
+                try { if (QuerySpecFor(n).kind != "off") Run("/Delete /F /TN \"" + n + "\"", out o); } catch { }
+        }
+
+        static Spec QuerySpecFor(string taskName)
+        {
             var s = new Spec();
             string xml;
-            try { if (Run("/Query /TN \"" + TaskName + "\" /XML", out xml) != 0) return s; }
+            try { if (Run("/Query /TN \"" + taskName + "\" /XML", out xml) != 0) return s; }
             catch { return s; }
             var m = Regex.Match(xml, @"<Command>(.*?)</Command>", RegexOptions.Singleline);
             if (m.Success) s.exe = System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim('"');
@@ -134,6 +151,7 @@ namespace Kozos
             // elsőként saját feladat-XML-lel: akkumulátorról is fut, és a kimaradt futást (kikapcsolt / alvó gép) pótolja
             int code = CreateFromXml(exePath, s, out o);
             if (code != 0) code = Run("/Create /F /TN \"" + TaskName + "\" /TR \"" + tr + "\" " + when, out o);
+            if (code == 0) RemoveLegacy();   // a régi nevű feladat ne fusson párhuzamosan
             message = code == 0 ? "Automatikus letöltés beállítva: " + Text(s) + "." : "Az ütemezés nem sikerült: " + o;
             return code == 0;
         }
@@ -201,8 +219,9 @@ namespace Kozos
         public static bool Remove(out string message)
         {
             if (QuerySpec().kind == "off") { message = "Nincs ütemezett letöltés."; return true; }
-            string o;
-            int code = Run("/Delete /F /TN \"" + TaskName + "\"", out o);
+            string o = "";
+            int code = QuerySpecFor(TaskName).kind == "off" ? 0 : Run("/Delete /F /TN \"" + TaskName + "\"", out o);
+            RemoveLegacy();
             message = code == 0 ? "Az automatikus letöltés kikapcsolva." : "A törlés nem sikerült: " + o;
             return code == 0;
         }

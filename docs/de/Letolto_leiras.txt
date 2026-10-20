@@ -38,7 +38,7 @@ AUTOMATISCHE LÄUFE
 ------------------
 
 Das Installationsprogramm (oder der Reiter Einstellungen der Anzeige) legt in der Windows-Aufgabenplanung
-die Aufgabe „Budaörsi időjárás – letöltés“ an: alle 15 / 30 / 60 Minuten, alle 3 Stunden, eigenes
+die Aufgabe „WStation – letöltés“ an: alle 15 / 30 / 60 Minuten, alle 3 Stunden, eigenes
 Intervall, täglich zu einer festen Zeit oder wöchentlich an bestimmten Tagen. Geplant öffnet der
 Downloader kein Fenster. Läuft gerade ein Download (z. B. über Aktualisieren), wartet der nächste.
 

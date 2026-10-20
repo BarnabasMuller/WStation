@@ -156,7 +156,7 @@ BEÁLLÍTÁSOK
   tüske, napsütés miatti túlmelegedés, kiesés utáni első mérés) külön kapcsolhatók, paraméterekkel;
   azonnal látszik, hány mérés lesz jelölve.
 - Változásnapló: mikor, mit, mire állítottál át; egy kattintással visszaállítható.
-- Frissítés: ha a programmappában vagy mellette újabb Idojaras_telepito_v*.exe van, egy sáv felajánlja.
+- Frissítés: ha a programmappában vagy mellette újabb WStation_setup_v*.exe van, egy sáv felajánlja.
 - Excel-export: a napi összesítő CSV-ben, a választott mértékegységekkel.
 
 Biztonság: a programok csak a saját mappájukba írnak (kivétel: a parancsikon és az ütemezett feladat,

@@ -158,7 +158,7 @@ SETTINGS
   spike, overheating due to sunshine, first measurement after an outage) can be switched separately,
   with parameters; the number of flagged measurements is shown immediately.
 - Change log: when, what and to what you changed; one click restores the old value.
-- Update: if a newer Idojaras_telepito_v*.exe is in the program folder or next to it, a bar offers it.
+- Update: if a newer WStation_setup_v*.exe is in the program folder or next to it, a bar offers it.
 - Excel export: the daily summary as CSV, in the chosen units.
 
 Security: the programs only write into their own folder (exceptions: the shortcut and the scheduled

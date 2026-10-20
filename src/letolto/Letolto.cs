@@ -13,7 +13,7 @@ using System.Threading;
 using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
-[assembly: System.Reflection.AssemblyProduct("Budaörsi időjárás – Letöltő")]
+[assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
 [assembly: System.Reflection.AssemblyVersion("2.2.1.0")]
 [assembly: System.Reflection.AssemblyFileVersion("2.2.1.0")]
 
@@ -936,7 +936,7 @@ CsendesIg=7
                 try { Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true }); } catch { }
             if (args.Any(a => a.Equals("--teszt-ertesites", StringComparison.OrdinalIgnoreCase)))
             {
-                Alerts.Notify("Budaörsi időjárás – próba", "Így fognak kinézni a riasztások (fagy, nyomásesés, szél, felhőszakadás, hőség).");
+                Alerts.Notify("WStation – próba", "Így fognak kinézni a riasztások (fagy, nyomásesés, szél, felhőszakadás, hőség).");
                 return 0;
             }
             try { Console.Title = "Weather Underground adatletöltő"; } catch { }
@@ -1648,7 +1648,7 @@ CsendesIg=7
             string title = due.Count == 1 ? due[0][1] : string.Join(" · ", due.Select(m => m[1]));
             string text = string.Join("\n", due.Select(m => due.Count == 1 ? m[2] : m[1] + ": " + m[2]));
             Log.Warn("Riasztás: " + title + " – " + text.Replace("\n", " | "));
-            Notify("Budaörsi időjárás – " + title, text);
+            Notify("WStation – " + title, text);
         }
 
         // Windows-értesítés (Windows 11-en a jobb alsó sarokban, az értesítési központba is bekerül)
@@ -1660,7 +1660,7 @@ CsendesIg=7
                 {
                     try { ni.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location); }
                     catch { ni.Icon = System.Drawing.SystemIcons.Information; }
-                    ni.Text = "Budaörsi időjárás";
+                    ni.Text = "WStation";
                     ni.Visible = true;
                     title = Langs.T(title); text = Langs.T(text);   // a Beállításokban választott nyelven
                     ni.ShowBalloonTip(15000, title.Length > 63 ? title.Substring(0, 63) : title, text.Length > 255 ? text.Substring(0, 255) : text, System.Windows.Forms.ToolTipIcon.Warning);

@@ -35,7 +35,7 @@ HOW DOES IT DECIDE WHAT TO DOWNLOAD?
 AUTOMATIC RUNS
 --------------
 
-The installer (or the Viewer's Settings tab) creates the "Budaörsi időjárás – letöltés" task in Windows
+The installer (or the Viewer's Settings tab) creates the "WStation – letöltés" task in Windows
 Task Scheduler: every 15 / 30 / 60 minutes, every 3 hours, a custom interval, daily at a set time or
 weekly on chosen days. When scheduled, the Downloader opens no window. If a download is already
 running (e.g. from the Refresh button), the next one waits.

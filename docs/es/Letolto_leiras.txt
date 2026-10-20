@@ -37,7 +37,7 @@ Los CSV tienen formato para Excel en húngaro (separador ; coma decimal).
 EJECUCIÓN AUTOMÁTICA
 --------------------
 
-El instalador (o la pestaña Ajustes del Visor) crea la tarea «Budaörsi időjárás – letöltés» en el
+El instalador (o la pestaña Ajustes del Visor) crea la tarea «WStation – letöltés» en el
 Programador de tareas de Windows: cada 15 / 30 / 60 minutos, cada 3 horas, con un intervalo propio, a
 diario a una hora fija o semanalmente en días elegidos. Programado, el Descargador no abre ventana. Si ya
 hay una descarga en curso (p. ej. desde Actualizar), la siguiente espera.

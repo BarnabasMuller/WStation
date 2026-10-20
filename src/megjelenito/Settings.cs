@@ -46,7 +46,7 @@ namespace Idojaras
 
         const string Template =
 @"# =====================================================================
-#  Budaörsi időjárás-megjelenítő – beállítások
+#  WStation – Megjelenítő – beállítások
 #  A '#' kezdetű sorok megjegyzések. Formátum: Kulcs=Érték
 #  Tizedesjelnek pontot vagy vesszőt is írhatsz.
 # =====================================================================

@@ -31,7 +31,7 @@ FIRST START
 
    (If the installer took over earlier data and the API key, you can skip this step.)
 
-2. Start Megjelenítő.exe (or the "Budaörsi időjárás" desktop shortcut).
+2. Start Megjelenítő.exe (or the "WStation" desktop shortcut).
 
 
 EVERYDAY USE
