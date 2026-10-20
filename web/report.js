@@ -43,11 +43,15 @@ function summaryText(d, m, s) {
   const all = [...new Set(d.date.map(x => x.slice(0, 7)))].map(mm => ({ mm, s: monthStats(d, mm) })).filter(o => o.s.good.length >= 20);
   const others = all.filter(o => o.mm !== m);
   let temp = '', wet = '';
-  if (others.length >= 2 && s.tavg != null) {
-    const rankWarm = 1 + all.filter(o => o.s.tavg > s.tavg).length;
-    temp = rankWarm === 1 ? 'az eddigi legmelegebb hónap' : rankWarm === all.length ? 'az eddigi leghidegebb hónap' : 'a ' + all.length + ' hónapból a ' + rankWarm + '. legmelegebb';
-  }
   const days = s.ix.length;
+  const dim = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5, 7), 0)).getUTCDate();
+  const partial = days < dim;
+  if (others.length >= 2 && s.tavg != null) {
+    // a nevezőben a vizsgált hónap is benne van (akkor is, ha részleges, és ezért az `all`-ból kimaradt)
+    const n = others.length + 1, rankWarm = 1 + others.filter(o => o.s.tavg > s.tavg).length;
+    temp = rankWarm === 1 ? 'az eddigi legmelegebb hónap' : rankWarm === n ? 'az eddigi leghidegebb hónap' : 'a ' + n + ' hónapból a ' + rankWarm + '. legmelegebb';
+    if (partial) temp += ' – részleges hónap: ' + days + ' / ' + dim + ' nap adata';
+  } else if (partial) temp = 'részleges hónap: ' + days + ' / ' + dim + ' nap adata';
   const rpd = s.rain / Math.max(1, days);
   // a budapesti sokéves átlag kb. 1,5 mm/nap (≈ 550 mm/év)
   wet = rpd < 0.7 ? 'nagyon száraz' : rpd < 1.3 ? 'száraz' : rpd < 2.2 ? 'átlagos csapadékú' : 'csapadékos';
@@ -105,6 +109,9 @@ async function monthReport(d, m) {
   repCharts.push(c1, c2);
 }
 
+// a kiválasztott év utolsó adatnapjának indexe a szárazság-modulban (a hőösszeg minden évben nulláról indul)
+function gddIdx(dr, y) { let k = null; dr.date.forEach((s, i) => { if (s.startsWith(y)) k = i; }); return k; }
+
 async function yearReport(d, y) {
   repState().year = y; saveUi();
   const months = [...new Set(d.date.filter(s => s.startsWith(y)).map(s => s.slice(0, 7)))];
@@ -115,7 +122,7 @@ async function yearReport(d, y) {
   $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-évkönyv · ' + esc(META.station) + ' · Budaörs</div><h1>' + y + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + (months.length < 12 ? '<br>(' + months.length + ' hónap adata)' : '') + '</div></div>' +
     '<p class="rep-sum">Az év csapadéka <b>' + rtext(total, 0) + '</b>, napsütése <b>' + num(sun, 0) + ' óra</b>. ' + rec.counts.hotDays + ' hőségnap, ' + rec.counts.tropicalNights + ' trópusi éjszaka, ' + rec.counts.frostDays + ' fagyos nap.' +
     (rec.frost.last ? ' Utolsó tavaszi fagy: ' + DS.fmt(rec.frost.last, { month: 'long', day: 'numeric' }) + '.' : '') + (rec.frost.first ? ' Első őszi fagy: ' + DS.fmt(rec.frost.first, { month: 'long', day: 'numeric' }) + '.' : '') +
-    (dr ? ' Hőösszeg: ' + num(tdconv(dr.gddCum[dr.gddCum.length - 1]), 0) + ' ' + tlabel() + '·nap.' : '') + '</p>' +
+    (dr && gddIdx(dr, y) != null ? ' Hőösszeg: ' + num(tdconv(dr.gddCum[gddIdx(dr, y)]), 0) + ' ' + tlabel() + '·nap.' : '') + '</p>' +
     '<h3>Hónapok</h3><table class="dtable rep-months"><thead><tr><th>Hónap</th><th>Átlag</th><th>Max.</th><th>Min.</th><th>Csapadék</th><th>Esős nap</th><th>Napsütés</th><th>Hőségnap</th><th>Fagyos nap</th></tr></thead><tbody>' +
     rows.map(r => '<tr><td>' + MONTHS_FULL[+r.m.slice(5) - 1] + '</td><td>' + ttext(r.s.tavg) + '</td><td>' + (r.s.imax != null ? num(tconv(d.tmax[r.s.imax])) : '–') + '</td><td>' + (r.s.imin != null ? num(tconv(d.tmin[r.s.imin])) : '–') + '</td><td>' + rtext(r.s.rain, 1) + '</td><td>' + r.s.rainy + '</td><td>' + num(r.s.sun, 0) + ' h</td><td>' + r.s.hot + '</td><td>' + r.s.frost + '</td></tr>').join('') +
     '</tbody></table>' +

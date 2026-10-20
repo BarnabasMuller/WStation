@@ -1,6 +1,23 @@
 ﻿BUDAÖRSI IDŐJÁRÁS – VÁLTOZÁSOK
 ==============================
 
+== 2.2 (fejlesztés alatt) ==
+- Letöltés: az állapotsorban helyesek az ékezetek; a hálózati hibát a Letöltő kilépési kóddal jelzi.
+  A mérések mindig metrikusan töltődnek le (a régi Units=e/h/s beállítás minden értéket elrontott volna).
+  A töredékesen letöltött napot néhány nap múlva még kétszer újra lekéri.
+- Automatikus letöltés: laptopon akkumulátorról is fut, és ha a gép a megadott időben ki volt kapcsolva vagy
+  aludt, a kimaradt letöltést bekapcsoláskor pótolja. A telepítő frissítéskor megtartja a meglévő ütemezést.
+- Biztonság: a letöltést és az Excel-mentést indító kérések csak a program saját felületéről jöhetnek.
+- Gyorsítótár: a második indítástól is az állomás saját koordinátáival számol (napkelte, párolgás); a CSV-ből
+  kitörölt sor a felületről is eltűnik.
+- Szárazság: febr. 29-i kezdetű éves öntözési időszak nem állítja le a számítást; egy profil törlésekor az
+  öntözési programjai is törlődnek, és egy sikertelen mentés után sem akad el a további mentés; a fák
+  csepegtetési ideje helyes (órában / napban). A kerti naplóba írt öntözés törlése a talajvíz-mérlegből is töröl.
+- Statisztika: gyors gépelésnél sem marad régi időszak eredménye a képernyőn. Jelentés: a részleges hónap
+  jelölve, a rangsor nevezője helyes; az évkönyv hőösszege a kiválasztott évé.
+- Futás: a napló törlése megerősítést kér. Víz alfül: érthetőbb összevetés.
+- Akadálymentesség: a kapcsolók billentyűzettel is kezelhetők, látható fókuszjelzés, jobb kontraszt sötét témán.
+
 == 2.1 (2026-10-19) ==
 - Többnyelvű: magyar, angol, német, spanyol – a felület, a ? és ƒx ablakok, a grafikonok, a Letöltő üzenetei és
   riasztásai, a telepítő és a leírások is. Új nyelv egy fájllal hozzáadható (docs\FORDITAS.md).

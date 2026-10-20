@@ -86,7 +86,10 @@ async function renderRun() {
   $('runTable').innerHTML = rows.length ? '<table class="dtable"><thead><tr><th>Mikor</th><th>Ki</th><th>Intenzitás</th><th>Rétegek</th><th>Érzet</th><th>Hatásos hőm.</th><th></th></tr></thead><tbody>' +
     rows.map(r => '<tr><td>' + F.full.format(r.t) + '</td><td>' + esc(r.who) + '</td><td>' + r.intensity + '</td><td>' + r.layers + '</td><td>' + (r.feel > 0 ? '+' : '') + r.feel + '</td><td>' + ttext(r.teff, 1) + '</td><td><a href="#" data-del="' + r.id + '" title="Törlés">✕</a></td></tr>').join('') + '</tbody></table>' : '<div class="muted">Még nincs rögzített futás. Futás után írd be az 5 adatot – minél több futás van, annál pontosabb a javaslat.</div>';
   $('runTable').querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', async e => {
-    e.preventDefault(); RUNS = RUNS.filter(r => String(r.id) !== a.dataset.del); await saveRuns(); renderRun();
+    e.preventDefault();
+    const r0 = RUNS.find(r => String(r.id) === a.dataset.del);
+    if (!r0 || !confirm('Törlöd a(z) ' + F.full.format(r0.t) + ' futást (' + r0.who + ')? Ez nem vonható vissza.')) return;
+    RUNS = RUNS.filter(r => String(r.id) !== a.dataset.del); await saveRuns(); renderRun();
   }));
 }
 
@@ -120,8 +123,10 @@ $('logSave').addEventListener('click', async () => {
   if (!t) { toast('Add meg, mikor volt a futás.'); return; }
   const w = await api('/api/at?t=' + t);
   if (!w.found) { toast('Ehhez az időponthoz nincs mérés (frissítsd az adatokat, vagy válassz korábbi időpontot).'); return; }
+  const te = teff(w);
+  if (te == null) { toast('Ehhez az időponthoz nincs hőmérséklet-adat (hőérzet), így a futás nem rögzíthető. Válassz egy közeli másik időpontot.', 7000); return; }
   await getRuns();
-  RUNS.push({ id: Date.now(), t, who, intensity: +$('logInt').value, layers: +$('logLayers').value, feel: +$('logFeel').value, teff: +teff(w).toFixed(1), temp: w.temp, feels: w.feels, wind: w.wind, hum: w.hum, solar: w.solar });
+  RUNS.push({ id: Date.now(), t, who, intensity: +$('logInt').value, layers: +$('logLayers').value, feel: +$('logFeel').value, teff: +te.toFixed(1), temp: w.temp, feels: w.feels, wind: w.wind, hum: w.hum, solar: w.solar });
   await saveRuns();
   toast('Futás rögzítve – köszönöm, ebből tanul a tanácsadó.');
   $('advWho').value = who;

@@ -3,6 +3,8 @@
 
 let stMonths = null, stHm = null, stCycle = null, stCmp = null;
 let ST_LAST = null;   // a legutóbbi érvényes időszak-lista
+// kérésszámlálók: gyors gépelésnél egy régebbi (lassabb) válasz ne írja felül az újabbat
+let stToken = 0, hmToken = 0, qToken = 0;
 
 function countRows(rec) {
   const c = rec.counts, fr = rec.frost;
@@ -37,14 +39,17 @@ async function renderStats() {
   if (!$('stRanges').children.length) renderRangePicker();
   // hibás sornál a legutóbbi érvényes időszakkal számolunk
   const list = validRanges() || ST_LAST || [resolveRow({})];
+  const token = ++stToken;
   ST_LAST = list;
   const side = S.rangeMode === 'side' && list.length > 1;
   const d = await getDays(true);
+  if (token !== stToken) return;
   $('stClean').checked = S.clean; $('stMetric').value = S.metric; $('stHmMetric').value = S.hm;
 
   // --- rekordok és számlálók
   if (!side) {
     const rec = await api('/api/records?clean=' + (S.clean ? 1 : 0) + '&ranges=' + encodeURIComponent(rangeParam(list)));
+    if (token !== stToken) return;
     $('stRecords').className = 'rec-grid';
     $('stRecords').innerHTML = rec.records.map(r =>
       '<div class="rec" data-t="' + r.t + '" title="Kattints: megnyitás az idővonalon"><div class="rec-t">' + esc(r.title) + '</div>' +
@@ -55,6 +60,7 @@ async function renderStats() {
   } else {
     // egymás mellett: időszakonként egy oszlop
     const recs = await Promise.all(list.map(x => api('/api/records?clean=' + (S.clean ? 1 : 0) + '&ranges=' + encodeURIComponent(rangeParam([x])))));
+    if (token !== stToken) return;
     const keys = [];
     recs.forEach(rc => rc.records.forEach(r => { if (!keys.find(k => k.key === r.key)) keys.push({ key: r.key, title: r.title }); }));
     const head = '<thead><tr><th></th>' + list.map(x => '<th>' + esc(rangeLabel(x)) + '</th>').join('') + '</tr></thead>';
@@ -117,7 +123,9 @@ function renderMonthCompare(d) {
 const HM_INFO = { temp: ['Hőmérséklet', '°C', TEMP_COLORS], hum: ['Páratartalom', '%', SEQ.hum], wind: ['Szél', 'km/h', SEQ.wind], sun: ['Napsugárzás', 'W/m²', SEQ.sun], pres: ['Légnyomás', 'hPa', ['#762a83', '#c2a5cf', '#f7f7f7', '#a6dba0', '#1b7837']], dew: ['Harmatpont', '°C', TEMP_COLORS], vpd: ['VPD', 'kPa', SEQ.orange] };
 async function renderHourHeat() {
   const k = UI.stat.hm, info = HM_INFO[k];
+  const token = ++hmToken;
   const h = await api('/api/hourly?metric=' + k + stParam());
+  if (token !== hmToken) return;
   const hq = { temp: 'temp', dew: 'temp', wind: 'wind', pres: 'pres' }[k];
   const conv = v => qv(hq, v);
   const unit = qu(hq, info[1]);
@@ -241,7 +249,9 @@ $('cmpN').addEventListener('change', e => {
 
 // ------------------------------------------------------------------ adatminőség
 async function renderQuality() {
+  const token = ++qToken;
   const q = await api('/api/quality?x=1' + stParam());
+  if (token !== qToken) return;
   const fmtMin = m => m < 120 ? m + ' perc' : (m / 60).toFixed(1).replace('.', ',') + ' óra';
   $('stGaps').innerHTML = '<table class="dtable"><thead><tr><th>Utolsó mérés előtte</th><th>Első mérés utána</th><th>Hossz</th></tr></thead><tbody>' +
     q.gaps.slice().sort((a, b) => b.minutes - a.minutes).map(g => '<tr data-a="' + g.from + '" data-b="' + g.to + '"><td>' + F.full.format(g.from) + '</td><td>' + F.full.format(g.to) + '</td><td><b>' + fmtMin(g.minutes) + '</b></td></tr>').join('') + '</tbody></table>';
