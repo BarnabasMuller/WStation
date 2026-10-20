@@ -1,7 +1,7 @@
 ﻿BUDAÖRSI IDŐJÁRÁS – VÁLTOZÁSOK
 ==============================
 
-== 2.2 (fejlesztés alatt) ==
+== 2.2.1 (2026-10-20) – hibajavítások ==
 - Letöltés: az állapotsorban helyesek az ékezetek; a hálózati hibát a Letöltő kilépési kóddal jelzi.
   A mérések mindig metrikusan töltődnek le (a régi Units=e/h/s beállítás minden értéket elrontott volna).
   A töredékesen letöltött napot néhány nap múlva még kétszer újra lekéri.

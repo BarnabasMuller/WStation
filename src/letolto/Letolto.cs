@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("Budaörsi időjárás – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.0.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.1.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.1.0")]
 
 namespace WuLetolto
 {
@@ -1052,7 +1052,7 @@ CsendesIg=7
 
         static int Run(string appDir, string dir, bool interactive)
         {
-            Log.Info("===== Indítás (Letöltő " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(2) + ") =====");
+            Log.Info("===== Indítás (Letöltő " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3) + ") =====");
             Cfg.Load(Path.Combine(appDir, "beallitasok.ini"), interactive && !Console.IsInputRedirected);
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | (SecurityProtocolType)12288; }
             catch { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
