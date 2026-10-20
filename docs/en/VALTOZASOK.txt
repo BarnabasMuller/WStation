@@ -1,13 +1,17 @@
 ﻿WSTATION – CHANGES
 =========================
 
-== 2.2.5 (2026-10-20) – translation and minor fixes ==
+== 2.2.5 (2026-10-21) – translation and minor fixes ==
 - Translation: the watering advice on the Drought tab, the dew point bands, the "unverified" record mark and the
   "Yes" button of confirmations are whole sentences in English, German and Spanish; default profile names with
   brackets (e.g. "Lawn (sprinkler)") are translated too.
 - Formula symbols of the suspicious-measurement rules are language-neutral (e.g. I_jump, P_melt, T_sun).
 - On phones the Running and Report tabs no longer scroll sideways; the "Record" buttons on the Drought tab tell
   screen readers the profile name.
+- Translation: the tree watering advice, the reliability line of the running advisor, the Location and cloud
+  labels, the fire danger classes and the spoken names of the formula buttons are translated too; translated
+  sentences no longer end in a double full stop. Even on very narrow (320 px) screens the Drought, Running and
+  Settings tabs fit.
 
 == 2.2.4 (2026-10-20) – review fixes ==
 - Suspicious measurements: new rules for rain jumps (melting snow too) and a frozen anemometer; the maximum

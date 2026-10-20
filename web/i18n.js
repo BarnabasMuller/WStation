@@ -68,11 +68,20 @@ function tr(s) {
   const t = s.trim();
   if (!t || !/[A-Za-zÀ-ž]/.test(t)) return s;
   const whole = I18N.map.get(t) || I18N.map.get(t.replace(/[.:!?]+$/, ''));
-  if (whole) return s.replace(t.replace(/[.:!?]+$/, ''), whole);
-  let out = I18N.re ? s.replace(I18N.re, m => I18N.map.get(m) || m) : s;
+  if (whole) {
+    const core = t.replace(/[.:!?]+$/, '');
+    // a kulcsból levágott záró pont a fordításban is ott van: ne legyen belőle „..” (pl. „Click for details..”)
+    return s.replace(core, whole.endsWith('.') && t.slice(core.length) === '.' ? whole.slice(0, -1) : whole);
+  }
+  let out = I18N.re ? s.replace(I18N.re, trDot) : s;
   // a rövid szavak (pl. „perc”, „most”) csak rövid feliratokban (legfeljebb 4 szó), hogy ne keletkezzen félig fordított mondat
-  if (I18N.reShort && (out.match(/\p{L}{2,}/gu) || []).length <= 4) out = out.replace(I18N.reShort, m => I18N.map.get(m) || m);
+  if (I18N.reShort && (out.match(/\p{L}{2,}/gu) || []).length <= 4) out = out.replace(I18N.reShort, trDot);
   return out;
+}
+// ponttal végződő fordítás (pl. „kb” → „approx.”) után az eredeti pontja ne duplázódjon („approx..”); a „...” megmarad
+function trDot(m, off, str) {
+  const v = I18N.map.get(m) || m;
+  return v !== m && v.endsWith('.') && str[off + m.length] === '.' && str[off + m.length + 1] !== '.' ? v.slice(0, -1) : v;
 }
 
 // mondatsablon: egész mondat helyőrzőkkel, a nyelvi fájlban is egészben (pl. "{n} m³-rel kevesebb víz" → "{n} m³ less water").
@@ -82,7 +91,7 @@ function tr(s) {
 const I18N_EDGE = /^([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)([\s\S]*?)([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)$/;
 function trEdge(s) {
   const m = s.match(I18N_EDGE), w = m && m[2] && I18N.map.get(m[2]);
-  return w ? m[1] + w + m[3] : null;
+  return w ? m[1] + (w.endsWith('.') && /^\.(?!\.)/.test(m[3]) ? w.slice(0, -1) : w) + m[3] : null;
 }
 function tf(tpl, vars) {
   let t = I18N && (I18N.map.get(tpl) || trEdge(tpl));

@@ -1,13 +1,17 @@
 ﻿WSTATION – ÄNDERUNGEN
 ===========================
 
-== 2.2.5 (2026-10-20) – Übersetzungs- und kleinere Korrekturen ==
+== 2.2.5 (2026-10-21) – Übersetzungs- und kleinere Korrekturen ==
 - Übersetzung: die Gießempfehlungen im Reiter Trockenheit, die Taupunkt-Bereiche, die Markierung „ungeprüft“ bei
   Rekorden und die Schaltfläche „Ja“ der Bestätigungen erscheinen auf Englisch, Deutsch und Spanisch als ganze
   Sätze; Standard-Profilnamen mit Klammern (z. B. „Rasen (Regner)“) werden ebenfalls übersetzt.
 - Die Formelzeichen der Regeln für verdächtige Messungen sind sprachneutral (z. B. I_jump, P_melt, T_sun).
 - Auf dem Handy lassen sich die Reiter Laufen und Bericht nicht mehr seitlich verschieben; die Schaltflächen
   „Erfassen“ im Reiter Trockenheit nennen dem Screenreader den Profilnamen.
+- Übersetzung: auch die Gießempfehlung für Bäume, die Zuverlässigkeitszeile des Laufberaters, die Beschriftungen
+  von Standort und Bewölkung, die Waldbrand-Gefahrenstufen und die vorgelesenen Namen der Formel-Schaltflächen
+  werden übersetzt; übersetzte Sätze enden nicht mehr mit doppeltem Punkt. Auch auf sehr schmalen (320 px)
+  Bildschirmen passen die Reiter Trockenheit, Laufen und Einstellungen.
 
 == 2.2.4 (2026-10-20) – Korrekturen nach Durchsicht ==
 - Verdächtige Messungen: neue Regeln für Niederschlagssprünge (auch Schneeschmelze) und eingefrorenen

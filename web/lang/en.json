@@ -2200,5 +2200,22 @@
   "talaj": "soil",
   "profilok": "profiles",
   "öntözésnapló": "irrigation log",
-  "csapadék-kalibráció": "rain calibration"
+  "csapadék-kalibráció": "rain calibration",
+  "A modell szerint egy réteg kb. {a}-ot ér, egy intenzitáspont kb. {b}-ot": "According to the model one layer is worth about {a}, one intensity point about {b}",
+  "{name}: nincs szüksége öntözésre": "{name}: no watering needed",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben (≈ {t} csepegtetés": "{name}: deeply dried out ({pct}). A deep, infrequent watering helps: about {l} under the canopy, in several portions (≈ {t} of drip irrigation",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben": "{name}: deeply dried out ({pct}). A deep, infrequent watering helps: about {l} under the canopy, in several portions",
+  "A teljes feltöltéshez {l} kellene, de a fának a stresszhatár feléig visszatöltés is elég": "A full refill would need {l}, but for a tree refilling to half the stress threshold is enough",
+  "képlet, magyarázat és beállítások": "formula, explanation and settings",
+  "Eső – képlet, magyarázat és beállítások": "Rain – formula, explanation and settings",
+  "Szél – képlet, magyarázat és beállítások": "Wind – formula, explanation and settings",
+  "A hely neve": "Place name",
+  "kikapcsolva": "off",
+  "borult": "overcast",
+  "melegem volt": "I was too warm",
+  "nagyon alacsony": "very low",
+  "alacsony": "low",
+  "magas": "high",
+  "nagyon magas": "very high",
+  "képlet és beállítások": "formula and settings"
 }

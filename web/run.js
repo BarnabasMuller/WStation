@@ -110,7 +110,7 @@ async function advise() {
   $('advOut').innerHTML = '<div class="adv-big">' + L + ' réteg</div>' +
     '<div class="line"><b>' + clothing(L, te) + '</b></div>' +
     '<div class="line">Időjárás' + (w.future ? ' (a legutóbbi mérés alapján, ' + F.full.format(w.t) + ')' : ' (' + F.full.format(w.t) + ')') + ': ' + tf('{t}, hőérzet {f}, szél {w}, pára {h} %', { t: ttext(w.temp), f: ttext(w.feels), w: wtext(w.wind), h: num(w.hum, 0) }) + (w.rainRate > 0.5 ? ', ' + tf('esik') : '') + ' → ' + tf('hatásos hőmérséklet {te}', { te: '<b>' + ttext(te, 1) + '</b>' }) + '</div>' +
-    '<div class="line small">Megbízhatóság: ' + rel + (who ? ' – ' + esc(who) : '') + '. A modell szerint egy réteg kb. ' + tdtext(perLayer, 0) + '-ot ér, egy intenzitáspont kb. ' + tdtext(model.beta[3] / Math.max(0.05, model.beta[1]), 1) + '-ot.</div>';
+    '<div class="line small">Megbízhatóság: ' + rel + (who ? ' – ' + esc(who) : '') + '. ' + tf('A modell szerint egy réteg kb. {a}-ot ér, egy intenzitáspont kb. {b}-ot.', { a: tdtext(perLayer, 0), b: tdtext(model.beta[3] / Math.max(0.05, model.beta[1]), 1) }) + '</div>';
 }
 
 ['advWho', 'advWhen', 'advInt'].forEach(id => $(id).addEventListener('input', () => { if (id === 'advWho') { UI.runWho = $('advWho').value; saveUi(); } advise(); }));

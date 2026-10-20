@@ -2200,5 +2200,22 @@
   "talaj": "Boden",
   "profilok": "Profile",
   "öntözésnapló": "Bewässerungsprotokoll",
-  "csapadék-kalibráció": "Niederschlagskalibrierung"
+  "csapadék-kalibráció": "Niederschlagskalibrierung",
+  "A modell szerint egy réteg kb. {a}-ot ér, egy intenzitáspont kb. {b}-ot": "Laut Modell ist eine Schicht etwa {a} wert, ein Intensitätspunkt etwa {b}",
+  "{name}: nincs szüksége öntözésre": "{name}: keine Bewässerung nötig",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben (≈ {t} csepegtetés": "{name}: tief ausgetrocknet ({pct}). Eine gründliche, seltene Bewässerung hilft: etwa {l} unter die Baumkrone, in mehreren Gaben (≈ {t} Tropfbewässerung",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben": "{name}: tief ausgetrocknet ({pct}). Eine gründliche, seltene Bewässerung hilft: etwa {l} unter die Baumkrone, in mehreren Gaben",
+  "A teljes feltöltéshez {l} kellene, de a fának a stresszhatár feléig visszatöltés is elég": "Für die volle Auffüllung wären {l} nötig, für einen Baum genügt aber das Auffüllen bis zur halben Stressgrenze",
+  "képlet, magyarázat és beállítások": "Formel, Erklärung und Einstellungen",
+  "Eső – képlet, magyarázat és beállítások": "Regen – Formel, Erklärung und Einstellungen",
+  "Szél – képlet, magyarázat és beállítások": "Wind – Formel, Erklärung und Einstellungen",
+  "A hely neve": "Ortsname",
+  "kikapcsolva": "aus",
+  "borult": "bedeckt",
+  "melegem volt": "mir war zu warm",
+  "nagyon alacsony": "sehr niedrig",
+  "alacsony": "niedrig",
+  "magas": "hoch",
+  "nagyon magas": "sehr hoch",
+  "képlet és beállítások": "Formel und Einstellungen"
 }

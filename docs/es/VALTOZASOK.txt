@@ -1,13 +1,17 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
-== 2.2.5 (2026-10-20) – correcciones de traducción y menores ==
+== 2.2.5 (2026-10-21) – correcciones de traducción y menores ==
 - Traducción: los consejos de riego de la pestaña Sequía, las bandas de punto de rocío, la marca «sin verificar»
   de los récords y el botón «Sí» de las confirmaciones aparecen como frases completas en inglés, alemán y
   español; los nombres de perfil predeterminados con paréntesis (p. ej. «Césped (aspersor)») también se traducen.
 - Los símbolos de las reglas de mediciones sospechosas son neutros (p. ej. I_jump, P_melt, T_sun).
 - En el móvil las pestañas Correr e Informe ya no se desplazan de lado; los botones «Registrar» de la pestaña
   Sequía indican al lector de pantalla el nombre del perfil.
+- Traducción: también se traducen el consejo de riego de los árboles, la línea de fiabilidad del asesor de
+  carrera, las etiquetas de Ubicación y nubosidad, los niveles de peligro de incendio y los nombres leídos de los
+  botones de fórmula; las frases traducidas ya no terminan con doble punto. Incluso en pantallas muy estrechas
+  (320 px) caben las pestañas Sequía, Correr y Ajustes.
 
 == 2.2.4 (2026-10-20) – correcciones tras revisión ==
 - Mediciones sospechosas: nuevas reglas para saltos de lluvia (también nieve fundida) y anemómetro congelado;

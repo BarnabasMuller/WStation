@@ -2199,5 +2199,22 @@
   "talaj": "suelo",
   "profilok": "perfiles",
   "öntözésnapló": "registro de riego",
-  "csapadék-kalibráció": "calibración de lluvia"
+  "csapadék-kalibráció": "calibración de lluvia",
+  "A modell szerint egy réteg kb. {a}-ot ér, egy intenzitáspont kb. {b}-ot": "Según el modelo una capa vale aprox. {a} y un punto de intensidad aprox. {b}",
+  "{name}: nincs szüksége öntözésre": "{name}: no necesita riego",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben (≈ {t} csepegtetés": "{name}: muy seco en profundidad ({pct}). Un riego profundo y poco frecuente ayuda: aprox. {l} bajo la copa, en varias tandas (≈ {t} de goteo",
+  "{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben": "{name}: muy seco en profundidad ({pct}). Un riego profundo y poco frecuente ayuda: aprox. {l} bajo la copa, en varias tandas",
+  "A teljes feltöltéshez {l} kellene, de a fának a stresszhatár feléig visszatöltés is elég": "Para rellenar del todo harían falta {l}, pero para un árbol basta con rellenar hasta la mitad del umbral de estrés",
+  "képlet, magyarázat és beállítások": "fórmula, explicación y ajustes",
+  "Eső – képlet, magyarázat és beállítások": "Lluvia – fórmula, explicación y ajustes",
+  "Szél – képlet, magyarázat és beállítások": "Viento – fórmula, explicación y ajustes",
+  "A hely neve": "Nombre del lugar",
+  "kikapcsolva": "desactivado",
+  "borult": "cubierto",
+  "melegem volt": "tuve calor",
+  "nagyon alacsony": "muy bajo",
+  "alacsony": "bajo",
+  "magas": "alto",
+  "nagyon magas": "muy alto",
+  "képlet és beállítások": "fórmula y ajustes"
 }

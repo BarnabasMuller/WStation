@@ -363,9 +363,13 @@ function renderWater() {
     const lines = trees.map(p => {
       const r = resById(p.id), dr = last(r.dr), raw = last(r.raw), lph = p.dripCount * p.dripLph;
       const fill = Math.max(0, dr - raw * 0.5) * r.area;
-      return '<b>' + ut(p.name) + '</b>: ' + (dr <= raw ? 'nincs szüksége öntözésre.' : 'mélyen kiszáradt (' + num(last(r.depl) * 100, 0) + '%). Egy alapos, ritka beöntözés segít: kb. <b>' + fmtL(fill) + '</b> a lombkorona alá, több részletben' + (lph > 0 ? ' (≈ ' + durText(fill / lph * 60) + ' csepegtetés)' : '') + '. ' +
+      // egész mondatos sablonok (6.37), mint a többi kártyán
+      const tv = { name: '<b>' + ut(p.name) + '</b>', pct: num(last(r.depl) * 100, 0) + '%', l: '<b>' + fmtL(fill) + '</b>', t: lph > 0 ? durText(fill / lph * 60) : '' };
+      return (dr <= raw ? tf('{name}: nincs szüksége öntözésre.', tv) :
+        (lph > 0 ? tf('{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben (≈ {t} csepegtetés).', tv)
+          : tf('{name}: mélyen kiszáradt ({pct}). Egy alapos, ritka beöntözés segít: kb. {l} a lombkorona alá, több részletben.', tv)) + ' ' +
         // a profilkártya „Hiányzik” értéke a teljes feltöltés – itt mondjuk meg, miért kevesebb a javaslat (7.22)
-        '<span class="muted">A teljes feltöltéshez ' + fmtL(Math.max(0, dr) * r.area) + ' kellene, de a fának a stresszhatár feléig visszatöltés is elég.</span>');
+        '<span class="muted">' + tf('A teljes feltöltéshez {l} kellene, de a fának a stresszhatár feléig visszatöltés is elég.', { l: fmtL(Math.max(0, dr) * r.area) }) + '</span>');
     });
     cards.push(mk('Fák', '🌳', trees.map(p => p.id), { status: 'A fák mélyen gyökereznek: ritkán, de sokat.', cls: trees.some(p => last(resById(p.id).dr) > last(resById(p.id).raw)) ? 'mild' : 'ok', lines }, trees.map(p => [p.id, p.name, ['l', 'perc', 'mm']])));
   }
