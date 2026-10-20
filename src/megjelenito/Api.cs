@@ -178,7 +178,7 @@ namespace Idojaras
                 case "/api/series": return Series(ds, AppState.S, q);
                 case "/api/export":
                     if (method != "POST") { status = 405; return "{}"; }   // Mentés ablakot nyit: csak POST
-                    return Export.SaveWithDialog(ds);
+                    return Export.SaveWithDialog(ds, q["raw"] == "1");
                 case "/api/days": return Days(ds, q["clean"] != "0");
                 case "/api/drought": return DroughtJson(ds);
                 case "/api/rainevents": return Analysis.RainEventsJson(ds, q["clean"] != "0", AppState.S);
@@ -359,7 +359,9 @@ namespace Idojaras
                 .P("hotDay", s.HotDay).P("tropicalNight", s.TropicalNight).P("frostDay", s.FrostDay).P("iceDay", s.IceDay)
                 .P("gapMinutes", s.GapMinutes).P("windUnit", s.WindUnit).P("excludeSuspect", s.ExcludeSuspect)
                 .P("tz", Tz.Iana).P("heatWarn1", s.HeatWarn1).P("heatWarn3", s.HeatWarn3).P("currency", s.Currency)
-                .End();
+                .Key("rainNormal").Arr();
+            foreach (var x in s.RainNormal) w.Num(x, 1);
+            w.EndArr().End();
             return w.End().ToString();
         }
 

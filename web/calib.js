@@ -83,8 +83,8 @@ async function saveCalib() {
     CAL = await post('/api/calib', body);
     drawCalib();
     $('calMsg').textContent = '✔ Mentve, újraszámolás…';
-    if (typeof waitReload === 'function') await waitReload();
-    if ($('calMsg')) $('calMsg').textContent = '✔ Mentve és újraszámolva.';
+    const ready = typeof waitReload === 'function' ? await waitReload() : true;
+    if ($('calMsg')) $('calMsg').textContent = savedMsg(ready);
   } catch (e) { $('calMsg').textContent = '⚠ ' + e.message; }
 }
 // „kalibrált” jelzés a csapadék mellett

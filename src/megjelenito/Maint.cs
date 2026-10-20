@@ -79,20 +79,19 @@ namespace Idojaras
         }
     }
 
-    // Frissítés-ellenőrzés helyben: újabb telepítő a programmappában vagy közvetlenül mellette
+    // Frissítés-ellenőrzés helyben: újabb telepítő a programmappában.
+    // Csak a programmappa (a szülőmappa – pl. Letöltések, Asztal – nem), és csak a WStation telepítője (10.12).
     static class UpdateCheck
     {
         static Version Me { get { return Assembly.GetExecutingAssembly().GetName().Version; } }
 
         static List<string> Candidates()
         {
-            var dirs = new List<string> { AppState.L.Base };
-            try { var parent = Directory.GetParent(AppState.L.Base); if (parent != null) dirs.Add(parent.FullName); } catch { }
             var res = new List<string>();
-            foreach (var d in dirs)
-                foreach (var pat in new[] { "WStation_setup*.exe", "Idojaras_telepito*.exe" })   // új és régi (2.2.1-ig) név
-                    try { res.AddRange(Directory.GetFiles(d, pat)); } catch { }
-            return res;
+            foreach (var pat in new[] { "WStation_setup*.exe", "Idojaras_telepito*.exe" })   // új és régi (2.2.1-ig) név
+                try { res.AddRange(Directory.GetFiles(AppState.L.Base, pat)); } catch { }
+            // a fájl saját termékneve is a WStationé legyen (egy véletlenül azonos nevű idegen exe ne kerüljön fel)
+            return res.Where(p => { try { return FileVersionInfo.GetVersionInfo(p).ProductName == "WStation"; } catch { return false; } }).ToList();
         }
 
         static Version Ver(string path)

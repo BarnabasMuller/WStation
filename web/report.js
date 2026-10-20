@@ -52,11 +52,13 @@ function summaryText(d, m, s) {
     temp = rankWarm === 1 ? 'az eddigi legmelegebb hónap' : rankWarm === n ? 'az eddigi leghidegebb hónap' : 'a ' + n + ' hónapból a ' + rankWarm + '. legmelegebb';
     if (partial) temp += ' – részleges hónap: ' + days + ' / ' + dim + ' nap adata';
   } else if (partial) temp = 'részleges hónap: ' + days + ' / ' + dim + ' nap adata';
-  const rpd = s.rain / Math.max(1, days);
-  // a budapesti sokéves átlag kb. 1,5 mm/nap (≈ 550 mm/év)
-  wet = rpd < 0.7 ? 'nagyon száraz' : rpd < 1.3 ? 'száraz' : rpd < 2.2 ? 'átlagos csapadékú' : 'csapadékos';
+  // a hónap saját sokéves átlagához mérve (9.6: júniusban kb. kétszer annyi eső az átlag, mint januárban); részleges hónapnál arányosan
+  const norm = (META.settings.rainNormal || [])[+m.slice(5, 7) - 1], exp = norm != null ? norm * days / dim : null;
+  const ratio = exp ? s.rain / exp : null;
+  wet = ratio == null ? '' : ratio < 0.4 ? 'nagyon száraz' : ratio < 0.75 ? 'száraz' : ratio <= 1.3 ? 'átlagos csapadékú' : ratio <= 2 ? 'csapadékos' : 'nagyon csapadékos';
+  const wetPct = ratio == null ? '' : ' (csapadék: a sokéves havi átlag ' + num(ratio * 100, 0) + '%-a)';
   const warm = s.tavg == null ? '' : s.tavg >= 22 ? 'Forró' : s.tavg >= 17 ? 'Meleg' : s.tavg >= 10 ? 'Enyhe' : s.tavg >= 3 ? 'Hűvös' : 'Hideg';
-  return warm + ', ' + wet + ' hónap: átlag <b>' + ttext(s.tavg) + '</b>' + (temp ? ' (' + temp + ')' : '') + ', <b>' + rtext(s.rain, 1) + '</b> csapadék ' + s.rainy + ' esős nappal, <b>' + num(s.sun, 0) + ' óra</b> napsütés.' +
+  return warm + (wet ? ', ' + wet : '') + ' hónap' + wetPct + ': átlag <b>' + ttext(s.tavg) + '</b>' + (temp ? ' (' + temp + ')' : '') + ', <b>' + rtext(s.rain, 1) + '</b> csapadék ' + s.rainy + ' esős nappal, <b>' + num(s.sun, 0) + ' óra</b> napsütés.' +
     (s.hot ? ' ' + s.hot + ' hőségnap' + (s.trop ? ' és ' + s.trop + ' trópusi éjszaka' : '') + '.' : '') + (s.frost ? ' ' + s.frost + ' fagyos nap.' : '');
 }
 

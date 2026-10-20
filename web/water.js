@@ -49,7 +49,14 @@ function renderWaterUse() {
   const box = $('waterUse');
   if (!box || !DR) return;
   const w = wState();
-  const list = (typeof validRanges === 'function' && (validRanges() || null)) || [{ a: DR.date[0], b: DS.today(), full: true }];
+  // saját időszakválasztó (10.10): alapból az idei év; a Statisztika fül időszaka csak kérésre
+  const pYears = [...new Set(DR.date.map(x => x.slice(0, 4)))], curY = DR.date[DR.date.length - 1].slice(0, 4);
+  if (!w.period || (/^\d{4}$/.test(w.period) && !pYears.includes(w.period))) w.period = curY;
+  const statList = typeof validRanges === 'function' ? validRanges() : null;
+  const list = w.period === 'all' ? [{ a: DR.date[0], b: DS.today(), full: true }]
+    : w.period === '365' ? [{ a: DS.add(DS.today(), -364), b: DS.today() }]
+    : w.period === 'stat' && statList ? statList
+    : [{ a: w.period + '-01-01', b: w.period + '-12-31' }];
   const inR = typeof rangePred === 'function' ? rangePred(list) : () => true;
   const profs = DR.config.profiles.filter(p => p.enabled && WTYPES[p.type]).map(p => ({ p, r: resById(p.id) })).filter(x => x.r);
   const shown = profs.filter(x => w.types[x.p.type] !== false);
@@ -74,10 +81,11 @@ function renderWaterUse() {
   const mk = Object.keys(months).sort();
   const topM = mk.slice().sort((a, b) => months[b].need - months[a].need)[0];
   let peak = -1; dayNeed.forEach((v, i) => { if (v > 0 && (peak < 0 || v > dayNeed[peak])) peak = i; });
-  const label = list.length === 1 && list[0].full ? 'teljes időszak' : list.map(x => typeof rangeLabel === 'function' ? rangeLabel(x) : x.a + '–' + x.b).join(' + ');
+  const pOpts = pYears.slice().reverse().map(y => [y, y]).concat([['365', 'Előző 365 nap'], ['all', 'Teljes időszak'], ['stat', 'A Statisztika fül időszaka']]);
+  const statLabel = w.period === 'stat' && statList ? ' <span class="muted small">(' + esc(statList.map(x => typeof rangeLabel === 'function' ? rangeLabel(x) : x.a + '–' + x.b).join(' + ')) + ')</span>' : '';
 
   box.innerHTML =
-    '<div class="row2 w-ctrl"><span class="muted">Időszak:</span> <b>' + esc(label) + '</b> <span class="muted small">(a Statisztika fül időszak-választójával állítható)</span></div>' +
+    '<div class="row2 w-ctrl"><label for="wPeriod" class="muted">Időszak:</label> <select class="sel" id="wPeriod">' + pOpts.map(([v, l]) => '<option value="' + v + '"' + (v === w.period ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select>' + statLabel + '</div>' +
     '<div class="row2 w-ctrl"><span class="muted">Növények:</span> <span class="daypick" id="wTypes">' + Object.entries(WTYPES).map(([k, v]) => '<label><input type="checkbox" value="' + k + '"' + (w.types[k] !== false ? ' checked' : '') + '>' + v + '</label>').join('') + '</span>' +
     '<label class="switch small"><input type="checkbox" id="wEff"' + (w.eff ? ' checked' : '') + '><span class="slider"></span><span>hatékonysági veszteséggel (szórófej ~75%, csepegtető ~90%)</span></label></div>' +
     '<div class="row2 w-ctrl"><span class="muted">Vízdíj:</span> <div class="seg" id="wPriceMode"><button data-v="0">egy ár</button><button data-v="1">vízdíj + csatornadíj</button></div>' +
@@ -86,23 +94,29 @@ function renderWaterUse() {
     '<h3 class="sub-h">Célállapot – legfeljebb ennyi kiszáradást engedj</h3><div class="w-targets">' +
     shown.map(({ p, r }) => { const t = Math.round(targetOf(p, r) * 100), raw = Math.round(baseP(p, r) * 100); return '<div class="w-t"><span>' + TYPE_ICON[p.type] + ' ' + ut(p.name) + '</span><input type="range" min="10" max="90" step="5" data-wt="' + p.id + '" value="' + t + '"><b>' + t + '%</b> <span class="muted small">' + (t < raw - 5 ? 'üde zöld' : t > raw + 10 ? 'takarékos, de stresszes' : 'a stresszhatár körül') + ' · stresszhatár ' + raw + '%</span></div>'; }).join('') + '</div>' +
     '<div class="today w-cards">' +
-    '<div class="card mini"><h3>Vízigény</h3><div class="big">' + num(needM3, needM3 < 10 ? 2 : 1) + '<small> m³</small></div><div class="line small">' + costText(needM3) + '</div></div>' +
-    '<div class="card mini"><h3>Tényleges öntözés</h3><div class="big">' + num(useM3, useM3 < 10 ? 2 : 1) + '<small> m³</small></div><div class="line small">' + costText(useM3) + '</div><div class="line small muted">a rögzített és a programozott locsolásból</div></div>' +
-    '<div class="card mini"><h3>Legdrágább hónap</h3><div class="big">' + (topM ? MONTHS_FULL[+topM.slice(5) - 1] : '–') + '</div><div class="line small">' + (topM ? num(months[topM].need, 2) + ' m³ · ' + num(months[topM].need * wPrice(), 0) + ' ' + cur() : '') + '</div></div>' +
+    '<div class="card mini"><h3>Vízigény</h3><div class="big">' + num(needM3, 1) + '<small> m³</small></div><div class="line small">' + costText(needM3) + '</div></div>' +
+    '<div class="card mini"><h3>Tényleges öntözés</h3><div class="big">' + num(useM3, 1) + '<small> m³</small></div><div class="line small">' + costText(useM3) + '</div><div class="line small muted">a rögzített és a programozott locsolásból</div></div>' +
+    '<div class="card mini"><h3>Legdrágább hónap</h3><div class="big">' + (topM ? MONTHS_FULL[+topM.slice(5) - 1] : '–') + '</div><div class="line small">' + (topM ? num(months[topM].need, 1) + ' m³ · ' + num(months[topM].need * wPrice(), 0) + ' ' + cur() : '') + '</div></div>' +
     '<div class="card mini"><h3>Csúcsnap</h3><div class="big">' + (peak >= 0 ? DS.fmt(DR.date[peak], { month: 'short', day: 'numeric' }) : '–') + '</div><div class="line small">' + (peak >= 0 ? fmtL(dayNeed[peak]) + ' egyszerre (a vödör visszatöltése)' : '') + '</div></div></div>' +
-    '<p class="w-cmp">Ha mindenhol <select class="sel" id="wCmp">' + [10, 20, 30].map(x => '<option value="' + x + '"' + (x === w.cmp ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> százalékponttal szárazabban tartod a növényeket, ebben az időszakban kb. <b>' + num(Math.max(0, needM3 - cmpM3), 1) + ' m³</b>-rel (≈ ' + num(Math.max(0, needM3 - cmpM3) * wPrice(), 0) + ' ' + cur() + ') kevesebb víz kellett volna: ' + num(needM3, 1) + ' m³ helyett ' + num(cmpM3, 1) + ' m³.</p>' +
+    '<p class="w-cmp">Ha a növényeket kicsit szárazabban tartod (<select class="sel" id="wCmp" aria-label="Mennyivel szárazabban">' + [10, 20, 30].map(x => '<option value="' + x + '"' + (x === w.cmp ? ' selected' : '') + '>' + x + '%-kal</option>').join('') + '</select> több kiszáradást engedve), ebben az időszakban kb. <b>' + num(Math.max(0, needM3 - cmpM3), 1) + ' m³</b>-rel (≈ ' + num(Math.max(0, needM3 - cmpM3) * wPrice(), 0) + ' ' + cur() + ') kevesebb víz kellett volna: ' + num(needM3, 1) + ' m³ helyett ' + num(cmpM3, 1) + ' m³.</p>' +
     '<div id="wBars" style="height:300px"></div><div id="wCal"></div>' +
     '<p class="hint">A vízigény: a talajvíz-mérleg a mért időjárással fut, és amikor egy növény kiszáradása eléri a célt, egy virtuális locsolás visszatölti a vödrét. Ezek összege literben (a terület × mm), m³-ben és forintban. A fák területe a lombkorona, a bokroké bokronként × darabszám.</p>';
 
   // vezérlők
+  $('wPeriod').addEventListener('change', e => { w.period = e.target.value; saveUi(); renderWaterUse(); });
   box.querySelectorAll('#wTypes input').forEach(c => c.addEventListener('change', () => { w.types[c.value] = c.checked; saveUi(); renderWaterUse(); }));
   $('wEff').addEventListener('change', e => { w.eff = e.target.checked; saveUi(); renderWaterUse(); });
   box.querySelectorAll('#wPriceMode button').forEach(b => { b.classList.toggle('on', (b.dataset.v === '1') === w.detailed); b.addEventListener('click', () => { w.detailed = b.dataset.v === '1'; saveUi(); renderWaterUse(); }); });
-  const priceIn = (id, key) => { const el = $(id); if (!el) return; el.addEventListener('change', () => {
-    const s = String(el.value).trim().replace(',', '.');
-    if (!/^\d+(\.\d+)?$/.test(s) || +s > 100000) { el.classList.add('bad'); $('wPErr').textContent = '⚠ 0 és 100 000 ' + cur() + '/m³ között'; return; }
-    w[key] = +s; saveUi(); renderWaterUse();
-  }); };
+  const priceOk = el => { const s = String(el.value).trim().replace(',', '.'); return /^\d+(\.\d+)?$/.test(s) && +s <= 100000 ? +s : null; };
+  const priceIn = (id, key) => { const el = $(id); if (!el) return;
+    // jó értéknél a hibajelzés azonnal eltűnik (15.5)
+    el.addEventListener('input', () => { if (priceOk(el) != null) { el.classList.remove('bad'); $('wPErr').textContent = ''; } });
+    el.addEventListener('change', () => {
+      const x = priceOk(el);
+      if (x == null) { el.classList.add('bad'); $('wPErr').textContent = '⚠ 0 és 100 000 ' + cur() + '/m³ között'; return; }
+      el.classList.remove('bad'); $('wPErr').textContent = '';
+      w[key] = x; saveUi(); renderWaterUse();
+    }); };
   priceIn('wPrice', 'price'); priceIn('wSewer', 'sewer'); priceIn('wSimple', 'simple');
   box.querySelectorAll('[data-wt]').forEach(s => {
     s.addEventListener('input', () => { s.nextElementSibling.textContent = s.value + '%'; });

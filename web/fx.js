@@ -125,22 +125,26 @@ async function openFx(key) {
     try {
       INI = await post('/api/ini', o);
       $('fxMsg').textContent = '✔ Mentve, újraszámolás…';
-      await waitReload();
-      $('fxMsg').textContent = '✔ Mentve és újraszámolva.';
+      $('fxMsg').textContent = savedMsg(await waitReload());
     } catch (e) { $('fxMsg').textContent = '⚠ ' + e.message; }
   });
 }
 
 // a háttérben induló újraolvasás megvárása, utána a nézet frissítése
+// true, ha az újraszámolás elkészült; false, ha 60 másodperc után még tart (10.8)
 async function waitReload() {
   await sleep(400);
+  let ready = false;
   for (let i = 0; i < 120; i++) {
     const s = await api('/api/status').catch(() => null);
-    if (s && s.status === 'ready') break;
+    if (s && s.status === 'ready') { ready = true; break; }
     await sleep(500);
   }
-  if (typeof start === 'function') await start();
+  if (ready && typeof start === 'function') await start();
+  return ready;
 }
+// a mentés utáni üzenet a valós állapot szerint
+function savedMsg(ready) { return ready ? '✔ Mentve és újraszámolva.' : '✔ Mentve. Az újraszámolás még tart – néhány másodperc múlva frissül a nézet.'; }
 
 // ------------------------------------------------------------------ gyanús mérések (Beállítások kártya és ƒx ablak)
 const SUSPECT_RULES = [
@@ -201,7 +205,7 @@ async function renderSuspect(box) {
   $('suSave').addEventListener('click', async () => {
     const o = collect();
     if (!o) return;
-    try { INI = await post('/api/ini', o); $('suMsg').textContent = '✔ Mentve, újraszámolás…'; await waitReload(); $('suMsg').textContent = '✔ Mentve és újraszámolva.'; }
+    try { INI = await post('/api/ini', o); $('suMsg').textContent = '✔ Mentve, újraszámolás…'; $('suMsg').textContent = savedMsg(await waitReload()); }
     catch (e) { $('suMsg').textContent = '⚠ ' + e.message; }
   });
   preview();

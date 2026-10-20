@@ -46,6 +46,8 @@ namespace Idojaras
         public double HeatWarn1 = 25, HeatWarn3 = 27;              // hőség-figyelő: napi középhőmérséklet (I., ill. III. fokozat)
         public double PlausibleTmax = 41.9;                        // e fölötti hőmérséklet-csúcs „ellenőrizetlen rekord” (alapból az országos rekord)
         public string Currency = "Ft";
+        // havi sokéves csapadékátlag (mm, jan–dec) a jelentés „száraz / csapadékos” besorolásához; alapból Budapest 1991–2020 (9.6)
+        public double[] RainNormal = { 37, 33, 34, 40, 62, 66, 59, 55, 50, 44, 50, 45 };
         // felhőzet-becslés (ƒx ablak)
         public double CloudKrs = 1.0;       // a mért sugárzás szorzója (érzékelő / 5 perces csúcsérték korrekciója)
         public double CloudA = 0.75, CloudB = 3.4;   // Kasten–Czeplak állandók
@@ -78,6 +80,9 @@ HosegFigyelo1=25
 HosegFigyelo3=27
 # Hihetőségi határ (°C): e fölötti csúcs a rekordoknál „ellenőrizetlen” jelzést kap (alapból az országos rekord, 41,9 °C)
 HihetoMaxHomerseklet=41.9
+# Havi sokéves csapadékátlag (mm, január–december, pontosvesszővel) – a jelentés „száraz / csapadékos” besorolásához.
+# Alapból Budapest (1991–2020); más helyszínhez a legközelebbi meteorológiai állomás értékei
+HaviCsapadekAtlag=37;33;34;40;62;66;59;55;50;44;50;45
 # Pénznem a vízdíjhoz
 Penznem=Ft
 
@@ -263,6 +268,7 @@ SzelesDelutanKmh=20
             s.HeatWarn1 = Num(d, "HosegFigyelo1", s.HeatWarn1, s);
             s.HeatWarn3 = Num(d, "HosegFigyelo3", s.HeatWarn3, s);
             s.PlausibleTmax = Num(d, "HihetoMaxHomerseklet", s.PlausibleTmax, s);
+            if (d.TryGetValue("HaviCsapadekAtlag", out v)) { var rn = ParseNormal(v); if (rn != null) s.RainNormal = rn; else s.Warnings.Add("HaviCsapadekAtlag: 12 szám kell pontosvesszővel – marad az alapérték"); }
             if (d.TryGetValue("Penznem", out v) && v.Trim().Length > 0) s.Currency = v.Trim().Length > 6 ? v.Trim().Substring(0, 6) : v.Trim();
             // felhőzet
             s.CloudKrs = Math.Max(0.3, Math.Min(2, Num(d, "FelhoKRs", s.CloudKrs, s)));
@@ -316,7 +322,18 @@ SzelesDelutanKmh=20
             { "FelhoEjDerult", new double[] { 0.2, 4, 0, 0 } }, { "FelhoEjReszben", new double[] { 0, 2, 0, 0 } }, { "FelhoEjSzelMax", new double[] { 1, 30, 0, 0 } }
         };
         // szöveges, szerkeszthető kulcsok (a helyszínhez)
-        public static readonly HashSet<string> TextKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "HelyNev", "Idozona", "Penznem" };
+        public static readonly HashSet<string> TextKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "HelyNev", "Idozona", "Penznem", "HaviCsapadekAtlag" };
+
+        // „37;33;…” → 12 nemnegatív szám (mm), különben null
+        public static double[] ParseNormal(string v)
+        {
+            var parts = (v ?? "").Split(';');
+            if (parts.Length != 12) return null;
+            var res = new double[12];
+            for (int i = 0; i < 12; i++)
+                if (!double.TryParse(parts[i].Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out res[i]) || res[i] < 0 || res[i] > 2000) return null;
+            return res;
+        }
 
         // az alapértékek a sablonból
         public static Dictionary<string, string> Defaults()
@@ -343,6 +360,7 @@ SzelesDelutanKmh=20
                 if (key.Equals("HelyNev", StringComparison.OrdinalIgnoreCase) && t.Length > 40) return "A hely neve legfeljebb 40 karakter.";
                 if (key.Equals("Penznem", StringComparison.OrdinalIgnoreCase) && (t.Length < 1 || t.Length > 6)) return "A pénznem 1–6 karakter (pl. Ft, €, EUR).";
                 if (key.Equals("Idozona", StringComparison.OrdinalIgnoreCase) && Tz.WindowsId(t) == null) return "Ismeretlen időzóna: " + t;
+                if (key.Equals("HaviCsapadekAtlag", StringComparison.OrdinalIgnoreCase) && ParseNormal(t) == null) return "A havi csapadékátlag 12 szám (mm), pontosvesszővel elválasztva.";
                 norm = t;
                 return null;
             }

@@ -872,8 +872,9 @@ $('btnExport').addEventListener('click', async () => {
   const msg = $('exportMsg');
   msg.className = 'msg'; msg.textContent = '';
   try {
-    const r = await post('/api/export');
-    if (r.download) { location.href = '/api/export.csv'; msg.className = 'msg ok'; msg.textContent = 'A böngésző letölti a fájlt.'; return; }
+    const raw = $('exportRaw').checked ? '?raw=1' : '';
+    const r = await post('/api/export' + raw);
+    if (r.download) { location.href = '/api/export.csv' + raw; msg.className = 'msg ok'; msg.textContent = 'A böngésző letölti a fájlt.'; return; }
     if (r.saved) { msg.className = 'msg ok'; msg.textContent = 'Elmentve (' + r.rows + ' nap): ' + r.path; }
     else if (r.error) { msg.className = 'msg err'; msg.textContent = r.error; }
   } catch (e) { msg.className = 'msg err'; msg.textContent = e.message; }

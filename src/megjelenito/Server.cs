@@ -95,7 +95,7 @@ namespace Idojaras
                     if (path == "/api/export.csv")
                     {
                         // böngészős módban letöltésként adjuk
-                        body = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(Export.DailyCsv(AppState.Data))).ToArray();
+                        body = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(Export.DailyCsv(AppState.Data, req.QueryString["raw"] == "1"))).ToArray();
                         type = "text/csv; charset=utf-8";
                         resp.Headers["Content-Disposition"] = "attachment; filename=\"" + Export.FileName() + "\"";
                     }

@@ -459,7 +459,8 @@
 
       <div class="card">
         <h3>Excel-export</h3>
-        <p>A napi összesítő tábla (egy sor = egy nap: hőmérséklet, pára, nyomás, szél, csapadék, napsütés…) CSV-fájlba, magyar Excel-formátumban, a választott mértékegységekkel.</p>
+        <p>A napi összesítő tábla (egy sor = egy nap: hőmérséklet, pára, nyomás, szél, csapadék, napsütés…) CSV-fájlba, Excelhez, a felület nyelvén és a választott mértékegységekkel. Alapból a gyanús mérések nélkül (tisztított adat).</p>
+        <div class="row2"><label class="chk"><input type="checkbox" id="exportRaw"> a gyanús mérésekkel együtt (nyers adat)</label></div>
         <div class="row2"><button class="btn primary" id="btnExport">Napi összesítő exportálása</button></div>
         <div class="msg" id="exportMsg"></div>
       </div>

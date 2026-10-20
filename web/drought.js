@@ -569,7 +569,7 @@ async function renderDroughtExtras() {
   const g = c.gdd, cum = last(DR.gddCum), pcum = last(DR.gddPheno);
   const year = DR.date[DR.date.length - 1].slice(0, 4);
   const ph = DR.pheno && DR.pheno[year];
-  const reach = g.milestones.map(m => { const i = DR.gddPheno.findIndex((x, k) => DR.date[k].startsWith(year) && x >= m.gdd); return '<li>' + esc(m.name) + ' (' + num(m.gdd, 0) + '): <b>' + (i >= 0 ? DS.fmt(DR.date[i], { month: 'short', day: 'numeric' }) : 'még nem') + '</b></li>'; }).join('');
+  const reach = g.milestones.map(m => { const i = DR.gddPheno.findIndex((x, k) => DR.date[k].startsWith(year) && x >= m.gdd); return '<li>' + ut(m.name) + ' (' + tf('{n} {u}·nap, {b} {u} felett', { n: num(tdconv(m.gdd), 0), b: num(tconv(g.milestoneBase != null ? g.milestoneBase : 5), 0), u: tlabel() }) + '): <b>' + (i >= 0 ? DS.fmt(DR.date[i], { month: 'short', day: 'numeric' }) : 'még nem') + '</b></li>'; }).join('');
   let diaryLine = '';
   try {
     const diary = (MARKS && MARKS.diary) || await api('/api/store/naplo');

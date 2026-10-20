@@ -319,6 +319,8 @@ async function renderPlace() {
       'A magyar hőségriasztás szerint 25 és 27 °C. A „Hőség” jelzés az Áttekintés Figyelő kártyáján.') +
     f('plPlaus', 'Hihetőségi határ', numIn('plPlaus', +tconv(parseFloat(String(v.HihetoMaxHomerseklet || 41.9).replace(',', '.'))).toFixed(1), 70) + ' ' + tlabel(),
       'E fölötti hőmérséklet-csúcs a rekordoknál „ellenőrizetlen” jelzést kap (alapból az országos rekord, 41,9 °C). A Windows-értesítés hőség-küszöbe a Riasztások résznél állítható.') +
+    f('plNorm', 'Havi sokéves csapadékátlag (mm, január–december)', '<input class="inp" id="plNorm" style="width:min(100%,420px)" value="' + esc(v.HaviCsapadekAtlag || '') + '">',
+      'Pontosvesszővel elválasztott 12 szám. A havi jelentés ehhez méri, hogy egy hónap száraz vagy csapadékos volt. Alapból Budapest (1991–2020).') +
     f('plCur', 'Pénznem', '<input class="inp" id="plCur" maxlength="6" style="width:70px" value="' + esc(v.Penznem || 'Ft') + '">', 'A Víz alfül költségeihez.');
 }
 function plNum(id, lo, hi) {
@@ -337,13 +339,16 @@ $('placeSave').addEventListener('click', async () => {
   const name = $('plName').value.trim(), curc = $('plCur').value.trim();
   if (/[=#]/.test(name)) { $('plNameErr').textContent = '⚠ „=” és „#” nem lehet benne'; return; }
   if (!curc || /[=#]/.test(curc)) { $('plCurErr').textContent = '⚠ 1–6 karakter, pl. Ft, €, EUR'; return; }
+  const normS = $('plNorm').value.trim(), normOk = normS.split(';').length === 12 && normS.split(';').every(x => /^\s*\d+([.,]\d+)?\s*$/.test(x));
+  $('plNorm').classList.toggle('bad', !normOk);
+  if (!normOk) { $('plNormErr').textContent = '⚠ 12 szám kell, pontosvesszővel (pl. 37;33;34;…)'; return; }
   if ([lat, lon, elev, h1, h3, hot, plaus].some(x => x == null)) { $('placeMsg').className = 'msg err'; $('placeMsg').textContent = 'Javítsd a pirossal jelölt mezőket – nem mentettem.'; return; }
   const msg = $('placeMsg'); msg.className = 'msg'; msg.textContent = 'Mentés…';
   try {
-    await post('/api/ini', { HelyNev: name, Idozona: $('plTz').value, TartalekSzelesseg: lat, TartalekHosszusag: lon, HosegFigyelo1: +qback('temp', h1).toFixed(1), HosegFigyelo3: +qback('temp', h3).toFixed(1), HosegNap: +qback('temp', hot).toFixed(1), HihetoMaxHomerseklet: +qback('temp', plaus).toFixed(1), Penznem: curc });
+    await post('/api/ini', { HelyNev: name, Idozona: $('plTz').value, TartalekSzelesseg: lat, TartalekHosszusag: lon, HosegFigyelo1: +qback('temp', h1).toFixed(1), HosegFigyelo3: +qback('temp', h3).toFixed(1), HosegNap: +qback('temp', hot).toFixed(1), HihetoMaxHomerseklet: +qback('temp', plaus).toFixed(1), HaviCsapadekAtlag: normS.replace(/\s+/g, ''), Penznem: curc });
     if (typeof DR !== 'undefined' && DR && DR.config.global.elevation !== elev) { DR.config.global.elevation = elev; await saveDroughtConfig(); }
-    if (typeof waitReload === 'function') await waitReload();
-    msg.className = 'msg ok'; msg.textContent = '✔ Mentve és újraszámolva.';
+    const ready = typeof waitReload === 'function' ? await waitReload() : true;
+    msg.className = 'msg ok'; msg.textContent = savedMsg(ready);
     renderPlace();
   } catch (e) { msg.className = 'msg err'; msg.textContent = '⚠ ' + e.message; }
 });
@@ -385,7 +390,7 @@ async function renderMetar() {
     finally { if ($('metarNow')) $('metarNow').disabled = false; }
   });
   if ($('metarApply')) $('metarApply').addEventListener('click', async () => {
-    try { await post('/api/ini', { FelhoDerultK: m.suggestClearK }); if (typeof waitReload === 'function') await waitReload(); $('metarMsg').className = 'msg ok'; $('metarMsg').textContent = '✔ Alkalmazva, újraszámolva.'; renderMetar(); }
+    try { await post('/api/ini', { FelhoDerultK: m.suggestClearK }); const ready = typeof waitReload === 'function' ? await waitReload() : true; $('metarMsg').className = 'msg ok'; $('metarMsg').textContent = ready ? '✔ Alkalmazva, újraszámolva.' : savedMsg(false); renderMetar(); }
     catch (e) { $('metarMsg').className = 'msg err'; $('metarMsg').textContent = '⚠ ' + e.message; }
   });
 }

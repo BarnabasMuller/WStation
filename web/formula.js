@@ -123,12 +123,7 @@ function evalFormula(ast, V) {
       }
       case 'fn': {
         const f = node.f, A = node.args;
-        if (['osszeg', 'sum', 'atlag', 'avg', 'min', 'max'].includes(f) && A.length === 2 && A[1].k === 'dur') {
-          const from = t[i] - A[1].v * 1000; let s = 0, c = 0, mn = Infinity, mx = -Infinity;
-          for (let j = i; j >= 0 && t[j] > from; j--) { const v = ev(A[0], j); if (v == null) continue; s += v; c++; if (v < mn) mn = v; if (v > mx) mx = v; }
-          if (!c) return null;
-          return f === 'osszeg' || f === 'sum' ? s : f === 'atlag' || f === 'avg' ? s / c : f === 'min' ? mn : mx;
-        }
+        if (isWindowFn(node)) { let r = WIN.get(node); if (!r) WIN.set(node, r = slide(node)); return r[i]; }
         const v = A.map(a => ev(a, i));
         if (f === 'ha' || f === 'if') { if (v[0] == null) return null; return v[0] ? v[1] : v[2]; }
         if (v.some(x => x == null)) return null;
@@ -144,9 +139,35 @@ function evalFormula(ast, V) {
     }
     return null;
   }
+  // csúszó ablak egyszer, két mutatóval (10.6: pontonként visszalépve egy 30 napos ablak 5 percen nagyon lassú volt)
+  const WIN = new Map();
+  function slide(node) {
+    const f = node.f, inner = new Array(n), res = new Array(n), w = node.args[1].v * 1000;
+    for (let j = 0; j < n; j++) inner[j] = ev(node.args[0], j);
+    const isSum = f === 'osszeg' || f === 'sum', isAvg = f === 'atlag' || f === 'avg', isMin = f === 'min';
+    let a = 0, s = 0, c = 0; const dq = [];   // összeg / darab, illetve min/max-hoz monoton sor (indexek)
+    for (let i = 0; i < n; i++) {
+      const v = inner[i];
+      if (v != null) {
+        s += v; c++;
+        if (!isSum && !isAvg) { while (dq.length && (isMin ? inner[dq[dq.length - 1]] >= v : inner[dq[dq.length - 1]] <= v)) dq.pop(); dq.push(i); }
+      }
+      while (a <= i && t[a] <= t[i] - w) { if (inner[a] != null) { s -= inner[a]; c--; } if (dq.length && dq[0] === a) dq.shift(); a++; }
+      res[i] = !c ? null : isSum ? s : isAvg ? s / c : inner[dq[0]];
+    }
+    return res;
+  }
   const out = new Array(n);
   for (let i = 0; i < n; i++) { const v = ev(ast, i); out[i] = v == null || !isFinite(v) ? null : v; }
   return out;
+}
+function isWindowFn(node) { return ['osszeg', 'sum', 'atlag', 'avg', 'min', 'max'].includes(node.f) && node.args.length === 2 && node.args[1].k === 'dur'; }
+// mennyi korábbi adat kell a képlethez (ms): az időeltolások és a csúszó ablakok összege a legmélyebb ágon
+function lookbackMs(node) {
+  if (!node || typeof node !== 'object') return 0;
+  if (node.k === 'var') return Math.max(0, -(node.shift || 0) * 1000);
+  if (node.k === 'fn' && isWindowFn(node)) return node.args[1].v * 1000 + lookbackMs(node.args[0]);
+  return Math.max(0, ...['a', 'b'].map(k => lookbackMs(node[k])), ...(node.args || []).map(lookbackMs));
 }
 
 // ------------------------------------------------------------------ felület
@@ -183,9 +204,10 @@ function checkFormula() {
 }
 
 const VARS_CACHE = {};
-async function varsFor(res) {
+async function varsFor(res, back) {
   if (res === '5perc') {
-    const [a, b] = chart ? visibleRange() : [META.last - 7 * D, META.last];
+    // a nézet előtti, a képlethez szükséges adat is (10.6: különben a nézet bal szélén csonka az ablak / eltolás)
+    const [a0, b] = chart ? visibleRange() : [META.last - 7 * D, META.last], a = a0 - (back || 0);
     const key = '5perc:' + Math.round(a / 600e3) + ':' + Math.round(b / 600e3);
     if (!VARS_CACHE[key]) VARS_CACHE[key] = await api('/api/vars?res=5perc&from=' + a + '&to=' + b);
     return VARS_CACHE[key];
@@ -201,8 +223,9 @@ async function drawFormulas() {
   const series = [];
   for (const f of on) {
     try {
-      const V = await varsFor(f.res);
-      const ys = evalFormula(parseFormula(f.expr), V);
+      const ast = parseFormula(f.expr);
+      const V = await varsFor(f.res, lookbackMs(ast));
+      const ys = evalFormula(ast, V);
       series.push({ name: f.name + (f.unit ? ' (' + f.unit + ')' : ''), type: 'line', showSymbol: false, connectNulls: false, data: V.t.map((t, i) => [t, ys[i] == null ? null : +ys[i].toFixed(4)]), lineStyle: { color: f.color, width: 1.8 }, itemStyle: { color: f.color } });
     } catch (e) { toast('„' + f.name + '”: ' + (e.msg || e)); }
   }
