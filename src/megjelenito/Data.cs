@@ -188,7 +188,7 @@ namespace Idojaras
 
     static class Loader
     {
-        const int CacheVersion = 3;
+        const int CacheVersion = 4;   // 4: soronkénti forrásfájl, állomás-koordináták
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
         class RawRow
@@ -197,6 +197,7 @@ namespace Idojaras
             public sbyte Qc;
             public float[] V;
             public int Prio;
+            public short Src;   // a forrásfájl indexe a manifesztben
             public string St;
         }
 
@@ -236,32 +237,42 @@ namespace Idojaras
             string cachePath = Path.Combine(cacheDir, "meresek.bin");
             List<FileInfoRec> cachedManifest;
             string cachedStation;
-            RawRow[] cached = ReadCache(cachePath, out cachedManifest, out cachedStation, ds);
+            double cachedLat, cachedLon;
+            RawRow[] cached = ReadCache(cachePath, out cachedManifest, out cachedStation, out cachedLat, out cachedLon, ds);
 
             string wantStation = s.StationId;
             bool stationOk = cached != null && (wantStation.Length == 0 || string.Equals(cachedStation, wantStation, StringComparison.OrdinalIgnoreCase));
             List<RawRow> rows;
             string station = cachedStation;
+            // azonos időpontnál az újabb fájl nyer: prioritás = a fájl helye módosítási idő szerint
+            var rank = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            { int k = 1; foreach (var m in manifest.OrderBy(x => x.Ticks)) rank[m.Name] = k++; }
+            int cachedUniq = 0;
 
             if (stationOk && SameManifest(cachedManifest, manifest))
             {
                 rows = cached.ToList();
+                foreach (var r in rows) r.Prio = rank[manifest[r.Src].Name];
                 ds.FromCache = true;
             }
             else
             {
-                // csak a megváltozott / új fájlokat dolgozzuk fel; ha fájl tűnt el, teljes újraépítés
+                // csak a megváltozott / új fájlokat dolgozzuk fel; a cache-ből csak a változatlan fájlok sorai maradnak meg
+                // (így egy CSV-ből kitörölt sor a cache-ből is eltűnik); ha fájl tűnt el, teljes újraépítés
                 bool anyRemoved = cachedManifest != null && cachedManifest.Any(c => !manifest.Any(m => m.Name.Equals(c.Name, StringComparison.OrdinalIgnoreCase)));
                 bool incremental = stationOk && !anyRemoved;
-                var toParse = manifest.Where(m => !incremental || !cachedManifest.Any(c => c.Name.Equals(m.Name, StringComparison.OrdinalIgnoreCase) && c.Length == m.Length && c.Ticks == m.Ticks)).ToList();
+                Func<FileInfoRec, bool> unchanged = m => cachedManifest != null && cachedManifest.Any(c => c.Name.Equals(m.Name, StringComparison.OrdinalIgnoreCase) && c.Length == m.Length && c.Ticks == m.Ticks);
+                var toParse = manifest.Where(m => !incremental || !unchanged(m)).ToList();
 
                 var parsed = new List<RawRow>();
                 var stationCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                int prio = 1;
                 foreach (var m in toParse.OrderBy(x => x.Ticks))
                 {
                     if (progress != null) progress("Beolvasás: " + m.Name);
-                    ParseObsFile(Path.Combine(dir, m.Name), prio++, parsed, stationCount, ds);
+                    int from = parsed.Count;
+                    ParseObsFile(Path.Combine(dir, m.Name), rank[m.Name], parsed, stationCount, ds);
+                    short src = (short)manifest.IndexOf(m);
+                    for (int i = from; i < parsed.Count; i++) parsed[i].Src = src;
                 }
                 ds.ParsedRows = parsed.Count;
 
@@ -273,12 +284,31 @@ namespace Idojaras
                     ds.Warnings.Add("A CSV-kben több állomás adata is van, csak ezt mutatom: " + station);
 
                 rows = new List<RawRow>();
-                if (incremental) rows.AddRange(cached);
+                if (stationOk) cachedUniq = cached.Select(r => r.T).Distinct().Count();
+                if (incremental)
+                {
+                    // a cache sorainak forrásindexe a régi manifeszt szerint van: átszámozzuk az újra
+                    var keepIdx = new Dictionary<int, short>();
+                    for (int i = 0; i < cachedManifest.Count; i++)
+                    {
+                        var m = manifest.FirstOrDefault(x => x.Name.Equals(cachedManifest[i].Name, StringComparison.OrdinalIgnoreCase));
+                        if (m != null && unchanged(m)) keepIdx[i] = (short)manifest.IndexOf(m);
+                    }
+                    foreach (var r in cached)
+                    {
+                        short ni;
+                        if (!keepIdx.TryGetValue(r.Src, out ni)) continue;
+                        r.Src = ni; r.Prio = rank[manifest[ni].Name];
+                        rows.Add(r);
+                    }
+                    if (double.IsNaN(ds.Lat)) { ds.Lat = cachedLat; ds.Lon = cachedLon; }
+                }
                 foreach (var r in parsed)
                     if (station.Length == 0 || string.Equals(r.St, station, StringComparison.OrdinalIgnoreCase)) rows.Add(r);
                 if (rows.Count == 0 && parsed.Count > 0)
                     ds.Warnings.Add("A beallitasok.ini állomása (" + station + ") nem szerepel a CSV-kben.");
             }
+            if (ds.FromCache) { ds.Lat = cachedLat; ds.Lon = cachedLon; }
 
             ds.Station = station ?? "";
 
@@ -292,11 +322,7 @@ namespace Idojaras
                 uniq.Add(r);
             }
             ds.DuplicateRows = dup;
-            if (!ds.FromCache)
-            {
-                int cachedCount = cached != null && stationOk ? cached.Length : 0;
-                ds.NewRows = Math.Max(0, uniq.Count - cachedCount);
-            }
+            if (!ds.FromCache) ds.NewRows = Math.Max(0, uniq.Count - cachedUniq);
 
             ds.N = uniq.Count;
             ds.T = new long[ds.N];
@@ -317,7 +343,7 @@ namespace Idojaras
                 try
                 {
                     Guard.CreateDirectory(cacheDir);
-                    WriteCache(cachePath, manifest, ds.Station, uniq);
+                    WriteCache(cachePath, manifest, ds.Station, ds.Lat, ds.Lon, rows);   // duplikátumszűrés előtt: fájlonként cserélhető
                 }
                 catch (Exception ex) { ds.Warnings.Add("A cache nem menthető (" + ex.Message + "), a program enélkül is működik."); }
             }
@@ -471,9 +497,9 @@ namespace Idojaras
             return true;
         }
 
-        static RawRow[] ReadCache(string path, out List<FileInfoRec> manifest, out string station, Dataset ds)
+        static RawRow[] ReadCache(string path, out List<FileInfoRec> manifest, out string station, out double lat, out double lon, Dataset ds)
         {
-            manifest = null; station = null;
+            manifest = null; station = null; lat = double.NaN; lon = double.NaN;
             if (!File.Exists(path)) return null;
             try
             {
@@ -481,6 +507,7 @@ namespace Idojaras
                 {
                     if (br.ReadInt32() != 0x4A4F4449 || br.ReadInt32() != CacheVersion) return null;
                     station = br.ReadString();
+                    lat = br.ReadDouble(); lon = br.ReadDouble();
                     int mc = br.ReadInt32();
                     manifest = new List<FileInfoRec>();
                     for (int i = 0; i < mc; i++) manifest.Add(new FileInfoRec { Name = br.ReadString(), Length = br.ReadInt64(), Ticks = br.ReadInt64() });
@@ -488,6 +515,9 @@ namespace Idojaras
                     if (cols != Col.Count) return null;
                     var T = ReadLongs(br, n);
                     var qc = br.ReadBytes(n);
+                    var srcb = br.ReadBytes(n * 2);
+                    if (srcb.Length != n * 2) throw new EndOfStreamException();
+                    var src = new short[n]; Buffer.BlockCopy(srcb, 0, src, 0, srcb.Length);
                     var data = new float[cols][];
                     for (int c = 0; c < cols; c++) data[c] = ReadFloats(br, n);
                     var rows = new RawRow[n];
@@ -495,7 +525,8 @@ namespace Idojaras
                     {
                         var v = new float[cols];
                         for (int c = 0; c < cols; c++) v[c] = data[c][i];
-                        rows[i] = new RawRow { T = T[i], Qc = (sbyte)qc[i], V = v, Prio = 0 };
+                        rows[i] = new RawRow { T = T[i], Qc = (sbyte)qc[i], V = v, Prio = 0, Src = src[i] };
+                        if (src[i] < 0 || src[i] >= mc) return null;
                     }
                     return rows;
                 }
@@ -508,13 +539,14 @@ namespace Idojaras
             }
         }
 
-        static void WriteCache(string path, List<FileInfoRec> manifest, string station, List<RawRow> rows)
+        static void WriteCache(string path, List<FileInfoRec> manifest, string station, double lat, double lon, List<RawRow> rows)
         {
             string tmp = path + ".tmp";
             using (var bw = new BinaryWriter(Guard.Create(tmp), Encoding.UTF8))
             {
                 bw.Write(0x4A4F4449); bw.Write(CacheVersion);
                 bw.Write(station ?? "");
+                bw.Write(lat); bw.Write(lon);
                 bw.Write(manifest.Count);
                 foreach (var m in manifest) { bw.Write(m.Name); bw.Write(m.Length); bw.Write(m.Ticks); }
                 int n = rows.Count;
@@ -524,6 +556,9 @@ namespace Idojaras
                 for (int i = 0; i < n; i++) { T[i] = rows[i].T; qc[i] = (byte)rows[i].Qc; }
                 var tb = new byte[n * 8]; Buffer.BlockCopy(T, 0, tb, 0, tb.Length); bw.Write(tb);
                 bw.Write(qc);
+                var src = new short[n];
+                for (int i = 0; i < n; i++) src[i] = rows[i].Src;
+                var sb2 = new byte[n * 2]; Buffer.BlockCopy(src, 0, sb2, 0, sb2.Length); bw.Write(sb2);
                 var col = new float[n];
                 var cb = new byte[n * 4];
                 for (int c = 0; c < Col.Count; c++)

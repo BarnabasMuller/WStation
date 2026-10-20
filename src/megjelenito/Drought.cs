@@ -105,6 +105,7 @@ namespace Idojaras
     public class DIrrigation
     {
         public string date = "", zone = "", unit = "mm", note = "";
+        public string diaryId;   // ha a kerti naplóból jött: a naplóbejegyzés azonosítója (a kettő együtt törlődik)
         public double amount;
     }
 
@@ -224,7 +225,11 @@ namespace Idojaras
         static bool ValidDate(string s) { DateTime d; return DateTime.TryParseExact(s ?? "", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out d); }
         static void VPrograms(DConfig c)
         {
-            foreach (var pg in c.programs)
+            foreach (var pg in c.programs) VProgram(c, pg);
+            foreach (var sc in c.schedules) VSchedule(c, sc);
+        }
+        static void VProgram(DConfig c, DProgram pg)
+        {
             {
                 string n = "program „" + pg.name + "”: ";
                 if (string.IsNullOrWhiteSpace(pg.name) || pg.name.Length > 60) throw new Exception(n + "a név 1–60 karakter");
@@ -234,7 +239,9 @@ namespace Idojaras
                 if (pg.every < 0 || pg.every > 60) throw new Exception(n + "x naponta: 0–60");
                 if (pg.every == 0 && !System.Text.RegularExpressions.Regex.IsMatch(pg.days ?? "", @"^\s*[1-7](\s*,\s*[1-7])*\s*$")) throw new Exception(n + "napok: 1–7 vesszővel");
             }
-            foreach (var sc in c.schedules)
+        }
+        static void VSchedule(DConfig c, DSchedule sc)
+        {
             {
                 if (!c.programs.Any(p => p.id == sc.program)) throw new Exception("időszak: ismeretlen program");
                 if (sc.yearly) { Md("időszak kezdete", sc.from); Md("időszak vége", sc.to); }
@@ -257,8 +264,10 @@ namespace Idojaras
                 int md = d.Month * 100 + d.Day, from = MdNum(sc.from), to = MdNum(sc.to);
                 bool inside = from <= to ? md >= from && md <= to : md >= from || md <= to;
                 if (!inside) return false;
-                a = new DateTime(d.Year, from / 100, from % 100);
-                if (a > d) a = a.AddYears(-1);
+                // febr. 29. kezdet nem szökőévben: febr. 28. (különben a DateTime kivételt dob, és leáll a mérleg)
+                Func<int, DateTime> startIn = y => new DateTime(y, from / 100, Math.Min(from % 100, DateTime.DaysInMonth(y, from / 100)));
+                a = startIn(d.Year);
+                if (a > d) a = startIn(d.Year - 1);
             }
             else
             {
@@ -327,7 +336,11 @@ namespace Idojaras
                 }
             }
             c.log.RemoveAll(l => double.IsNaN(l.amount) || l.amount < 0 || l.amount > 100000);
-            fix("öntözési programok", () => VPrograms(c), () => { c.programs = new List<DProgram>(); c.schedules = new List<DSchedule>(); });
+            // öntözési programok és időszakok: csak a hibás elem esik ki, a többi megmarad
+            foreach (var pg in c.programs.ToList())
+                try { VProgram(c, pg); } catch (Exception ex) { c.programs.Remove(pg); fixedParts.Add(ex.Message + " – a program kimaradt"); }
+            foreach (var sc in c.schedules.ToList())
+                try { VSchedule(c, sc); } catch (Exception ex) { c.schedules.Remove(sc); fixedParts.Add(ex.Message + " – az időszak kimaradt"); }
             return fixedParts;
         }
 

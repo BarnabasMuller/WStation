@@ -27,8 +27,12 @@ async function renderDiary() {
   $('dList').querySelectorAll('[data-d]').forEach(s => s.addEventListener('click', () => gotoDay(s.dataset.d)));
   $('dList').querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', async e => {
     e.preventDefault();
-    if (!confirm('Törlöd a bejegyzést?')) return;
-    DIARY.splice(+a.dataset.del, 1); await saveDiary(); renderDiary(); renderCalendar();
+    const x = DIARY[+a.dataset.del];
+    const linked = x && x.id && typeof DR !== 'undefined' && DR ? DR.config.log.filter(l => l.diaryId === x.id).length : 0;
+    if (!confirm('Törlöd a bejegyzést?' + (linked ? ' A talajvíz-mérlegből is kikerül ez a locsolás.' : ''))) return;
+    DIARY.splice(+a.dataset.del, 1); await saveDiary();
+    if (linked) { DR.config.log = DR.config.log.filter(l => l.diaryId !== x.id); await saveDroughtConfig(); }
+    renderDiary(); renderCalendar();
   }));
 }
 
@@ -37,13 +41,13 @@ $('dAdd').addEventListener('click', async () => {
   const date = $('dDate').value, tag = $('dTag').value, text = $('dText').value.trim();
   if (!date) { toast('Add meg a dátumot.'); return; }
   await getDiary();
-  const entry = { date, tag, text };
+  const entry = { id: 'd' + Date.now().toString(36), date, tag, text };
   if (tag === 'öntözés') {
     const amount = parseFloat(String($('dAmount').value).replace(',', '.'));
     if (amount > 0) {
       entry.amount = amount; entry.unit = $('dUnit').value; entry.zone = $('dZone').value;
       // a locsolás a talajvíz-mérlegbe is bekerül
-      if (typeof DR !== 'undefined' && DR) { DR.config.log.push({ date, zone: entry.zone, unit: entry.unit, amount, note: 'kerti napló' }); await saveDroughtConfig(); }
+      if (typeof DR !== 'undefined' && DR) { DR.config.log.push({ date, zone: entry.zone, unit: entry.unit, amount, note: 'kerti napló', diaryId: entry.id }); await saveDroughtConfig(); }
     }
   }
   DIARY.push(entry);

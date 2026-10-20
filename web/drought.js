@@ -275,6 +275,9 @@ function lawnAdvice(p, r) {
   return { status, cls, lines: out };
 }
 
+// csepegtetési idő: 90 perc alatt percben, fölötte órában (pl. „7,6 óra”)
+function durText(min) { return min < 90 ? num(min, 0) + ' perc' : num(min / 60, 1) + ' óra'; }
+
 function shrubAdvice(p, r) {
   const dr = last(r.dr), raw = last(r.raw);
   const etcAvg = avgLast(r.etc, 7) || 0.1;
@@ -287,8 +290,8 @@ function shrubAdvice(p, r) {
   else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; }
   else { status = 'Locsolni kell.'; cls = 'strong'; }
   const fill = dr * p.area;
-  if (fill >= 0.5 && cls !== 'ok') out.push('Feltöltéshez bokronként kb. <b>' + fmtL(fill) + '</b> → <b>' + num(fill / lph * 60, 0) + ' perc</b> (' + num(p.dripCount, 0) + ' × ' + num(p.dripLph, 1) + ' l/h csepegtető).');
-  out.push('Napi fenntartás: bokronként kb. <b>' + fmtL(daily) + '</b> (≈ <b>' + num(daily / lph * 60, 0) + ' perc</b> csepegtetés naponta' + (p.count > 1 ? '; ' + num(p.count, 0) + ' bokorra összesen ' + fmtL(daily * p.count) : '') + ').');
+  if (fill >= 0.5 && cls !== 'ok') out.push('Feltöltéshez bokronként kb. <b>' + fmtL(fill) + '</b> → <b>' + durText(fill / lph * 60) + '</b> (' + num(p.dripCount, 0) + ' × ' + num(p.dripLph, 1) + ' l/h csepegtető).');
+  out.push('Napi fenntartás: bokronként kb. <b>' + fmtL(daily) + '</b> (≈ <b>' + durText(daily / lph * 60) + '</b> csepegtetés naponta' + (p.count > 1 ? '; ' + num(p.count, 0) + ' bokorra összesen ' + fmtL(daily * p.count) : '') + ').');
   const pa = typeof programAdvice === 'function' ? programAdvice(p, r) : null;
   if (pa) out.push(pa);
   return { status, cls, lines: out };
@@ -343,7 +346,7 @@ function renderWater() {
     const lines = trees.map(p => {
       const r = resById(p.id), dr = last(r.dr), raw = last(r.raw), lph = p.dripCount * p.dripLph;
       const fill = Math.max(0, dr - raw * 0.5) * r.area;
-      return '<b>' + esc(p.name) + '</b>: ' + (dr <= raw ? 'nincs szüksége öntözésre.' : 'mélyen kiszáradt (' + num(last(r.depl) * 100, 0) + '%). Egy alapos, ritka beöntözés segít: kb. <b>' + fmtL(fill) + '</b> a lombkorona alá, több részletben' + (lph > 0 ? ' (≈ ' + num(fill / lph / 60, 1) + ' óra csepegtetés)' : '') + '.');
+      return '<b>' + esc(p.name) + '</b>: ' + (dr <= raw ? 'nincs szüksége öntözésre.' : 'mélyen kiszáradt (' + num(last(r.depl) * 100, 0) + '%). Egy alapos, ritka beöntözés segít: kb. <b>' + fmtL(fill) + '</b> a lombkorona alá, több részletben' + (lph > 0 ? ' (≈ ' + durText(fill / lph * 60) + ' csepegtetés)' : '') + '.');
     });
     cards.push(mk('Fák', '🌳', trees.map(p => p.id), { status: 'A fák mélyen gyökereznek: ritkán, de sokat.', cls: trees.some(p => last(resById(p.id).dr) > last(resById(p.id).raw)) ? 'mild' : 'ok', lines }, trees.map(p => [p.id, p.name, ['l', 'perc', 'mm']])));
   }
@@ -364,7 +367,12 @@ function renderWater() {
       saveDroughtConfig('Locsolás rögzítve.');
     });
     card.querySelectorAll('[data-del]').forEach(a => a.addEventListener('click', e => {
-      e.preventDefault(); DR.config.log.splice(+a.dataset.del, 1); saveDroughtConfig('Bejegyzés törölve.');
+      e.preventDefault();
+      const l = DR.config.log[+a.dataset.del];
+      if (!l || !confirm('Törlöd a(z) ' + l.date + '-i locsolást?' + (l.diaryId ? ' A kerti naplóból is kikerül.' : ''))) return;
+      DR.config.log.splice(+a.dataset.del, 1); saveDroughtConfig('Bejegyzés törölve.');
+      // a kerti naplóból rögzített locsolás bejegyzése is törlődik
+      if (l.diaryId && typeof getDiary === 'function') getDiary().then(list => { const i = list.findIndex(x => x.id === l.diaryId); if (i >= 0) { list.splice(i, 1); saveDiary(); } });
     }));
   });
 }
@@ -380,7 +388,11 @@ async function saveDroughtConfig(msg) {
     if (msg) toast(msg);
     renderDrought();
     if (typeof refreshCalendarMetrics === 'function') refreshCalendarMetrics();
-  } catch (e) { toast('Nem menthető: ' + e.message); }
+  } catch (e) {
+    // a sikertelen mentés ne hagyja félkész állapotban a memóriát (különben minden további mentés is elbukna)
+    if (DR_SNAP) { DR.config = JSON.parse(JSON.stringify(DR_SNAP)); renderDrought(); }
+    toast('Nem menthető: ' + e.message + ' – a legutóbbi mentett állapot maradt érvényben.', 9000);
+  }
 }
 
 // a ? ablakok közös részei (openModal, paramTable, readTable, presetek) a params.js-ben
@@ -447,9 +459,15 @@ async function openHelp(q) {
   $('mapply').addEventListener('click', () => { if (readTable($('ptab'), defs, p)) { closeModal(); saveDroughtConfig('Mentve, újraszámolva.'); } });
   $('mreset').addEventListener('click', () => { const o = Object.assign({}, p, std, { id: p.id, name: p.name, enabled: p.enabled }); $('ptab').innerHTML = paramTable(defs, o, std); wireFajta(); check(); });
   $('mdelete').addEventListener('click', () => {
-    if (!confirm('Törlöd a(z) „' + p.name + '” profilt? (A rögzített locsolásai is törlődnek.)')) return;
+    // a zóna öntözési programjai és azok időszakai is törlődnek (különben a szerver elutasítja a mentést: „ismeretlen zóna”)
+    const pgs = (DR.config.programs || []).filter(pg => pg.zone === p.id), pgIds = pgs.map(pg => pg.id);
+    const nLog = DR.config.log.filter(l => l.zone === p.id).length;
+    const extra = [nLog ? nLog + ' rögzített locsolása' : '', pgs.length ? pgs.length + ' öntözési programja (' + pgs.map(pg => '„' + pg.name + '”').join(', ') + ')' : ''].filter(Boolean);
+    if (!confirm('Törlöd a(z) „' + p.name + '” profilt?' + (extra.length ? ' Vele együtt törlődik: ' + extra.join(' és ') + '.' : '') + ' Ez nem vonható vissza.')) return;
     DR.config.profiles = DR.config.profiles.filter(x => x.id !== p.id);
     DR.config.log = DR.config.log.filter(l => l.zone !== p.id);
+    DR.config.programs = (DR.config.programs || []).filter(pg => pg.zone !== p.id);
+    DR.config.schedules = (DR.config.schedules || []).filter(sc => !pgIds.includes(sc.program));
     closeModal(); saveDroughtConfig('Profil törölve.');
   });
   wirePresets('profil:' + p.type, () => { const o = Object.assign({}, p); if (!readTable($('ptab'), defs, o)) return false; delete o.id; delete o.enabled; return o; },

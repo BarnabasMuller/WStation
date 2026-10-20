@@ -65,6 +65,7 @@ namespace Idojaras
                 sw.Restart();
                 var ds2 = Loader.Load(a, s, null);
                 Ok(ds2.FromCache && ds2.N == ds.N, "Második indítás a cache-ből", sw.ElapsedMilliseconds + " ms, " + ds2.N + " mérés");
+                Ok(double.IsNaN(ds.Lat) || Math.Abs(ds2.Lat - ds.Lat) < 1e-6, "Az állomás koordinátái a cache-ből is megvannak (2.2)", N(ds2.Lat, 4) + ", " + N(ds2.Lon, 4));
 
                 // --- két átfedő CSV egyesítése
                 var b = Layout.For(Path.Combine(tmp, "B"));
@@ -89,6 +90,13 @@ namespace Idojaras
                 Ok(!db2.FromCache && db2.ParsedRows == secondRows && db2.N == total + 1 && db2.NewRows == 1,
                    "Változáskor csak az új/megváltozott fájlt dolgozza fel",
                    "újraolvasott sorok: " + db2.ParsedRows + " (csak a masodik.csv: " + secondRows + "), új mérés: " + db2.NewRows);
+
+                // --- 2.2: a CSV-ből törölt sor a cache-ből is eltűnik (csak a masodik.csv-ben lévő, utolsó előtti sor)
+                var m2 = File.ReadAllLines(Path.Combine(b.Data, "masodik.csv"), Encoding.UTF8).ToList();
+                m2.RemoveAt(m2.Count - 2);
+                File.WriteAllLines(Path.Combine(b.Data, "masodik.csv"), m2, new UTF8Encoding(true));
+                var db3 = Loader.Load(b, Settings.Load(b), null);
+                Ok(db3.N == total, "A CSV-ből törölt sor a cache-ből is eltűnik (2.2)", db3.N + " mérés (várt: " + total + ")");
 
                 // --- napi csapadék = a napi halmozott precipTotal maximuma
                 int mismatch = 0, resets = 0;
@@ -275,6 +283,19 @@ namespace Idojaras
                     var pg3 = new DProgram { every = 3 }; var scy = new DSchedule { from = "05-01", to = "09-30", yearly = true };
                     int on3 = Enumerable.Range(0, 365).Count(i => DroughtStore.ProgramOn(pg3, scy, new DateTime(2026, 1, 1).AddDays(i)));
                     Ok(on == 13 && on3 == 51, "Öntözési program napjai", "szeptember H-Sze-P: " + on + " (várt 13), 3 naponta máj.–szept.: " + on3 + " (várt 51)");
+                    // --- 2.2: febr. 29-i kezdetű éves időszak nem szökőévben sem dob kivételt
+                    string err29 = null; int on29 = 0;
+                    try { var sc29 = new DSchedule { from = "02-29", to = "03-31", yearly = true }; on29 = Enumerable.Range(0, 365).Count(i => DroughtStore.ProgramOn(pg3, sc29, new DateTime(2026, 1, 1).AddDays(i))); }
+                    catch (Exception ex) { err29 = ex.Message; }
+                    Ok(err29 == null && on29 > 0, "Febr. 29-i éves időszak nem szökőévben (2.2)", err29 ?? on29 + " öntözési nap");
+                    // --- 2.2: hibás program javításkor csak az az egy esik ki
+                    var rc = DConfig.Defaults();
+                    rc.programs.Add(new DProgram { id = "jo", name = "Jó", zone = rc.profiles[0].id, days = "1", unit = "mm", amount = 5 });
+                    rc.programs.Add(new DProgram { id = "rossz", name = "Rossz", zone = "nincs-ilyen", days = "1", unit = "mm", amount = 5 });
+                    rc.schedules.Add(new DSchedule { id = "s1", program = "jo", from = "2026-05-01", to = "2026-05-31" });
+                    rc.schedules.Add(new DSchedule { id = "s2", program = "rossz", from = "2026-05-01", to = "2026-05-31" });
+                    DroughtStore.Repair(rc);
+                    Ok(rc.programs.Count == 1 && rc.programs[0].id == "jo" && rc.schedules.Count == 1, "Javításkor csak a hibás öntözési program esik ki (2.2)", rc.programs.Count + " program, " + rc.schedules.Count + " időszak marad (várt: 1, 1)");
                     // --- 2.1: gyanús-mérés szabályok kapcsolói
                     var s2x = Settings.FromDict(new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { { "JelolWuBizonytalan", "false" }, { "JelolNapsutes", "false" } }, a, new Settings());
                     int rowsAll, rowsLess;
