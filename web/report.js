@@ -81,7 +81,7 @@ async function monthReport(d, m) {
     const firstIdx = dr.date.findIndex(x => x.startsWith(m));
     if (lastIdx != null && firstIdx >= 0) drHtml = '<h3>Szárazság a hónap végén</h3><p class="muted small">Kiszáradás: 0% = a talaj tele van vízzel, 100% = a növény már nem tud vizet felvenni (nagyobb = szárazabb).</p>' + repTable(dr.config.profiles.filter(p => p.enabled).map(p => {
       const r = dr.profiles.find(x => x.id === p.id); return [ut(p.name), tf('{a}% kiszáradás (a hónap elején {b}%)', { a: num(r.depl[lastIdx] * 100, 0), b: num(r.depl[firstIdx] * 100, 0) })];   // a % iránya egyértelmű (7.33)
-    }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tlabel() + '·nap'], ['Legnagyobb tűzveszély (FWI)', (v => num(v, 0) + (typeof fwiClass === 'function' ? ' – ' + fwiClass(v)[0] : ''))(Math.max(0, ...dr.fwi.slice(firstIdx, lastIdx + 1).filter(x => x != null)))]   // kategóriával, mint az Áttekintésen (7.26)]));
+    }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tlabel() + '·nap'], ['Legnagyobb tűzveszély (FWI)', (v => num(v, 0) + (typeof fwiClass === 'function' ? ' – ' + fwiClass(v)[0] : ''))(Math.max(0, ...dr.fwi.slice(firstIdx, lastIdx + 1).filter(x => x != null)))] /* kategóriával, mint az Áttekintésen (7.26) */]));
   }
   $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-jelentés · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + title + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + '</div></div>' +
     '<p class="rep-sum">' + summaryText(d, m, s) + '</p>' +
