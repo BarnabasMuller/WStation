@@ -2229,5 +2229,9 @@
   "Sávok (ennek a profilnak a p = {p} értékéből": "Bands (from this profile’s value p = {p}",
   "Derült-küszöb (tisztaégbolt-index": "Clear-sky threshold (clear-sky index",
   "1 (érzékelő-eltérésnél módosítható": "1 (adjust if the sensor deviates",
-  "0,7 (a METAR-ellenőrzés javasolhat": "0.7 (the METAR check can suggest a value"
+  "0,7 (a METAR-ellenőrzés javasolhat": "0.7 (the METAR check can suggest a value",
+  "RO = (P − Ia)² / (P − Ia + S), ha P > Ia": "RO = (P − Ia)² / (P − Ia + S), if P > Ia",
+  "5 napos előzetes csapadék": "5-day antecedent precipitation",
+  "a talajvíz-mérlegből: a felső réteg telítettsége fokozatmentesen tolja a CN-t (száraz → AMC I, telített → AMC III); 5 napos csapadék: a szabványos SCS-határok szerint": "from the soil water balance: the saturation of the top layer shifts CN smoothly (dry → AMC I, saturated → AMC III); 5-day precipitation: by the standard SCS thresholds",
+  "pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1": "e.g. rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1"
 }

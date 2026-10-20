@@ -2229,5 +2229,9 @@
   "Sávok (ennek a profilnak a p = {p} értékéből": "Bänder (aus dem Wert p = {p} dieses Profils",
   "Derült-küszöb (tisztaégbolt-index": "Klar-Schwelle (Klarhimmelindex",
   "1 (érzékelő-eltérésnél módosítható": "1 (bei Sensorabweichung anpassen",
-  "0,7 (a METAR-ellenőrzés javasolhat": "0,7 (die METAR-Prüfung kann einen Wert vorschlagen"
+  "0,7 (a METAR-ellenőrzés javasolhat": "0,7 (die METAR-Prüfung kann einen Wert vorschlagen",
+  "RO = (P − Ia)² / (P − Ia + S), ha P > Ia": "RO = (P − Ia)² / (P − Ia + S), wenn P > Ia",
+  "5 napos előzetes csapadék": "5-Tage-Vorniederschlag",
+  "a talajvíz-mérlegből: a felső réteg telítettsége fokozatmentesen tolja a CN-t (száraz → AMC I, telített → AMC III); 5 napos csapadék: a szabványos SCS-határok szerint": "aus der Bodenwasserbilanz: die Sättigung der oberen Schicht verschiebt den CN stufenlos (trocken → AMC I, gesättigt → AMC III); 5-Tage-Niederschlag: nach den Standard-SCS-Grenzen",
+  "pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1": "z. B. rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1"
 }

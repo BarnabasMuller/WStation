@@ -98,11 +98,11 @@ const RULES = {
 };
 // a képletben használt szimbólum (a ƒx és ? ablakokban a paraméter neve mellett)
 const SYM = {
-  kc: 'Kc', kcIni: 'Kc,ini', kcMid: 'Kc,mid', kcEnd: 'Kc,end', kcWinter: 'Kc,tél', zr: 'Zr', p: 'p', availFrac: 'f', potLiters: 'V',
+  kc: 'Kc', kcIni: 'Kc,ini', kcMid: 'Kc,mid', kcEnd: 'Kc,end', kcWinter: 'Kc,win', zr: 'Zr', p: 'p', availFrac: 'f', potLiters: 'V',
   canopyD: 'd_k', height: 'h', trunkCm: 'K', formFactor: 'f_a', sapFrac: 's', waterFrac: 'w',
-  solarFactor: 'k_Rs', windHeight: 'z', roofFactor: 'k_tető', albedo: 'α', elevation: 'z_tszf',
-  topFC: 'θFC', topWP: 'θWP', subFC: 'θFC,alsó', subWP: 'θWP,alsó', topDepth: 'Z_felső', rew: 'REW', cn: 'CN', ia: 'Ia/S',
-  ffmc0: 'FFMC₀', dmc0: 'DMC₀', dc0: 'DC₀', windFactor: 'k_W', baseT: 'T_bázis', cap: 'T_max', phenoBase: 'T_bázis,fen',
+  solarFactor: 'k_Rs', windHeight: 'z', roofFactor: 'k_roof', albedo: 'α', elevation: 'z_asl',
+  topFC: 'θFC', topWP: 'θWP', subFC: 'θFC,sub', subWP: 'θWP,sub', topDepth: 'Z_top', rew: 'REW', cn: 'CN', ia: 'Ia/S',
+  ffmc0: 'FFMC₀', dmc0: 'DMC₀', dc0: 'DC₀', windFactor: 'k_W', baseT: 'T_base', cap: 'T_max', phenoBase: 'T_base,phen',
   sprinklerRate: 'I', dripLph: 'q', dripCount: 'n'
 };
 // mezők közötti összefüggések

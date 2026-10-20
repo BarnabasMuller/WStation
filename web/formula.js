@@ -185,7 +185,8 @@ function renderFormulaPanel() {
 
 function openFormulaEditor(i) {
   fEdit = i;
-  const f = i >= 0 ? formulas()[i] : { name: 'Saját mutató', expr: 'eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)', res: 'hour', unit: '', color: '#e11d48' };
+  // új képlet: a név a felület nyelvén, más nyelven az angol változónevekkel (a képletnyelv mindkettőt érti)
+  const f = i >= 0 ? formulas()[i] : { name: tr('Saját mutató'), expr: lang() === 'hu' ? 'eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1)' : 'rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1)', res: 'hour', unit: '', color: '#e11d48' };
   $('fName').value = f.name; $('fExpr').value = f.expr; $('fRes').value = f.res; $('fUnit').value = f.unit || ''; $('fColor').value = f.color || '#e11d48';
   $('fDelete').classList.toggle('hidden', i < 0);
   $('fEditor').classList.remove('hidden');

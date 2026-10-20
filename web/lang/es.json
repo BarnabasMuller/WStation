@@ -2228,5 +2228,9 @@
   "Sávok (ennek a profilnak a p = {p} értékéből": "Bandas (según el valor p = {p} de este perfil",
   "Derült-küszöb (tisztaégbolt-index": "Umbral de despejado (índice de cielo claro",
   "1 (érzékelő-eltérésnél módosítható": "1 (ajustable si el sensor se desvía",
-  "0,7 (a METAR-ellenőrzés javasolhat": "0,7 (la comprobación METAR puede sugerir un valor"
+  "0,7 (a METAR-ellenőrzés javasolhat": "0,7 (la comprobación METAR puede sugerir un valor",
+  "RO = (P − Ia)² / (P − Ia + S), ha P > Ia": "RO = (P − Ia)² / (P − Ia + S), si P > Ia",
+  "5 napos előzetes csapadék": "precipitación previa de 5 días",
+  "a talajvíz-mérlegből: a felső réteg telítettsége fokozatmentesen tolja a CN-t (száraz → AMC I, telített → AMC III); 5 napos csapadék: a szabványos SCS-határok szerint": "del balance hídrico del suelo: la saturación de la capa superior desplaza el CN de forma continua (seco → AMC I, saturado → AMC III); precipitación de 5 días: según los umbrales SCS estándar",
+  "pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1": "p. ej. rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1"
 }

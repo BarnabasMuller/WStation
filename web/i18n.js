@@ -134,7 +134,9 @@ function trNode(n) {
     if (out !== cur) n.nodeValue = out;
     return;
   }
-  if (n.nodeType !== 1 || I18N_SKIP.has(n.nodeName)) return;
+  if (n.nodeType !== 1) return;
+  // a szövegmező tartalma a felhasználóé, de a helyőrzője és a súgója fordul (pl. a képletszerkesztő példája)
+  if (I18N_SKIP.has(n.nodeName)) { if (n.nodeName === 'TEXTAREA') trAttrs(n); return; }
   if (n.classList && n.classList.contains('notr')) return;
   trAttrs(n);
   if (n.nodeName === 'INPUT') return;
