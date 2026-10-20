@@ -224,6 +224,29 @@ $('bkSave').addEventListener('click', async () => {
     loadBackup();
   } catch (e) { $('bkMsg').className = 'msg err'; $('bkMsg').textContent = e.message; }
 });
+// másolat a felhasználó által választott helyre, és visszaállítás egy zipből (13.2)
+$('bkCopy').addEventListener('click', async () => {
+  const m = $('bkMsg'); m.className = 'msg'; m.textContent = '';
+  try {
+    const r = await post('/api/backup/copy');
+    if (r.download) { location.href = '/api/backup/latest.zip'; m.className = 'msg ok'; m.textContent = 'A böngésző letölti a legutóbbi mentést.'; }
+    else if (r.saved) { m.className = 'msg ok'; m.textContent = '✔ Másolat elmentve: ' + r.path; }
+    else if (r.error) { m.className = 'msg err'; m.textContent = '⚠ ' + r.error; }
+  } catch (e) { m.className = 'msg err'; m.textContent = '⚠ ' + e.message; }
+});
+$('bkRestore').addEventListener('click', async () => {
+  if (!(await askConfirm('Visszaállítasz egy korábbi biztonsági mentést?', { sub: 'A mérések és a beállítások a mentés állapotára cserélődnek. Előtte a mostani állapotról is készül egy mentés, így ez visszavonható.', ok: 'Mentés kiválasztása…', cancel: 'Mégse' }))) return;
+  const m = $('bkMsg'); m.className = 'msg'; m.textContent = 'Visszaállítás…';
+  try {
+    const r = await post('/api/backup/restore');
+    if (r.cancelled) { m.textContent = ''; return; }
+    if (r.error) { m.className = 'msg err'; m.textContent = '⚠ ' + r.error; return; }
+    m.className = 'msg ok'; m.textContent = tf('✔ Visszaállítva: {file} ({n} fájl). Újraolvasás…', { file: r.file, n: r.restored });
+    if (typeof waitReload === 'function') await waitReload();
+    m.textContent = tf('✔ Visszaállítva: {file} ({n} fájl).', { file: r.file, n: r.restored });
+    loadBackup();
+  } catch (e) { m.className = 'msg err'; m.textContent = '⚠ ' + e.message; }
+});
 $('bkNow').addEventListener('click', async () => {
   $('bkMsg').className = 'msg'; $('bkMsg').textContent = 'Mentés készül…';
   $('bkNow').disabled = true;

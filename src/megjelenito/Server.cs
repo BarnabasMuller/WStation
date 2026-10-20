@@ -92,7 +92,15 @@ namespace Idojaras
                         }
                         using (var sr = new StreamReader(req.InputStream, Encoding.UTF8)) reqBody = sr.ReadToEnd();
                     }
-                    if (path == "/api/export.csv")
+                    var latestZip = path == "/api/backup/latest.zip" ? BackupTools.Latest() : null;
+                    if (latestZip != null)
+                    {
+                        // böngészős módban a legutóbbi mentés letöltésként
+                        body = File.ReadAllBytes(latestZip.FullName);
+                        type = "application/zip";
+                        resp.Headers["Content-Disposition"] = "attachment; filename=\"" + latestZip.Name + "\"";
+                    }
+                    else if (path == "/api/export.csv")
                     {
                         // böngészős módban letöltésként adjuk
                         body = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(Export.DailyCsv(AppState.Data, req.QueryString["raw"] == "1"))).ToArray();

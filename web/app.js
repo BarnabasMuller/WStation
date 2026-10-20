@@ -245,18 +245,23 @@ async function waitReady() {
     STATUS = s;
     if (s.status !== 'loading' && s.status !== 'downloading') return s;
     const title = s.status === 'downloading' ? 'Új adatok letöltése…' : 'Adatok betöltése…';
-    if (!META) overlay('loading', title, esc(s.progress || ''));
-    else setBusy(s.status === 'downloading' ? 'Letöltés: ' + (s.progress || '…') : 'Betöltés…');
+    const dl = s.status === 'downloading';
+    if (!META) overlay('loading', title, esc(s.progress || ''), dl ? [{ label: 'Megszakítás', onClick: cancelDownload }] : null);
+    else setBusy(dl ? 'Letöltés: ' + (s.progress || '…') : 'Betöltés…', dl);
     await sleep(400);
   }
 }
 
-function setBusy(text) {
+function setBusy(text, cancellable) {
   const b = $('busy');
   if (!text) { b.classList.add('hidden'); return; }
   b.classList.remove('hidden');
   $('busyText').textContent = text;
+  $('btnCancelDl').classList.toggle('hidden', !cancellable);
 }
+// a futó letöltés leállítása (12.3) – a már letöltött napok megmaradnak
+function cancelDownload() { $('btnCancelDl').disabled = true; post('/api/refresh/cancel').catch(() => { }).finally(() => setTimeout(() => { $('btnCancelDl').disabled = false; }, 2000)); }
+$('btnCancelDl').addEventListener('click', cancelDownload);
 
 function showProblem(s) {
   if (s.status === 'nodata') {
@@ -510,6 +515,14 @@ function xAxes() {
   }));
 }
 
+// a panelcímek a mértékegységgel egy sorban (6.15: a tengely tetején a mértékegység rácsúszott a címre)
+function panelTitles() {
+  const u = [[tlabel()], ['%'], [plabel()], [wlabel()], [rrlabel(), rlabel()], ['W/m²', 'UV', '%']];
+  return PANELS.map((p, i) => ({
+    text: '{t|' + p.title + '}  {u|' + u[i].join(' · ') + '}', top: TOP0 + i * STEP - 30, left: 6,
+    textStyle: { rich: { t: { fontSize: fs(13.5), fontWeight: 600, color: cssVar('--ink') }, u: { fontSize: fs(11.5), color: cssVar('--muted') } } }
+  }));
+}
 function buildChart() {
   const el = $('chart');
   chart = echarts.init(el, null, { renderer: 'canvas' });
@@ -540,19 +553,19 @@ function buildChart() {
   const option = {
     animation: false,
     textStyle: { fontFamily: '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif' },
-    title: PANELS.map((p, i) => ({
-      text: p.title, top: TOP0 + i * STEP - 30, left: 6,
-      textStyle: { fontSize: fs(13.5), fontWeight: 600, color: ink }
-    })),
+    title: panelTitles(),
+    // jelmagyarázat panelenként (12.5): a színek mellett vonaltípus is különbözik (harmatpont, lökés, halmozott, felhőzet szaggatott)
+    legend: [[0, ['Hőmérséklet', 'Harmatpont', 'Min–max']], [3, ['Átlagszél', 'Széllökés']], [4, ['Csapadékintenzitás', 'Napi csapadék', 'Napi halmozott']], [5, ['Napsugárzás', 'UV-index', 'Felhőzet (becslés)']]]
+      .map(([i, data]) => ({ data, top: TOP0 + i * STEP - 28, right: 58, selectedMode: false, itemWidth: 18, itemHeight: 8, itemGap: 12, textStyle: { color: muted, fontSize: fs(11.5) } })),
     grid: PANELS.map((p, i) => ({ left: 58, right: 58, top: TOP0 + i * STEP, height: GH })),
     xAxis: xAxes(),
     yAxis: [
-      yBase(0, tlabel()), yBase(1, '%', { min: 0, max: 100, scale: false }), yBase(2, plabel()),
-      yBase(3, wlabel(), { min: 0, scale: false }), yBase(4, rrlabel(), { min: 0, scale: false }),
-      yBase(4, rlabel(), { min: 0, scale: false, position: 'right', splitLine: { show: false } }),
-      yBase(5, 'W/m²', { min: 0, scale: false }),
+      yBase(0, ''), yBase(1, '', { min: 0, max: 100, scale: false }), yBase(2, ''),
+      yBase(3, '', { min: 0, scale: false }), yBase(4, '', { min: 0, scale: false }),
+      yBase(4, '', { min: 0, scale: false, position: 'right', splitLine: { show: false } }),
+      yBase(5, '', { min: 0, scale: false }),
       // az UV-skála legfeljebb 15 – egy lehetetlen tüske (pl. 130) ne lapítsa el a valódi görbét
-      yBase(5, 'UV', { min: 0, max: v => Math.max(1, Math.min(Math.ceil(v.max), 15)), scale: false, position: 'right', splitLine: { show: false } }),
+      yBase(5, '', { min: 0, max: v => Math.max(1, Math.min(Math.ceil(v.max), 15)), scale: false, position: 'right', splitLine: { show: false } }),
       // a felhőzet-becslés saját, rejtett 0–100 %-os tengelye
       yBase(5, '', { min: 0, max: 100, scale: false, show: false })
     ],
@@ -574,14 +587,14 @@ function buildChart() {
       ln('tLo', 'Minimum', 0, 0, 'transparent', tlabel, 1, { stack: 'band', lineStyle: { width: 0 }, tooltip: { show: false } }),
       ln('tBand', 'Min–max', 0, 0, C.temp, tlabel, 1, { stack: 'band', lineStyle: { width: 0 }, areaStyle: { color: C.temp, opacity: .16 } }),
       ln('tAvg', 'Hőmérséklet', 0, 0, C.temp, tlabel, 1, { lineStyle: { width: 2, color: C.temp }, markArea: gapAreas() }),
-      ln('tDew', 'Harmatpont', 0, 0, C.dew, tlabel, 1, { lineStyle: { width: 1.4, color: C.dew } }),
+      ln('tDew', 'Harmatpont', 0, 0, C.dew, tlabel, 1, { lineStyle: { width: 1.4, color: C.dew, type: 'dashed' } }),
       flags('fTemp', 0, 0),
       ln('hum', 'Páratartalom', 1, 1, C.hum, '%', 0, { areaStyle: { color: C.hum, opacity: .08 }, markArea: gapAreas() }),
       flags('fHum', 1, 1),
       ln('pres', 'Légnyomás', 2, 2, C.pres, plabel, () => pdec(1), { lineStyle: { width: 2, color: C.pres }, markArea: gapAreas() }),
       flags('fPres', 2, 2),
       ln('wind', 'Átlagszél', 3, 3, C.wind, 'km/h', 1, { areaStyle: { color: C.wind, opacity: .14 }, markArea: gapAreas() }),
-      ln('gust', 'Széllökés', 3, 3, C.wind, 'km/h', 1, { lineStyle: { width: 1, color: C.wind, opacity: .55, type: 'solid' } }),
+      ln('gust', 'Széllökés', 3, 3, C.wind, 'km/h', 1, { lineStyle: { width: 1.2, color: C.wind, opacity: .8, type: 'dotted' } }),
       flags('fWind', 3, 3),
       ln('rate', 'Csapadékintenzitás', 4, 4, C.rain, rrlabel, () => rdec(1), { areaStyle: { color: C.rain, opacity: .2 }, markArea: gapAreas() }),
       { id: 'rainDay', name: 'Napi csapadék', type: 'bar', xAxisIndex: 4, yAxisIndex: 5, barMaxWidth: 16, itemStyle: { color: C.rain, opacity: .55, borderRadius: [3, 3, 0, 0] }, data: [], animation: false },
@@ -599,9 +612,8 @@ function buildChart() {
 
   let zt = 0;
   chart.on('datazoom', () => { clearTimeout(zt); zt = setTimeout(onZoom, 220); updateSpan(); });
-  window.addEventListener('resize', () => chart && chart.resize());
-  // ha a fül/ablak rejtve volt építéskor, a méret később megjön
-  if (window.ResizeObserver) new ResizeObserver(() => chart && chart.getWidth() !== el.clientWidth && chart.resize()).observe(el);
+  // a figyelők egyszer (14.6: témaváltáskor minden újraépítés újabbat tett fel); az ablakméretet a közös resizeVisibleCharts kezeli
+  if (!buildChart._ro && window.ResizeObserver) { buildChart._ro = true; new ResizeObserver(() => chart && chart.getWidth() !== el.clientWidth && chart.resize()).observe(el); }
 }
 
 function gapAreas() {
@@ -700,7 +712,7 @@ function applyData() {
       { id: 'fUv', data: f.uv || [] },
       { id: 'cloud', data: cloudPts() }
     ],
-    yAxis: [{ name: tlabel() }, {}, { name: plabel() }, { name: wlabel() }, { name: rrlabel() }, { name: rlabel() }]
+    title: panelTitles()
   });
   if (typeof decorateTimeline === 'function') decorateTimeline();
 }

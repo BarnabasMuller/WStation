@@ -13,7 +13,7 @@ if not exist dist\bin mkdir dist\bin
 if not exist build mkdir build
 set COMMON=/nologo /optimize+ /platform:x64 /win32manifest:src\app.manifest
 
-set VREFS=/r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:lib\Microsoft.Web.WebView2.Core.dll /r:lib\Microsoft.Web.WebView2.WinForms.dll
+set VREFS=/r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:lib\Microsoft.Web.WebView2.Core.dll /r:lib\Microsoft.Web.WebView2.WinForms.dll
 set VRES=/resource:web\index.html,web/index.html /resource:web\app.js,web/app.js /resource:web\i18n.js,web/i18n.js /resource:web\app.css,web/app.css /resource:web\echarts.min.js,web/echarts.min.js /resource:web\calendar.js,web/calendar.js /resource:web\week.js,web/week.js /resource:web\params.js,web/params.js /resource:web\drought.js,web/drought.js /resource:web\explain.js,web/explain.js /resource:web\fx.js,web/fx.js /resource:web\calib.js,web/calib.js /resource:web\irrigation.js,web/irrigation.js /resource:web\water.js,web/water.js /resource:web\changes.js,web/changes.js /resource:web\insights.js,web/insights.js /resource:web\rain.js,web/rain.js /resource:web\wind.js,web/wind.js
 set VRES=%VRES% /resource:web\ranges.js,web/ranges.js /resource:web\stats.js,web/stats.js /resource:web\run.js,web/run.js /resource:web\formula.js,web/formula.js /resource:web\diary.js,web/diary.js /resource:web\report.js,web/report.js /resource:web\settings.js,web/settings.js
 set VRES=%VRES% /resource:lib\Microsoft.Web.WebView2.Core.dll,lib/Microsoft.Web.WebView2.Core.dll /resource:lib\Microsoft.Web.WebView2.WinForms.dll,lib/Microsoft.Web.WebView2.WinForms.dll /resource:lib\WebView2Loader.dll,lib/WebView2Loader.dll

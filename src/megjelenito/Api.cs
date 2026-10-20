@@ -23,6 +23,16 @@ namespace Idojaras
         public static long DownloadSerial;
         static int busy;
         static bool backupChecked;
+        static volatile bool cancelDownload;
+        const int DownloadTimeoutMin = 30;   // ennél tovább nem várunk a Letöltőre (12.3)
+
+        // a futó letöltés megszakítása (a Frissítés melletti „Megszakítás” gomb); a már elmentett napok megmaradnak
+        public static bool CancelDownload()
+        {
+            if (Status != "downloading") return false;
+            cancelDownload = true;
+            return true;
+        }
 
         // download = true: előbb lefuttatja a Letöltőt (ha megvan), utána újraolvassa a CSV-ket
         public static void RefreshAsync(bool download)
@@ -45,6 +55,7 @@ namespace Idojaras
             if (exe == null) return;
             Status = "downloading";
             Progress = "A letöltő indul...";
+            cancelDownload = false;
             bool netError = false;
             var psi = new ProcessStartInfo(exe, "--nowait")
             {
@@ -67,7 +78,28 @@ namespace Idojaras
                 p.Start();
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
-                p.WaitForExit();
+                // időkorláttal és megszakíthatóan (12.3); a Letöltő a CSV-t atomi cserével menti, így a leállítás nem ront el adatot
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                bool stopped = false, timedOut = false;
+                while (!p.WaitForExit(500))
+                {
+                    if (cancelDownload || sw.Elapsed.TotalMinutes > DownloadTimeoutMin)
+                    {
+                        timedOut = !cancelDownload; stopped = true;
+                        try { p.Kill(); } catch { }
+                        p.WaitForExit(10000);
+                        break;
+                    }
+                }
+                if (stopped)
+                {
+                    DownloadOk = false;
+                    DownloadMessage = timedOut ? "A letöltés " + DownloadTimeoutMin + " perc után sem fejeződött be, ezért leállítottam. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja."
+                                               : "A letöltés megszakítva. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja.";
+                    cancelDownload = false;
+                    Interlocked.Increment(ref DownloadSerial);
+                    return;
+                }
                 int code = p.ExitCode;
                 DownloadOk = code == 0 && !netError;
                 if (code == 6) netError = true;   // a Letöltő 2.2-től kilépési kóddal jelzi a hálózati hibát
@@ -149,6 +181,12 @@ namespace Idojaras
                     return AlertSettings.Test(out status);
                 case "/api/schedule": return ScheduleJson(method == "POST" ? (body ?? "") : null, q["minutes"]);
                 case "/api/backup": return BackupJson(method, body, out status);
+                case "/api/backup/copy":
+                    if (method != "POST") { status = 405; return "{}"; }   // Mentés ablakot nyit: csak POST
+                    return BackupTools.CopyLatest();
+                case "/api/backup/restore":
+                    if (method != "POST") { status = 405; return "{}"; }
+                    return BackupTools.Restore();
                 case "/api/changelog": return ChangeLog.Handle(method, body, out status);
                 case "/api/update": return UpdateCheck.Json(method == "POST", out status);
                 case "/api/dlsettings": return DlSettings.Handle(method, body, out status);
@@ -163,6 +201,10 @@ namespace Idojaras
                     // mellékhatásos kérés: csak POST (saját fejléccel), így egy idegen weboldal nem indíthatja el
                     if (method != "POST") { status = 405; return "{}"; }
                     AppState.RefreshAsync(false);
+                    return StatusJson();
+                case "/api/refresh/cancel":
+                    if (method != "POST") { status = 405; return "{}"; }
+                    AppState.CancelDownload();
                     return StatusJson();
                 case "/api/refresh":
                     if (method != "POST") { status = 405; return "{}"; }   // letöltést indít (API-kvóta): csak POST

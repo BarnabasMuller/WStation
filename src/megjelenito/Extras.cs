@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -186,6 +187,96 @@ namespace Idojaras
             else if (error != null) w.P("saved", false).P("error", "A fájl nem menthető: " + error);
             else w.P("saved", false).P("cancelled", true);
             return w.End().ToString();
+        }
+    }
+
+    // Biztonsági mentés másolása tetszőleges helyre és visszaállítás egy zipből (13.2).
+    // A célt / a forrást a felhasználó választja ki (mint az Excel-exportnál), a visszaállítás csak a programmappába ír.
+    static class BackupTools
+    {
+        public static string Dir { get { return Path.Combine(AppState.L.DlApp, "mentesek"); } }
+        public static FileInfo Latest()
+        {
+            return Directory.Exists(Dir) ? new DirectoryInfo(Dir).GetFiles("mentes_*.zip").OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault() : null;
+        }
+
+        public static string CopyLatest()
+        {
+            var z = Latest();
+            if (z == null) return "{\"error\":\"Még nincs biztonsági mentés – előbb készíts egyet.\"}";
+            var win = Program.Window;
+            if (win == null || win.IsDisposed) return "{\"download\":true}";
+            string saved = null, error = null;
+            win.Invoke((Action)(() =>
+            {
+                using (var d = new SaveFileDialog { Title = "Biztonsági mentés másolása (pl. pendrive-ra vagy OneDrive-ba)", Filter = "Zip (*.zip)|*.zip", FileName = z.Name })
+                {
+                    if (d.ShowDialog(win) != DialogResult.OK) return;
+                    try { File.Copy(z.FullName, d.FileName, true); saved = d.FileName; }   // kivétel az őr alól: a felhasználó választotta a helyet
+                    catch (Exception ex) { error = ex.Message; }
+                }
+            }));
+            var w = new JW().Obj();
+            if (saved != null) { w.P("saved", true).P("path", saved); ChangeLog.Add("Biztonsági mentés", "másolat", null, saved, null); }
+            else if (error != null) w.P("error", "A másolat nem készült el: " + error);
+            else w.P("cancelled", true);
+            return w.End().ToString();
+        }
+
+        // a zip melyik bejegyzése hova kerülhet vissza (más nem: se mappán kívülre, se programfájl)
+        static string Target(string entry)
+        {
+            string e = entry.Replace('\\', '/');
+            if (e.Contains("..") || e.StartsWith("/") || e.Contains(":")) return null;
+            var parts = e.Split('/');
+            if (parts.Length == 2 && parts[0] == "data" && e.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)) return Path.Combine(AppState.L.Data, parts[1]);
+            bool cfg = e.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) || e.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
+            if (parts.Length == 2 && parts[0] == Layout.DlAppName && cfg) return Path.Combine(AppState.L.DlApp, parts[1]);
+            if (parts.Length == 2 && parts[0] == Layout.AppName && cfg) return Path.Combine(AppState.L.App, parts[1]);
+            if (parts.Length == 3 && parts[0] == Layout.AppName && parts[1] == "presetek" && parts[2].Length > 0) return Path.Combine(AppState.L.App, "presetek", parts[2]);
+            return null;
+        }
+
+        public static string Restore()
+        {
+            var win = Program.Window;
+            if (win == null || win.IsDisposed) return "{\"error\":\"A visszaállítás a program ablakában érhető el (böngészős módban nem).\"}";
+            string src = null;
+            win.Invoke((Action)(() =>
+            {
+                using (var d = new OpenFileDialog { Title = "Visszaállítás biztonsági mentésből", Filter = "WStation biztonsági mentés (*.zip)|*.zip", InitialDirectory = Directory.Exists(Dir) ? Dir : AppState.L.Base })
+                    if (d.ShowDialog(win) == DialogResult.OK) src = d.FileName;
+            }));
+            if (src == null) return "{\"cancelled\":true}";
+            try
+            {
+                int n = 0;
+                using (var zfs = File.OpenRead(src))
+                using (var zip = new System.IO.Compression.ZipArchive(zfs, System.IO.Compression.ZipArchiveMode.Read))
+                {
+                    var items = zip.Entries.Where(en => en.Length > 0).Select(en => new { en, t = Target(en.FullName) }).Where(x => x.t != null).ToList();
+                    if (!items.Any(x => x.t.StartsWith(AppState.L.Data, StringComparison.OrdinalIgnoreCase)))
+                        return "{\"error\":\"Ez nem a WStation biztonsági mentése (nincs benne mérési adat).\"}";
+                    // előbb a mostani állapotról is mentés készül, hogy a visszaállítás visszavonható legyen
+                    string exe = AppState.L.FindDownloader();
+                    if (exe != null)
+                        using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
+                            p.WaitForExit(120000);
+                    foreach (var x in items)
+                    {
+                        Guard.CreateDirectory(Path.GetDirectoryName(x.t));
+                        string tmp = x.t + ".visszaallit";
+                        using (var es = x.en.Open()) using (var fs = Guard.Create(tmp)) es.CopyTo(fs);
+                        if (File.Exists(x.t)) Guard.Delete(x.t);
+                        Guard.Move(tmp, x.t);
+                        n++;
+                    }
+                }
+                ChangeLog.Add("Biztonsági mentés", "visszaállítás", null, Path.GetFileName(src) + " (" + n + " fájl)", null);
+                AppState.RefreshAsync(false);
+                return new JW().Obj().P("restored", n).P("file", Path.GetFileName(src)).End().ToString();
+            }
+            catch (Exception ex) { return new JW().Obj().P("error", "A visszaállítás nem sikerült: " + ex.Message).End().ToString(); }
         }
     }
 }
