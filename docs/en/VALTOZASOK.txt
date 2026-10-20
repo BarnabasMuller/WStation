@@ -1,6 +1,31 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.4 (2026-10-20) – review fixes ==
+- Suspicious measurements: new rules for rain jumps (melting snow too) and a frozen anemometer; the maximum
+  temperature above the plausibility limit (default 41.9 °C) is marked "unverified".
+- Overview: plain-language sentences, exact times in "What changed", stale-data warning follows the download
+  schedule. Drought: summary at the top ("water today?"), technical cards in a collapsible section; the Water
+  sub-tab has its own period selector.
+- Refresh can be cancelled (max. 30 minutes); a second launch brings the running window to the front.
+- Backup: copy the latest backup elsewhere and restore from a backup. Excel export in the interface language,
+  optionally with raw data. Report: dry / wet compared to the monthly long-term average (Settings › Location).
+- Timeline: legend per panel, unit in the panel title, Ctrl + wheel zooms. Beaufort name from the rounded value.
+- Accessibility: keyboard-operable dialogs, named charts and fields, own confirmation dialog, skip link.
+- Translation: whole-sentence templates, no half-translated sentences. Installer: files are replaced together
+  (rolled back on error) while scheduled downloading is paused. Many smaller fixes.
+
+== 2.2.3 (2026-10-20) – cloud cover estimate ==
+- Cloud cover estimated from your own measurements (% and okta, likely cloud type), optional METAR check.
+
+== 2.2.2 (2026-10-20) – WStation, location, language-dependent file names ==
+- New name: WStation. Settings › Location (name, time zone, coordinates, altitude, heat thresholds, currency).
+  Programs and guides are named in the installer language (e.g. Viewer.exe, Downloader.exe).
+
+== 2.2.1 (2026-10-20) – bug fixes ==
+- Download, scheduling (also on battery, missed runs caught up), security, cache, drought, statistics, report
+  and accessibility fixes.
+
 == 2.1 (2026-10-19) ==
 - Multilingual: Hungarian, English, German, Spanish – the interface, the ? and ƒx windows, the charts, the
   Downloader's messages and alerts, the installer and the guides. A new language can be added with one file.

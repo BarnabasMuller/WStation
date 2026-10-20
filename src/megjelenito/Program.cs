@@ -14,8 +14,8 @@ using Microsoft.Web.WebView2.WinForms;
 
 [assembly: System.Reflection.AssemblyTitle("WStation")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Megjelenítő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.3.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.3.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.4.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.4.0")]
 
 namespace Idojaras
 {

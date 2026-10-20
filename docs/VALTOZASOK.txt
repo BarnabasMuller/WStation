@@ -1,6 +1,35 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.4 (2026-10-20) – átnézési javítások ==
+- Gyanús mérések: új szabályok a csapadékugrásra (olvadó hó is) és a befagyott szélmérőre; a napsütés miatti
+  túlmelegedés 30 perces széllel is. A legmagasabb hőmérséklet a hihetőségi határ (alapból az országos rekord,
+  41,9 °C) fölött „ellenőrizetlen” jelzést kap. Az esőesemények intenzitása a mérési lépésekből is számol.
+- Áttekintés: közérthető mondatok a nap helyéről az évben, a napnév kiírva, a részleges nap jelölve; a kártyák
+  üres hely nélkül töltik ki a sort. A „Mi változott” sáv pontos időt ír, és nem ismétli a sárga figyelmeztetést;
+  a sárga sáv a letöltési gyakorisághoz igazodik.
+- Szárazság: a fül tetején összefoglaló („kell-e ma locsolni?”), a szakmai kártyák egy lenyitható részben; a cserepes
+  és a bokor-javaslat a mostani kiszáradást is nézi; a fák javaslata megmondja, miért kevesebb a teljes feltöltésnél.
+  A Víz alfülnek saját időszakválasztója van.
+- Frissítés: megszakítható, legfeljebb fél óráig tart. Második indításkor a futó ablak kerül előre.
+- Biztonsági mentés: a legutóbbi mentés másolható pendrive-ra vagy felhőbe, és mentésből vissza is állítható.
+- Excel-export a felület nyelvén és számformátumával, választhatóan a nyers adatokkal.
+- Jelentés: a „száraz / csapadékos” besorolás a hónap saját sokéves átlagához mér (Beállítások › Helyszín);
+  a grafikonok sötét témában is jól nyomtathatók.
+- Idővonal: jelmagyarázat panelenként, a mértékegység a panelcímben; a sima görgő az oldalt görgeti, nagyítás
+  Ctrl + görgővel. A grafikonok ablakméret-váltás után is jó méretűek.
+- Beaufort: a fokozat neve a kerekített értékből, egy szélcsend-határ (1 csomó). A riasztás- és eseményszövegek
+  a választott mértékegységben (a Windows-értesítés is).
+- Akadálymentesség: a párbeszédablakok és a kártyák billentyűzettel is kezelhetők, a grafikonoknak és a mezőknek van
+  nevük, saját megerősítő ablak „OK / Mégse” helyett, „Ugrás a tartalomra”, a legkisebb betűméret mindenre hat,
+  keskeny ablakban sincs vízszintes görgetés.
+- Fordítás: egész mondatos sablonok – angolul, németül, spanyolul nincs több félig fordított mondat; a saját
+  nevek (programok, napló) nem fordulnak.
+- Telepítő: a programfájlok egyben cserélődnek (hibánál visszaáll), közben az ütemezett letöltés szünetel.
+  A Megjelenítő és a Letöltő nem írhatja egyszerre a beallitasok.ini-t.
+- További javítások: hőség-figyelő az utolsó 24 órából, FWI hiányos délnél, változásnapló emberi nyelven, saját
+  képlet csúszó ablaka a nézet szélén, törölt profil visszaállítása a locsolásaival, és sok kisebb hiba.
+
 == 2.2.3 (2026-10-20) – felhőzet-becslés ==
 - Új: a felhőzet becslése a saját mérésekből, %-ban és oktában, a valószínű felhőtípussal (pl. „gomolyfelhők –
   hol süt, hol nem”, „vékony magas felhő – fátyolos napsütés”) és megbízhatósággal. Nappal a napsugárzásból,

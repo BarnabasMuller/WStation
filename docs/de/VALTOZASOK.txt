@@ -1,6 +1,32 @@
 ﻿WSTATION – ÄNDERUNGEN
 ===========================
 
+== 2.2.4 (2026-10-20) – Korrekturen nach Durchsicht ==
+- Verdächtige Messungen: neue Regeln für Niederschlagssprünge (auch Schneeschmelze) und eingefrorenen
+  Windmesser; Höchsttemperatur über der Plausibilitätsgrenze (Standard 41,9 °C) wird „ungeprüft“ markiert.
+- Übersicht: verständliche Sätze, genaue Zeiten bei „Was hat sich geändert“, Warnung bei alten Daten passend
+  zum Download-Zeitplan. Trockenheit: Zusammenfassung oben („heute gießen?“), Fachkarten aufklappbar; der
+  Unterreiter Wasser hat eine eigene Zeitraumauswahl.
+- Aktualisierung abbrechbar (max. 30 Minuten); ein zweiter Start holt das laufende Fenster nach vorn.
+- Sicherung: letzte Sicherung kopieren und aus einer Sicherung wiederherstellen. Excel-Export in der Sprache der
+  Oberfläche, wahlweise mit Rohdaten. Bericht: trocken / nass im Vergleich zum langjährigen Monatsmittel.
+- Zeitleiste: Legende je Panel, Einheit im Paneltitel, Zoom mit Strg + Mausrad. Beaufort-Name aus dem
+  gerundeten Wert.
+- Barrierefreiheit: Dialoge per Tastatur, benannte Diagramme und Felder, eigener Bestätigungsdialog, Sprunglink.
+- Übersetzung: Satzvorlagen, keine halb übersetzten Sätze. Installationsprogramm: Dateien werden gemeinsam
+  ersetzt (bei Fehler zurückgesetzt), der geplante Download pausiert dabei. Viele kleinere Korrekturen.
+
+== 2.2.3 (2026-10-20) – Bewölkungsschätzung ==
+- Bewölkung aus den eigenen Messungen geschätzt (% und Achtel, wahrscheinlicher Wolkentyp), optional METAR-Abgleich.
+
+== 2.2.2 (2026-10-20) – WStation, Standort, sprachabhängige Dateinamen ==
+- Neuer Name: WStation. Einstellungen › Standort (Name, Zeitzone, Koordinaten, Höhe, Hitzeschwellen, Währung).
+  Programme und Anleitungen heißen wie die Sprache des Installationsprogramms.
+
+== 2.2.1 (2026-10-20) – Fehlerbehebungen ==
+- Korrekturen bei Download, Zeitplan (auch im Akkubetrieb, verpasste Läufe werden nachgeholt), Sicherheit,
+  Cache, Trockenheit, Statistik, Bericht und Barrierefreiheit.
+
 == 2.1 (2026-10-19) ==
 - Mehrsprachig: Ungarisch, Englisch, Deutsch, Spanisch – Oberfläche, ?- und ƒx-Fenster, Diagramme, Meldungen
   und Warnungen des Downloaders, Installationsprogramm und Anleitungen. Neue Sprache mit einer Datei hinzufügbar.

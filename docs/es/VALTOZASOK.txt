@@ -1,6 +1,32 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
+== 2.2.4 (2026-10-20) – correcciones tras revisión ==
+- Mediciones sospechosas: nuevas reglas para saltos de lluvia (también nieve fundida) y anemómetro congelado;
+  la máxima por encima del límite de plausibilidad (por defecto 41,9 °C) se marca «sin verificar».
+- Resumen: frases claras, horas exactas en «Qué ha cambiado», aviso de datos antiguos según la programación de
+  descarga. Sequía: resumen arriba («¿regar hoy?»), tarjetas técnicas plegables; la subpestaña Agua tiene su
+  propio selector de período.
+- La actualización se puede cancelar (máx. 30 minutos); un segundo inicio trae al frente la ventana abierta.
+- Copia de seguridad: copiar la última copia y restaurar desde una copia. Exportación a Excel en el idioma de la
+  interfaz, opcionalmente con datos brutos. Informe: seco / húmedo frente a la media mensual de largo plazo.
+- Línea de tiempo: leyenda por panel, unidad en el título, zoom con Ctrl + rueda. Nombre Beaufort según el
+  valor redondeado.
+- Accesibilidad: diálogos con teclado, gráficos y campos con nombre, diálogo de confirmación propio, enlace de salto.
+- Traducción: plantillas de frase completa, sin frases medio traducidas. Instalador: los archivos se sustituyen
+  juntos (se revierte si hay error) con la descarga programada en pausa. Muchas correcciones menores.
+
+== 2.2.3 (2026-10-20) – estimación de nubosidad ==
+- Nubosidad estimada con las propias mediciones (% y octas, tipo de nube probable), comprobación METAR opcional.
+
+== 2.2.2 (2026-10-20) – WStation, ubicación, nombres de archivo según idioma ==
+- Nuevo nombre: WStation. Ajustes › Ubicación (nombre, zona horaria, coordenadas, altitud, umbrales de calor,
+  moneda). Programas y guías llevan el nombre en el idioma del instalador.
+
+== 2.2.1 (2026-10-20) – correcciones ==
+- Correcciones en descarga, programación (también con batería, se recuperan las ejecuciones perdidas),
+  seguridad, caché, sequía, estadística, informe y accesibilidad.
+
 == 2.1 (2026-10-19) ==
 - Multilingüe: húngaro, inglés, alemán, español – la interfaz, las ventanas ? y ƒx, los gráficos, los mensajes
   y alertas del Descargador, el instalador y las guías. Un idioma nuevo se añade con un archivo.
