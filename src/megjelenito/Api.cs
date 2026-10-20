@@ -160,9 +160,12 @@ namespace Idojaras
                     if (method != "POST") { status = 405; return "{}"; }
                     return OpenFolder(q["what"], out status);
                 case "/api/reload":
+                    // mellékhatásos kérés: csak POST (saját fejléccel), így egy idegen weboldal nem indíthatja el
+                    if (method != "POST") { status = 405; return "{}"; }
                     AppState.RefreshAsync(false);
                     return StatusJson();
                 case "/api/refresh":
+                    if (method != "POST") { status = 405; return "{}"; }   // letöltést indít (API-kvóta): csak POST
                     AppState.RefreshAsync(q["download"] != "0");
                     return StatusJson();
             }
@@ -173,7 +176,9 @@ namespace Idojaras
                 case "/api/meta": return Meta(ds);
                 case "/api/today": return Today(ds, AppState.S);
                 case "/api/series": return Series(ds, AppState.S, q);
-                case "/api/export": return Export.SaveWithDialog(ds);
+                case "/api/export":
+                    if (method != "POST") { status = 405; return "{}"; }   // Mentés ablakot nyit: csak POST
+                    return Export.SaveWithDialog(ds);
                 case "/api/days": return Days(ds, q["clean"] != "0");
                 case "/api/drought": return DroughtJson(ds);
                 case "/api/rainevents": return Analysis.RainEventsJson(ds, q["clean"] != "0", AppState.S);

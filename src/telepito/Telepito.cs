@@ -286,7 +286,8 @@ namespace Telepito
                 string msg;
                 try
                 {
-                    if (scheduleMinutes > 0) Utemezes.Set(Path.Combine(target, Names.Downloader), scheduleMinutes, out msg);
+                    if (scheduleMinutes < 0) msg = "Automatikus letöltés: változatlan (" + Utemezes.Text(Utemezes.QuerySpec()) + ").";
+                    else if (scheduleMinutes > 0) Utemezes.Set(Path.Combine(target, Names.Downloader), scheduleMinutes, out msg);
                     else if (survey.ScheduleMinutes > 0) Utemezes.Remove(out msg);
                     else msg = "Automatikus letöltés: kikapcsolva.";
                 }
@@ -514,6 +515,7 @@ namespace Telepito
         readonly TextBox txtTarget, txtImport;
         readonly CheckBox chkImport, chkShortcut, chkSchedule;
         readonly ComboBox cmbSchedule;
+        bool schedKeep;   // a lista első eleme: „jelenlegi megtartása” (a meglévő, akár egyedi ütemezés érintetlen marad)
         readonly Label lblInfo, lblStatus;
         readonly ProgressBar bar;
         readonly Button btnInstall, btnCancel, btnTarget, btnImport;
@@ -608,7 +610,7 @@ namespace Telepito
             body.Controls.Add(chkShortcut);
             y += 30;
             chkSchedule = new CheckBox { Text = "Automatikus letöltés a háttérben (Feladatütemező):", Location = P(24, y), AutoSize = true, Checked = true };
-            cmbSchedule = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = P(400, y - 3), Width = S(150) };
+            cmbSchedule = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Location = P(400, y - 3), Width = S(196) };
             foreach (var m in Utemezes.Choices) cmbSchedule.Items.Add(Utemezes.Text(m));
             cmbSchedule.SelectedIndex = Array.IndexOf(Utemezes.Choices, 60);
             chkSchedule.CheckedChanged += (s, e) => cmbSchedule.Enabled = chkSchedule.Checked;
@@ -672,12 +674,18 @@ namespace Telepito
             lblInfo.ForeColor = survey.Kind == Found.Newer ? Color.Firebrick : survey.Kind == Found.OldLayout ? Warn : Muted;
             orig[btnInstall] = survey.Kind == Found.Empty ? "Telepítés" : "Frissítés";
             btnInstall.Text = T(orig[btnInstall]);
-            if (survey.ScheduleMinutes > 0)
+            // meglévő ütemezésnél alapból az marad, ahogy van (a Beállításokban megadott napi / heti / egyedi is),
+            // különben egy frissítés csendben „óránként”-re írná át
+            cmbSchedule.Items.Clear();
+            foreach (var m in Utemezes.Choices) cmbSchedule.Items.Add(T(Utemezes.Text(m)));
+            schedKeep = survey.ScheduleMinutes > 0;
+            if (schedKeep)
             {
                 chkSchedule.Checked = true;
-                int idx = Array.IndexOf(Utemezes.Choices, survey.ScheduleMinutes);
-                if (idx >= 0) cmbSchedule.SelectedIndex = idx;
+                cmbSchedule.Items.Insert(0, T("jelenlegi megtartása") + " (" + T(Utemezes.Text(Utemezes.QuerySpec())) + ")");
+                cmbSchedule.SelectedIndex = 0;
             }
+            else cmbSchedule.SelectedIndex = Array.IndexOf(Utemezes.Choices, 60);
         }
 
         void PickTarget()
@@ -712,7 +720,9 @@ namespace Telepito
                 MessageBox.Show(this, T("Az átvételhez megadott mappa nem létezik:") + "\n" + import, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            int minutes = chkSchedule.Checked ? Utemezes.Choices[Math.Max(0, cmbSchedule.SelectedIndex)] : 0;
+            int sel = Math.Max(0, cmbSchedule.SelectedIndex);
+            // -1: a meglévő ütemezés változatlan marad
+            int minutes = !chkSchedule.Checked ? 0 : schedKeep && sel == 0 ? -1 : Utemezes.Choices[sel - (schedKeep ? 1 : 0)];
             foreach (Control c in body.Controls) if (c != bar && c != lblStatus) c.Enabled = false;
             bar.Visible = true;
             lblStatus.ForeColor = Muted;

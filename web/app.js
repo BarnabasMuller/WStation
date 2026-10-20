@@ -279,7 +279,7 @@ async function reload(download) {
   btn.disabled = true; btn.classList.add('spin');
   try {
     const before = STATUS ? STATUS.downloadSerial : 0;
-    await api('/api/refresh?download=' + (download ? 1 : 0));
+    await post('/api/refresh?download=' + (download ? 1 : 0));
     const s = await waitReady();
     setBusy(null);
     if (s.status !== 'ready') { showProblem(s); return; }

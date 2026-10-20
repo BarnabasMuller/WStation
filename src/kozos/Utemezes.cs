@@ -40,9 +40,15 @@ namespace Kozos
             };
             using (var p = Process.Start(psi))
             {
-                string o = p.StandardOutput.ReadToEnd(), e = p.StandardError.ReadToEnd();
-                p.WaitForExit(20000);
-                output = (o + e).Trim();
+                var eTask = p.StandardError.ReadToEndAsync();
+                string o = p.StandardOutput.ReadToEnd();
+                if (!p.WaitForExit(20000))
+                {
+                    try { p.Kill(); } catch { }
+                    output = "Az ütemező (schtasks) 20 másodperc alatt nem válaszolt.";
+                    return -1;
+                }
+                output = (o + eTask.Result).Trim();
                 return p.ExitCode;
             }
         }
@@ -125,9 +131,71 @@ namespace Kozos
                 default: message = "Ismeretlen ütemezés."; return false;
             }
             string o;
-            int code = Run("/Create /F /TN \"" + TaskName + "\" /TR \"" + tr + "\" " + when, out o);
+            // elsőként saját feladat-XML-lel: akkumulátorról is fut, és a kimaradt futást (kikapcsolt / alvó gép) pótolja
+            int code = CreateFromXml(exePath, s, out o);
+            if (code != 0) code = Run("/Create /F /TN \"" + TaskName + "\" /TR \"" + tr + "\" " + when, out o);
             message = code == 0 ? "Automatikus letöltés beállítva: " + Text(s) + "." : "Az ütemezés nem sikerült: " + o;
             return code == 0;
+        }
+
+        // A feladat XML-ből: a schtasks /SC alapbeállításai („csak hálózati tápellátásnál”, nincs „kimaradt futás pótlása”)
+        // laptopon és ki-be kapcsolt gépen sok letöltést kihagynának.
+        static int CreateFromXml(string exePath, Spec s, out string output)
+        {
+            output = "";
+            if (Guard.Root == null) return -1;
+            string xml = BuildTaskXml(exePath, s);
+            if (xml == null) return -1;
+            string file = System.IO.Path.Combine(Guard.Root, "utemezes_feladat.xml");
+            try
+            {
+                Guard.WriteAllText(file, xml, Encoding.Unicode);   // a schtasks /XML UTF-16-ot vár
+                return Run("/Create /F /TN \"" + TaskName + "\" /XML \"" + file + "\"", out output);
+            }
+            catch (Exception ex) { output = ex.Message; return -1; }
+            finally { try { if (System.IO.File.Exists(file)) Guard.Delete(file); } catch { } }
+        }
+
+        internal static string BuildTaskXml(string exePath, Spec s)
+        {
+            string trigger;
+            DateTime now = DateTime.Now;
+            string time = ValidTime(s.time) ? s.time : "06:00";
+            string startAt = now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "T" + time + ":00";
+            switch (s.kind)
+            {
+                case "interval":
+                    if (s.minutes % 1440 == 0)
+                        trigger = "<CalendarTrigger><StartBoundary>" + startAt + "</StartBoundary><Enabled>true</Enabled><ScheduleByDay><DaysInterval>" + (s.minutes / 1440) + "</DaysInterval></ScheduleByDay></CalendarTrigger>";
+                    else
+                    {
+                        string iv = s.minutes % 60 == 0 ? "PT" + (s.minutes / 60) + "H" : "PT" + s.minutes + "M";
+                        trigger = "<TimeTrigger><Repetition><Interval>" + iv + "</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition>" +
+                                  "<StartBoundary>" + now.AddMinutes(1).ToString("yyyy-MM-ddTHH:mm:00", CultureInfo.InvariantCulture) + "</StartBoundary><Enabled>true</Enabled></TimeTrigger>";
+                    }
+                    break;
+                case "daily":
+                    trigger = "<CalendarTrigger><StartBoundary>" + startAt + "</StartBoundary><Enabled>true</Enabled><ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger>";
+                    break;
+                case "weekly":
+                    var days = (s.days ?? new List<string>()).Where(d => DayCodes.Contains(d)).Distinct().ToList();
+                    trigger = "<CalendarTrigger><StartBoundary>" + startAt + "</StartBoundary><Enabled>true</Enabled><ScheduleByWeek><DaysOfWeek>" +
+                              string.Concat(days.Select(d => "<" + DayXml[Array.IndexOf(DayCodes, d)] + " />")) + "</DaysOfWeek><WeeksInterval>1</WeeksInterval></ScheduleByWeek></CalendarTrigger>";
+                    break;
+                default: return null;
+            }
+            Func<string, string> x = v => System.Security.SecurityElement.Escape(v);
+            string xml = "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\r\n" +
+                "<Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">" +
+                "<RegistrationInfo><Description>" + x("A Weather Underground mérések letöltése (Letöltő --nowait).") + "</Description></RegistrationInfo>" +
+                "<Triggers>" + trigger + "</Triggers>" +
+                "<Principals><Principal id=\"Author\"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>" +
+                "<Settings><MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy><DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>" +
+                "<StopIfGoingOnBatteries>false</StopIfGoingOnBatteries><StartWhenAvailable>true</StartWhenAvailable><RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>" +
+                "<IdleSettings><StopOnIdleEnd>false</StopOnIdleEnd><RestartOnIdle>false</RestartOnIdle></IdleSettings><Enabled>true</Enabled><Hidden>false</Hidden>" +
+                "<ExecutionTimeLimit>PT2H</ExecutionTimeLimit><Priority>7</Priority></Settings>" +
+                "<Actions Context=\"Author\"><Exec><Command>" + x("\"" + exePath + "\"") + "</Command><Arguments>--nowait</Arguments></Exec></Actions></Task>";
+            return xml;
         }
 
         public static bool Remove(out string message)
