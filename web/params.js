@@ -185,7 +185,7 @@ function presetBar(kind) {
     '<input class="inp" id="pname" placeholder="új preset neve" maxlength="60">' +
     '<button class="btn" id="psave">Mentés presetként</button><span class="pmsg" id="pmsg"></span></div>';
 }
-function presetOptions(list) { return list.length ? list.map(p => '<option>' + esc(p.name) + '</option>').join('') : '<option value="">(még nincs mentett)</option>'; }
+function presetOptions(list) { return list.length ? list.map(p => '<option class="ut">' + esc(p.name) + '</option>').join('') : '<option value="">(még nincs mentett)</option>'; }
 
 function wirePresets(kind, getData, setData) {
   const list = () => (PRESETS || []).filter(p => p.kind === kind);

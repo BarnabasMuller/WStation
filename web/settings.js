@@ -146,6 +146,7 @@ function schedShow() {
   $('schedTimeRow').classList.toggle('hidden', !(k === 'daily' || k === 'weekly' || (k === 'interval' && +$('schedUnit').value === 1440)));
 }
 function renderScheduleV2(s) {
+  SCHED = s;   // az „elavult adat” sáv küszöbéhez
   $('schedNow').textContent = s.kind !== 'off' ? s.text + (s.ours ? '' : ' (másik mappa Letöltőjére mutat!)') : 'kikapcsolva';
   let k = s.kind;
   if (k === 'interval' && PRESET_MIN[String(s.minutes)]) k = String(s.minutes);

@@ -96,7 +96,7 @@ function renderRangePicker() {
   }));
 
   // kedvencek
-  $('stFavSel').innerHTML = '<option value="">– kedvenc időszakok –</option>' + S.favs.map((f, i) => '<option value="' + i + '">' + esc(f.name) + '</option>').join('');
+  $('stFavSel').innerHTML = '<option value="">– kedvenc időszakok –</option>' + S.favs.map((f, i) => '<option class="ut" value="' + i + '">' + esc(f.name) + '</option>').join('');
   checkRows();
 }
 

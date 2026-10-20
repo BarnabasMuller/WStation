@@ -60,7 +60,7 @@ function programAdvice(p, r) {
 function pgSummary(pg) {
   const p = profById(pg.zone);
   const when = pg.every > 0 ? (pg.every === 1 ? 'naponta' : pg.every + ' naponta') : String(pg.days || '').split(/[,; ]+/).filter(Boolean).map(d => DOW[+d - 1]).join('-');
-  return (p ? TYPE_ICON[p.type] + ' ' + esc(p.name) : '<span class="neg">törölt zóna</span>') + ' · ' + when + ', ' + num(pg.amount, pg.amount % 1 ? 1 : 0) + ' ' + IRR_UNIT_NAME[pg.unit];
+  return (p ? TYPE_ICON[p.type] + ' ' + ut(p.name) : '<span class="neg">törölt zóna</span>') + ' · ' + when + ', ' + num(pg.amount, pg.amount % 1 ? 1 : 0) + ' ' + IRR_UNIT_NAME[pg.unit];
 }
 function scText(sc) {
   if (sc.yearly) return 'minden évben ' + sc.from.replace('-', '. ') + '. – ' + sc.to.replace('-', '. ') + '.';
@@ -77,7 +77,7 @@ function renderIrrigation() {
   const zones = c.profiles.filter(p => p.type !== 'felszin');
   box.innerHTML =
     '<h3 class="sub-h">Mentett programok</h3>' +
-    (c.programs.length ? '<table class="dtable"><tbody>' + c.programs.map((pg, i) => '<tr><td><b>' + esc(pg.name) + '</b></td><td>' + pgSummary(pg) + '</td><td>' +
+    (c.programs.length ? '<table class="dtable"><tbody>' + c.programs.map((pg, i) => '<tr><td><b>' + ut(pg.name) + '</b></td><td>' + pgSummary(pg) + '</td><td>' +
       c.schedules.filter(s => s.program === pg.id).length + ' időszak</td><td><button class="btn small" data-pedit="' + i + '">szerkeszt</button> <button class="btn small" data-pdel="' + i + '">×</button></td></tr>').join('') + '</tbody></table>'
       : '<p class="muted">Még nincs mentett program. Pl. „Nyári gyep: H-Sze-P, 12 perc” vagy „Bokrok csepegtető: naponta 6 l”.</p>') +
     '<div class="irr-form" id="pgForm"></div>' +
@@ -86,9 +86,9 @@ function renderIrrigation() {
     (c.schedules.length ? '<table class="dtable"><thead><tr><th>Program</th><th>Érvényes</th><th>Most</th><th></th></tr></thead><tbody>' + c.schedules.map((sc, i) => {
       const pg = c.programs.find(x => x.id === sc.program);
       const active = pg && (sc.yearly ? true : today >= sc.from && today <= sc.to) && (sc.yearly ? (sc.from <= sc.to ? today.slice(5) >= sc.from && today.slice(5) <= sc.to : today.slice(5) >= sc.from || today.slice(5) <= sc.to) : true);
-      return '<tr><td>' + (pg ? esc(pg.name) : '–') + '</td><td>' + scText(sc) + '</td><td>' + (active ? '<span class="tag ok">aktív</span>' : '<span class="muted">–</span>') + '</td><td><button class="btn small" data-sdel="' + i + '">×</button></td></tr>';
+      return '<tr><td>' + (pg ? ut(pg.name) : '–') + '</td><td>' + scText(sc) + '</td><td>' + (active ? '<span class="tag ok">aktív</span>' : '<span class="muted">–</span>') + '</td><td><button class="btn small" data-sdel="' + i + '">×</button></td></tr>';
     }).join('') + '</tbody></table>' : '<p class="muted">Nincs időszak – a programok addig nem számítanak bele a mérlegbe.</p>') +
-    (c.programs.length ? '<div class="row2 irr-sched"><select class="sel" id="scProg">' + c.programs.map(pg => '<option value="' + pg.id + '">' + esc(pg.name) + '</option>').join('') + '</select>' +
+    (c.programs.length ? '<div class="row2 irr-sched"><select class="sel" id="scProg">' + c.programs.map(pg => '<option class="ut" value="' + pg.id + '">' + esc(pg.name) + '</option>').join('') + '</select>' +
       '<label class="switch small"><input type="checkbox" id="scYearly"><span class="slider"></span><span>minden évben</span></label>' +
       '<span id="scDates"><input type="date" class="inp" id="scFrom" value="' + today + '"> – <input type="date" class="inp" id="scTo" value="' + DS.add(today, 30) + '"></span>' +
       '<span id="scMd" class="hidden"><input class="inp" id="scFromMd" placeholder="HH-NN" maxlength="5" style="width:70px" value="05-01"> – <input class="inp" id="scToMd" placeholder="HH-NN" maxlength="5" style="width:70px" value="09-30"></span>' +
@@ -130,7 +130,7 @@ function programForm(pg) {
   const unitOpts = z => (IRR_UNITS[(profById(z) || {}).type] || ['mm']).map(u => '<option value="' + u + '"' + (u === pg.unit ? ' selected' : '') + '>' + IRR_UNIT_NAME[u] + '</option>').join('');
   const days = String(pg.days || '').split(/[,; ]+/);
   f.innerHTML = '<div class="row2"><label>Név <input class="inp" id="pgName" maxlength="60" style="width:220px" value="' + esc(pg.name) + '" placeholder="pl. Nyári gyep"></label>' +
-    '<label>Zóna <select class="sel" id="pgZone">' + zones.map(p => '<option value="' + p.id + '"' + (p.id === pg.zone ? ' selected' : '') + '>' + TYPE_ICON[p.type] + ' ' + esc(p.name) + '</option>').join('') + '</select></label></div>' +
+    '<label>Zóna <select class="sel" id="pgZone">' + zones.map(p => '<option class="ut" value="' + p.id + '"' + (p.id === pg.zone ? ' selected' : '') + '>' + TYPE_ICON[p.type] + ' ' + esc(p.name) + '</option>').join('') + '</select></label></div>' +
     '<div class="row2"><select class="sel" id="pgMode"><option value="days">a hét napjain</option><option value="every">x naponta</option></select>' +
     '<span class="daypick" id="pgDays">' + DOW.map((d, i) => '<label><input type="checkbox" value="' + (i + 1) + '"' + (days.includes(String(i + 1)) ? ' checked' : '') + '>' + d + '</label>').join('') + '</span>' +
     '<span id="pgEveryW" class="hidden">minden <input class="inp num" id="pgEvery" style="width:50px" value="' + (pg.every || 2) + '"> napon</span></div>' +

@@ -17,7 +17,7 @@ const FX = {
   beaufort: {
     title: '🌬️ Beaufort-fokozat (tört érték)',
     f: 'B = (v / 0,836)<sup>2/3</sup>, v m/s-ban (WMO: v = 0,836 · B<sup>3/2</sup>)<br>1 csomó = 1,852 km/h · 1 m/s = 3,6 km/h',
-    text: 'A klasszikus Beaufort-skála egész fokozatait a WMO-képlet folytonossá teszi: így látszik, hogy 3,3 vagy 3,9 Bft fújt. A fokozat neve (pl. „gyenge szél”) a kerekített értékből jön. Példa: 18 km/h = 5,0 m/s → 3,3 Bft.'
+    text: 'A klasszikus Beaufort-skála egész fokozatait a WMO-képlet folytonossá teszi: így látszik, hogy 3,3 vagy 3,9 Bft fújt. A fokozat neve (pl. „gyenge szél”) a kerekített értékből jön; 1 csomó (1,9 km/h) alatt szélcsend (0), a Szél fül szélcsend-aránya is ezzel számol. Példa: 18 km/h = 5,0 m/s → 3,3 Bft.'
   },
   sun: {
     title: '☀️ Napsütéses órák és napenergia',

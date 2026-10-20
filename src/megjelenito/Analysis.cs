@@ -206,7 +206,7 @@ namespace Idojaras
         {
             var inDay = DayFilter(ranges, year);
             var days = (clean ? ds.Days : ds.DaysRaw).Where(d => inDay(d.Day)).ToList();
-            var good = days.Where(d => d.Coverage >= 0.8).ToList();
+            var good = days.Where(d => d.Coverage >= DayStat.FullCoverage).ToList();
             int i0 = 0, i1 = ds.N;
             var w = new JW().Obj().P("year", year).P("clean", clean).Key("records").Arr();
             Func<int, int, int, Func<double, double, bool>, int> best = (col, mask, dummy, better) =>
@@ -273,7 +273,7 @@ namespace Idojaras
             Func<Func<DayStat, bool>, Tuple<int, DayStat, DayStat>> streak = cond =>
             {
                 int bestLen = 0, len = 0; DayStat bs = null, be = null, cs = null; DayStat prev = null;
-                foreach (var d in days.Where(x => x.Coverage >= 0.5))
+                foreach (var d in days.Where(x => x.Coverage >= DayStat.FullCoverage))
                 {
                     bool c = cond(d) && (prev == null || d.Day == prev.Day + 1 || len == 0);
                     if (cond(d)) { if (prev != null && d.Day != prev.Day + 1) len = 0; if (len == 0) cs = d; len++; if (len > bestLen) { bestLen = len; bs = cs; be = d; } }

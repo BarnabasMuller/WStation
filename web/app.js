@@ -26,6 +26,8 @@ function buildFormatters() {
   F.dayY = new Intl.DateTimeFormat(L, { timeZone: TZ, year: 'numeric', month: 'short', day: 'numeric' });
   F.month = new Intl.DateTimeFormat(L, { timeZone: TZ, year: 'numeric', month: 'short' });
   F.full = new Intl.DateTimeFormat(L, { timeZone: TZ, year: 'numeric', month: 'short', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  // a fejlécben és a „Ma” kártyán kiírt napnévvel (7.27: a „P” rövidítés rejtvény)
+  F.fullL = new Intl.DateTimeFormat(L, { timeZone: TZ, year: 'numeric', month: 'short', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   F.ymd = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
   F.hour = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 }
@@ -37,14 +39,18 @@ function num(v, d = 1) {
   const s = Number(v).toLocaleString(numLocale(), { minimumFractionDigits: d, maximumFractionDigits: d });
   return /^-0([.,]0*)?$/.test(s) ? s.slice(1) : s.replace(/^-/, '−');
 }
+// egy nap akkor „teljes”, ha legalább ennyi része lefedett (mint a szerveren: DayStat.FullCoverage) – 8.6
+const COV_FULL = 0.8;
+// felhasználói szöveg (programnév, napló, kedvenc…): a fordítás csak akkor cseréli, ha egészében egy ismert kifejezés (6.7)
+function ut(s) { return '<span class="ut">' + esc(s) + '</span>'; }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 // időtartam egységesen (6.22): „55 perc”, „1 óra 49 perc”, 48 óra fölött „3 nap 4 óra”
 function fmtDuration(min) {
   if (min == null || isNaN(min)) return '–';
   const m = Math.round(min);
-  if (m < 60) return m + ' perc';
-  if (m < 48 * 60) { const h = Math.floor(m / 60), r = m % 60; return h + ' óra' + (r ? ' ' + r + ' perc' : ''); }
-  const d = Math.floor(m / 1440), h = Math.round((m % 1440) / 60); return d + ' nap' + (h ? ' ' + h + ' óra' : '');
+  if (m < 60) return tf('{m} perc', { m });
+  if (m < 48 * 60) { const h = Math.floor(m / 60), r = m % 60; return r ? tf('{h} óra {m} perc', { h, m: r }) : tf('{h} óra', { h }); }
+  const d = Math.floor(m / 1440), h = Math.round((m % 1440) / 60); return h ? tf('{d} nap {h} óra', { d, h }) : tf('{d} nap', { d });
 }
 function signed(v, d = 1) { if (v === null || isNaN(v)) return '–'; return (v > 0 ? '+' : v < 0 ? '−' : '±') + num(Math.abs(v), d); }
 
@@ -61,7 +67,7 @@ function dayLabel(ms) {
   const y = F.ymd.format(Date.now() - D);
   if (d === today) return 'ma ' + F.time.format(ms);
   if (d === y) return 'tegnap ' + F.time.format(ms);
-  return F.full.format(ms);
+  return F.fullL.format(ms);
 }
 
 // ------------------------------------------------------------------ mértékegységek (belül mindig metrikus; csak a kijelzés vált)
@@ -138,11 +144,23 @@ function fs(px) {
   return px;
 }
 
+// minden grafikon: fülváltáskor és ablakméret-váltáskor a láthatók átméreteződnek (6.8 – a rejtett fülön nem kapnak méretet)
+const ALL_CHARTS = new Set();
+function resizeVisibleCharts() {
+  ALL_CHARTS.forEach(c => {
+    if (c.isDisposed()) { ALL_CHARTS.delete(c); return; }
+    const el = c.getDom();
+    if (el && el.offsetParent !== null && el.clientWidth && c.getWidth() !== el.clientWidth) c.resize();
+  });
+}
+window.addEventListener('resize', () => { clearTimeout(resizeVisibleCharts._t); resizeVisibleCharts._t = setTimeout(resizeVisibleCharts, 100); });
+
 // a grafikonok alap betűmérete (tengelyfeliratok stb.) is kövesse a beállítást
 (function () {
   const init0 = echarts.init;
   echarts.init = function () {
     const c = init0.apply(this, arguments), so = c.setOption;
+    ALL_CHARTS.add(c);
     c.setOption = function (o) {
       if (o && typeof o === 'object' && UI && UI.minFont) o.textStyle = Object.assign({ fontSize: fs(12) }, o.textStyle || {});
       if (o && typeof o === 'object' && typeof trOption === 'function') trOption(o, 0);
@@ -153,11 +171,13 @@ function fs(px) {
 })();
 
 // ------------------------------------------------------------------ szél segédek
-const BFT = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+// szélcsend: 1 csomó alatt (Beaufort 0) – a Szél fül statisztikája és a fokozat neve ugyanezzel számol (9.3)
+const CALM_KMH = 1.852;
 const BFT_NAME = ['szélcsend', 'gyenge szellő', 'enyhe szél', 'gyenge szél', 'mérsékelt szél', 'élénk szél', 'erős szél',
   'igen erős szél', 'viharos szél', 'erős vihar', 'teljes vihar', 'orkánszerű vihar', 'orkán'];
-// egész fokozat (a fokozat nevéhez) a WMO-határok szerint
-function beaufort(kmh) { if (kmh == null || isNaN(kmh)) return null; let b = 0; while (b < BFT.length && kmh >= BFT[b]) b++; return b; }
+// egész fokozat (a fokozat nevéhez): a tört érték kerekítve, ahogy az ƒx ablak is írja (9.3); szélcsend 1 csomó alatt
+function beaufort(kmh) { if (kmh == null || isNaN(kmh)) return null; return kmh < CALM_KMH ? 0 : Math.max(1, Math.round(beaufortF(kmh))); }
+function bftText(kmh) { const b = beaufort(kmh); return b == null ? '' : b + ' Bft (' + BFT_NAME[b] + ')'; }
 // tört Beaufort: a WMO-képlet (v = 0,836 · B^1,5 m/s) megfordítva, legfeljebb 12
 function beaufortF(kmh) { if (kmh == null || isNaN(kmh)) return null; return Math.min(12, Math.pow(Math.max(0, kmh / 3.6) / 0.836, 2 / 3)); }
 function windUnit() { return units().wind; }
@@ -317,12 +337,22 @@ function toast(msg, ms) {
 }
 
 // ------------------------------------------------------------------ fejléc, lábléc
+// az „elavult adat” sáv küszöbe a beállított letöltési gyakoriság kb. 1,5-szerese (12.4); ütemezés nélkül 1 nap
+let SCHED = null;
+function staleLimitMin() {
+  if (!SCHED) return 90;
+  const per = SCHED.kind === 'interval' && SCHED.minutes > 0 ? SCHED.minutes : SCHED.kind === 'weekly' ? 10080 / Math.max(1, (SCHED.days || []).length) : 1440;
+  return Math.max(90, Math.round(per * 1.5));
+}
+function loadSchedule() {
+  api('/api/schedule').then(x => { SCHED = x; if (META && TODAY) renderHeader(); }).catch(() => { });
+}
 function renderHeader() {
   const n = TODAY.now || {};
   $('sub').textContent = META.station + (placeName() !== META.station ? ' · ' + placeName() : '') + ' · utolsó mérés: ' + dayLabel(Math.max(META.last, n.t || 0));
   const b = $('staleBanner');
-  if (n.ageMin > 90) {
-    b.textContent = 'Az utolsó mérés ' + relTime(n.t) + ' készült (' + F.full.format(n.t) + '). Kattints a Frissítés gombra az új adatok letöltéséhez.';
+  if (n.ageMin > staleLimitMin()) {
+    b.textContent = 'Az utolsó mérés ' + relTime(n.t) + ' készült (' + F.fullL.format(n.t) + '). Kattints a Frissítés gombra az új adatok letöltéséhez.';
     b.classList.remove('hidden');
   } else b.classList.add('hidden');
 }
@@ -364,12 +394,21 @@ function renderToday() {
     ? ' · ' + (isToday ? 'Tegnap ilyenkor' : '24 órával korábban') + ' <b>' + ttext(ty) + '</b> (' + tsigned(n.temp - ty) + ')' : '';
 
   const year = [];
-  if (y.warmRank) year.push('Rangsor a legmelegebb napok között: <b>' + y.warmRank + '.</b> a(z) ' + y.days + ' idei napból (az ' + (isToday ? 'eddigi mai' : 'aznapi') + ' maximum alapján)');
-  if (y.coldRank) year.push('Rangsor a leghidegebb éjszakák között: <b>' + y.coldRank + '.</b>');
+  // közérthető mondatok (7.27), egészben fordítható sablonnal (6.33)
+  const dayLong = t.date ? new Intl.DateTimeFormat(numLocale(), { timeZone: 'UTC', weekday: 'long' }).format(Date.parse(t.date + 'T12:00:00Z')) : '';
   if (y.monthTmaxAvg != null && t.tmax != null) {
-    const d = t.tmax - y.monthTmaxAvg;
-    const mi = new Date(t.date + 'T12:00:00').getMonth();
-    year.push((isToday ? 'A mai' : 'Az aznapi') + ' maximum <b>' + tdtext(Math.abs(d)) + '-kal ' + (d >= 0 ? 'magasabb' : 'alacsonyabb') + '</b> az idei ' + MONTH_ADJ[mi] + ' napok átlagánál (' + ttext(y.monthTmaxAvg) + ')');
+    const d = t.tmax - y.monthTmaxAvg, mi = new Date(t.date + 'T12:00:00').getMonth();
+    const v = { day: dayLong, t: '<b>' + ttext(t.tmax) + '</b>', d: '<b>' + tdtext(Math.abs(d)) + '</b>', month: MONTH_ADJ[mi], avg: ttext(y.monthTmaxAvg) };
+    year.push(Math.abs(d) < 0.5
+      ? tf(isToday ? 'Ma eddig {t} volt a legmelegebb – nagyjából annyi, mint egy átlagos {month} napon ({avg}).' : '{day}: {t} volt a legmelegebb – nagyjából annyi, mint egy átlagos {month} napon ({avg}).', v)
+      : d > 0 ? tf(isToday ? 'Ma eddig {t} volt a legmelegebb – {d} fokkal melegebb egy átlagos {month} napnál ({avg}).' : '{day}: {t} volt a legmelegebb – {d} fokkal melegebb egy átlagos {month} napnál ({avg}).', v)
+      : tf(isToday ? 'Ma eddig {t} volt a legmelegebb – {d} fokkal hűvösebb egy átlagos {month} napnál ({avg}).' : '{day}: {t} volt a legmelegebb – {d} fokkal hűvösebb egy átlagos {month} napnál ({avg}).', v));
+  }
+  if (y.warmRank && y.days >= 10) {
+    // a rangsor helyett egy szó: hol áll a nap az idei napok között (a pontos helyezés a buboréksúgóban)
+    const q = (y.warmRank - 1) / Math.max(1, y.days - 1), rank = tf('{n}. a(z) {all} idei napból', { n: y.warmRank, all: y.days });
+    const txt = q <= 0.05 ? tf('Az idei év egyik legmelegebb napja volt.') : q <= 0.25 ? tf('Melegebb nap volt az idei napok többségénél.') : q < 0.75 ? tf('Átlagos meleg nap volt (az idei napok középmezőnyében).') : q < 0.95 ? tf('Hűvösebb nap volt az idei napok többségénél.') : tf('Az idei év egyik leghűvösebb napja volt.');
+    year.push('<span title="' + esc(rank) + '">' + txt + '</span>');
   }
   year.push('Idén eddig: <b>' + y.hotDays + '</b> hőségnap (≥ ' + ttext(st.hotDay, 0) + ') · <b>' + y.tropicalNights + '</b> trópusi éjszaka · <b>' + y.frostDays + '</b> fagyos nap');
   year.push('Idei csapadék: <b>' + rtext(y.rain, 1) + '</b>, ' + y.rainDays + ' esős nappal (≥ ' + rtext(1, 0) + ')');
@@ -388,6 +427,7 @@ function renderToday() {
           <span>▲ <b>${ttext(t.tmax)}</b> ${t.tmaxT ? F.time.format(t.tmaxT) : ''}</span>
         </div>
         <div class="when">Utolsó mérés: ${n.t ? dayLabel(n.t) + ' (' + relTime(n.t) + ')' : '–'}</div>
+        ${!isToday && t.coverage != null && t.coverage < 0.97 ? '<div class="when">' + tf('Részleges nap: a mérések {p}%-a van meg, ezért a napi értékek nem teljesek.', { p: num(t.coverage * 100, 0) }) + '</div>' : ''}
       </div>
     </div>
 
@@ -399,8 +439,8 @@ function renderToday() {
         ${n.dir != null && !isNaN(n.dir) ? `<path class="arrow" d="M32 13 L38.5 36 L32 31.5 L25.5 36 Z" style="transform: rotate(${n.dir + 180}deg)"/>` : ''}
       </svg>
       <div class="big">${num(wconv(n.wind), 1)}<small>${wlabel()}</small></div>
-      <div class="row"><span>Lökés <b>${wtext(n.gust)}</b></span><span>${windUnit() === 'kmh' ? '<b>' + num(n.wind / 1.852, 1) + '</b> csomó' : '<b>' + num(n.wind, 1) + '</b> km/h'}</span></div>
-      <div class="line">${bft == null ? '' : '<b>' + num(beaufortF(n.wind), 1) + ' Bft</b> – ' + BFT_NAME[bft] + ' · '}${dirText(n.dir)} felől${n.dir != null && !isNaN(n.dir) ? ' (' + num(n.dir, 0) + '°)' : ''}</div>
+      <div class="row"><span>Lökés <b>${wtext(n.gust)}</b></span></div>
+      <div class="line">${bft == null ? '' : '<b>' + bft + ' Bft</b> – ' + BFT_NAME[bft] + ' · '}${dirText(n.dir)} felől${n.dir != null && !isNaN(n.dir) ? ' (' + num(n.dir, 0) + '°)' : ''}</div>
       <div class="line">${Ma} legnagyobb lökés: <b>${wtext(t.gustMax)}</b> ${t.gustMaxT ? F.time.format(t.gustMaxT) : ''}</div>
     </div>
 
@@ -776,6 +816,7 @@ function showTab(t, save) {
   if (t === 'idovonal' && typeof renderFormulaPanel === 'function') renderFormulaPanel();
   if (t === 'beallitasok' && typeof renderAlerts === 'function') renderAlerts();
   if (save) { UI.tab = t; saveUi(); }
+  requestAnimationFrame(resizeVisibleCharts); setTimeout(resizeVisibleCharts, 600);   // az aszinkron rajzolók után is
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab, true)));
@@ -865,6 +906,7 @@ async function init() {
   syncWindUnitButtons(); syncUnitButtons();
   showTab(UI.tab || 'attekintes', false);
   start();
+  loadSchedule();
   checkUpdate();
 }
 // minden szkript betöltése után indul (a Beállítások és a többi modul függvényei addigra megvannak)

@@ -28,7 +28,7 @@ function repTable(rows) { return '<table class="rtable">' + rows.map(r => '<tr><
 
 function monthStats(d, m) {
   const ix = d.date.map((s, i) => i).filter(i => d.date[i].startsWith(m));
-  const good = ix.filter(i => d.cov[i] >= 0.5);
+  const good = ix.filter(i => d.cov[i] >= COV_FULL);   // közös lefedettségi küszöb (8.6)
   const avg = k => { const v = good.map(i => d[k][i]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
   const sum = k => ix.reduce((a, i) => a + (d[k][i] || 0), 0);
   const ext = (k, f) => good.reduce((b, i) => d[k][i] != null && (b == null || f(d[k][i], d[k][b])) ? i : b, null);
@@ -76,7 +76,7 @@ async function monthReport(d, m) {
     const lastIdx = dr.date.map((x, i) => i).filter(i => dr.date[i].startsWith(m)).pop();
     const firstIdx = dr.date.findIndex(x => x.startsWith(m));
     if (lastIdx != null && firstIdx >= 0) drHtml = '<h3>Szárazság a hónap végén</h3>' + repTable(dr.config.profiles.filter(p => p.enabled).map(p => {
-      const r = dr.profiles.find(x => x.id === p.id); return [esc(p.name), num(r.depl[lastIdx] * 100, 0) + '% (hónap elején ' + num(r.depl[firstIdx] * 100, 0) + '%)'];
+      const r = dr.profiles.find(x => x.id === p.id); return [ut(p.name), num(r.depl[lastIdx] * 100, 0) + '% (hónap elején ' + num(r.depl[firstIdx] * 100, 0) + '%)'];
     }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tlabel() + '·nap'], ['Legnagyobb tűzveszély (FWI)', num(Math.max(...dr.fwi.slice(firstIdx, lastIdx + 1)), 0)]]));
   }
   $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-jelentés · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + title + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + '</div></div>' +

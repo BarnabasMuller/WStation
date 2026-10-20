@@ -91,7 +91,7 @@ function renderMonthCompare(d) {
     if (!inR(s)) return;
     const m = s.slice(0, 7);
     const o = months[m] = months[m] || { t: [], rain: 0, sun: 0, n: 0, nAll: 0, days: new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)).getUTCDate() };
-    if (d.cov[i] >= 0.5) { if (d.tavg[i] != null) o.t.push(d.tavg[i]); o.n++; }
+    if (d.cov[i] >= COV_FULL) { if (d.tavg[i] != null) o.t.push(d.tavg[i]); o.n++; }
     // az összeg és a vetítés ugyanazokból a napokból (11.5): a csapadék / napsütés minden adatos napból
     o.rain += d.rain[i] || 0; o.sun += d.sun[i] || 0; o.nAll += d.cov[i] || 0;
   });

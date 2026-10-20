@@ -45,13 +45,15 @@ async function renderWind() {
   const avgWind = di.map(i => d.wind[i]).filter(x => x != null);
   // a Szél fülön a Beaufort mindenhol egy, az átlagszélnél két tizedes; a csomó egy tizedes
   const awk = avgWind.length ? avgWind.reduce((x, y) => x + y, 0) / avgWind.length : null;
-  const both = (kmh, bd) => kmh == null ? '' : [windUnit() !== 'bft' ? num(beaufortF(kmh), bd) + ' Bft' : null, windUnit() !== 'kn' ? num(kmh / 1.852, 1) + ' csomó' : null].filter(Boolean).join(' · ');
+  // a második egységként a Beaufort egész fokozat + név (7.32: a tört Bft laikusnak furcsa; tört érték csak Bft módban)
+  const both = (kmh, bd) => kmh == null ? '' : [windUnit() !== 'bft' ? bftText(kmh) : null, windUnit() !== 'kn' ? num(kmh / 1.852, 1) + ' csomó' : null].filter(Boolean).join(' · ');
   $('windCards').innerHTML = [
     ['Átlagszél', wtext(awk, windUnit() === 'bft' ? 2 : null), both(awk, 2)],
     ['Legerősebb lökés', gi != null ? wtext(d.gust[gi]) : '–', gi != null ? DS.fmt(d.date[gi], { month: 'short', day: 'numeric' }) + ' · ' + both(d.gust[gi], 1) : ''],
     ['Uralkodó irány', dom == null ? '–' : dirText(dom), dom == null ? '' : num(dom, 0) + '° felől'],
-    ['Szélcsend (< 1 csomó)', num(w.calmPct, 0) + '%', 'a mérések arányában'],
-    ['3 Bft fölötti délutánok', w.windyDays + ' nap', 'átlag ≥ ' + wtext(w.windyKmh, windUnit() === 'bft' ? 2 : null) + ' ' + w.afternoonFrom + '–' + w.afternoonTo + ' óra között, ' + w.afternoonDays + ' napból · leghosszabb sorozat: ' + w.windyStreak + ' nap']
+    // a definíciók a fül egységében (7.32)
+    ['Szélcsend (' + (windUnit() === 'bft' ? '0 Bft' : '< ' + wtext(CALM_KMH, 1)) + ')', num(w.calmPct, 0) + '%', 'a mérések arányában'],
+    ['Szeles délutánok', w.windyDays + ' nap', 'átlag ≥ ' + wtext(w.windyKmh, windUnit() === 'bft' ? 2 : null) + ' ' + w.afternoonFrom + '–' + w.afternoonTo + ' óra között, ' + w.afternoonDays + ' napból · leghosszabb sorozat: ' + w.windyStreak + ' nap']
   ].map(([x, y, z]) => '<div class="card mini"><h3>' + x + '</h3><div class="big">' + y + '</div><div class="line small">' + esc(z) + '</div></div>').join('');
 
   // óra × hónap hőtérkép

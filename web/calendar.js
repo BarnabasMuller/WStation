@@ -331,7 +331,7 @@ function calTooltip(d, i, m) {
   h += '<br><span style="color:' + cssVar('--muted') + '">' +
     num(tconv(d.tmin[i])) + ' / ' + ttext(d.tmax[i]) + ' · ' + rtext(d.rain[i], 1) + ' · ' + num(d.sun[i], 1) + ' h nap · lökés ' + wtext(d.gust[i]) + '</span>';
   if (d.cov[i] < 0.8) h += '<br><span style="color:' + cssVar('--warn-ink') + '">⚠ hiányos adat: ' + d.n[i] + ' mérés (' + num(d.cov[i] * 100, 0) + '%)</span>';
-  if (typeof diaryFor === 'function') diaryFor(s).forEach(x => { h += '<br>' + (DIARY_TAGS[x.tag] || '📝') + ' <b>' + esc(x.tag || '') + '</b>' + (x.text ? ': ' + esc(x.text) : ''); });
+  if (typeof diaryFor === 'function') diaryFor(s).forEach(x => { h += '<br>' + (DIARY_TAGS[x.tag] || '📝') + ' <b>' + esc(x.tag || '') + '</b>' + (x.text ? ': ' + ut(x.text) : ''); });
   h += '<br><span style="color:' + cssVar('--muted') + ';font-size:11.5px">Kattints: megnyitás az idővonalon</span>';
   return h;
 }

@@ -119,7 +119,7 @@ async function renderWeek() {
       if (rows.has('hum')) body += R('Pára', num(d.humMin[i], 0) + '–' + num(d.humMax[i], 0) + ' %');
       if (rows.has('pres')) body += R('Nyomás', ptext(d.pres[i], 0) + '<small> · ' + signed(pconv(d.presChg[i]), pdec(1)) + '</small>');
       if (rows.has('uv')) body += R('UV', num(d.uv[i], 0));
-      if (d.cov[i] < 0.8) body += '<div class="wk-warn">⚠ hiányos adat (' + num(d.cov[i] * 100, 0) + '%)</div>';
+      if (d.cov[i] < COV_FULL) body += '<div class="wk-warn">⚠ hiányos adat (' + num(d.cov[i] * 100, 0) + '%)</div>';
     }
     return '<div class="wk-card' + (isToday ? ' today-card' : '') + (i === undefined || future ? ' empty' : '') + '" data-date="' + s + '" title="' + esc(icoText) + (i !== undefined && !future ? ' – kattints: megnyitás az idővonalon' : '') + '">' +
       '<div class="wk-head"><div><div class="wk-day">' + DS.fmt(s, { weekday: 'long' }) + (isToday ? ' · ma' : '') + '</div><div class="wk-date">' + DS.fmt(s, { month: 'short', day: 'numeric' }) + '</div></div>' +

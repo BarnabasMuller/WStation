@@ -166,7 +166,7 @@ function renderDrChips() {
   const c = DR.config;
   $('drChips').innerHTML = c.profiles.map(p =>
     '<label class="chip' + (p.enabled ? ' on' : '') + '" title="Megjelenítés be/ki"><input type="checkbox" data-id="' + p.id + '"' + (p.enabled ? ' checked' : '') + '>' +
-    TYPE_ICON[p.type] + ' ' + esc(p.name) + '</label>').join('');
+    TYPE_ICON[p.type] + ' ' + ut(p.name) + '</label>').join('');
   $('drChips').querySelectorAll('input').forEach(i => i.addEventListener('change', () => {
     profById(i.dataset.id).enabled = i.checked; saveDroughtConfig();
   }));
@@ -200,7 +200,7 @@ function renderDrCards() {
     }
     if (p.type === 'felszin') extra += '<div class="line small">A felső 10 cm: egy eső után gyorsan nedves, napok alatt kiszárad.</div>';
     h.push('<div class="card dr-card"><button class="qbtn" data-q="p:' + p.id + '" title="Képlet és beállítások">ƒx</button>' +
-      '<h3>' + TYPE_ICON[p.type] + ' ' + esc(p.name) + '</h3>' +
+      '<h3>' + TYPE_ICON[p.type] + ' ' + ut(p.name) + '</h3>' +
       '<div class="big" style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '<small>% kiszáradás</small> <button class="qmini" data-depl="' + p.id + '" title="0% = a gyökérzóna „vödre” tele, 100% = üres (hervadáspont). A jelölt vonal a stresszhatár. Kattints a részletekért.">?</button></div>' +
       '<div class="bar"><span style="width:' + Math.min(100, depl * 100) + '%;background:' + drColor(depl) + '"></span><i style="left:' + (raw / taw * 100) + '%" title="stresszhatár (RAW)"></i></div>' +
       '<div class="line"><span class="tag ' + cls + '">' + st + '</span> Ks = ' + num(ks, 2) + '</div>' + extra + '</div>');
@@ -310,7 +310,7 @@ function potAdvice(pots) {
     const every = Math.max(0.5, tawL * p.p / need);
     // a cserép mostani állapota (11.3): ha a stresszhatáron túl van, előbb most kell meglocsolni
     const dr = last(r.dr), raw = last(r.raw), nowL = Math.max(0, dr) * A;
-    let txt = '<b>' + esc(p.name) + '</b> (' + num(p.potLiters, 0) + ' l, ' + PROFILE_PARAMS.place.options[p.place] + '): az utolsó adatnapon kb. <b>' + fmtL(need) + '</b> vizet párologtatott. ';
+    let txt = '<b>' + ut(p.name) + '</b> (' + num(p.potLiters, 0) + ' l, ' + PROFILE_PARAMS.place.options[p.place] + '): az utolsó adatnapon kb. <b>' + fmtL(need) + '</b> vizet párologtatott. ';
     if (dr != null && raw != null && dr >= raw) { txt += '<b class="neg">Most locsold meg</b>: kb. <b>' + fmtL(nowL) + '</b> kell a feltöltéshez. Utána '; worst = 'strong'; }
     if (rainL >= need && !(dr >= raw)) txt += 'Az utolsó adatnap esője elég volt.';
     else if (every < 1) { txt += '<b class="neg">Naponta kétszer</b> locsold, alkalmanként kb. ' + fmtL(need / 2 + 0.05) + '.'; worst = 'strong'; }
@@ -340,9 +340,9 @@ function renderWater() {
       '<div class="w-note">A rögzített locsolást a talajvíz-mérleg beszámítja.</div></details></div>';
   };
   const lawn = c.profiles.filter(p => p.type === 'gyep' && p.enabled);
-  lawn.forEach(p => cards.push(mk(esc(p.name), '🌱', [p.id], lawnAdvice(p, resById(p.id)), [[p.id, p.name, ['perc', 'mm', 'l']]])));
+  lawn.forEach(p => cards.push(mk(ut(p.name), '🌱', [p.id], lawnAdvice(p, resById(p.id)), [[p.id, p.name, ['perc', 'mm', 'l']]])));
   const shrubs = c.profiles.filter(p => p.type === 'bokor' && p.enabled);
-  shrubs.forEach(p => cards.push(mk(esc(p.name), '🌿', [p.id], shrubAdvice(p, resById(p.id)), [[p.id, p.name, ['perc', 'l', 'mm']]])));
+  shrubs.forEach(p => cards.push(mk(ut(p.name), '🌿', [p.id], shrubAdvice(p, resById(p.id)), [[p.id, p.name, ['perc', 'l', 'mm']]])));
   const pots = c.profiles.filter(p => p.type === 'cserep' && p.enabled);
   if (pots.length) cards.push(mk('Cserepes virágok', '🪴', pots.map(p => p.id), potAdvice(pots), pots.map(p => [p.id, p.name, ['l', 'mm']])));
   const trees = c.profiles.filter(p => p.type === 'fa' && p.enabled);
@@ -350,7 +350,9 @@ function renderWater() {
     const lines = trees.map(p => {
       const r = resById(p.id), dr = last(r.dr), raw = last(r.raw), lph = p.dripCount * p.dripLph;
       const fill = Math.max(0, dr - raw * 0.5) * r.area;
-      return '<b>' + esc(p.name) + '</b>: ' + (dr <= raw ? 'nincs szüksége öntözésre.' : 'mélyen kiszáradt (' + num(last(r.depl) * 100, 0) + '%). Egy alapos, ritka beöntözés segít: kb. <b>' + fmtL(fill) + '</b> a lombkorona alá, több részletben' + (lph > 0 ? ' (≈ ' + durText(fill / lph * 60) + ' csepegtetés)' : '') + '.');
+      return '<b>' + ut(p.name) + '</b>: ' + (dr <= raw ? 'nincs szüksége öntözésre.' : 'mélyen kiszáradt (' + num(last(r.depl) * 100, 0) + '%). Egy alapos, ritka beöntözés segít: kb. <b>' + fmtL(fill) + '</b> a lombkorona alá, több részletben' + (lph > 0 ? ' (≈ ' + durText(fill / lph * 60) + ' csepegtetés)' : '') + '. ' +
+        // a profilkártya „Hiányzik” értéke a teljes feltöltés – itt mondjuk meg, miért kevesebb a javaslat (7.22)
+        '<span class="muted">A teljes feltöltéshez ' + fmtL(Math.max(0, dr) * r.area) + ' kellene, de a fának a stresszhatár feléig visszatöltés is elég.</span>');
     });
     cards.push(mk('Fák', '🌳', trees.map(p => p.id), { status: 'A fák mélyen gyökereznek: ritkán, de sokat.', cls: trees.some(p => last(resById(p.id).dr) > last(resById(p.id).raw)) ? 'mild' : 'ok', lines }, trees.map(p => [p.id, p.name, ['l', 'perc', 'mm']])));
   }
@@ -446,7 +448,7 @@ async function openHelp(q) {
   const std = (DR.defaults.profiles.find(d => d.id === p.id) || DR.defaults.profiles.find(d => d.type === p.type && (p.type !== 'fa' || d.fajta === p.fajta)) || DR.defaults.profiles.find(d => d.type === p.type));
   const formula = p.type === 'felszin' ? F_SURFACE : F_BALANCE + (p.type === 'cserep' ? F_POT : '') + (p.type === 'fa' ? F_TREE : '');
   const fajtaText = p.type === 'fa' ? '<div class="kc-note" id="kcnote">' + (FAJTA[p.fajta] || FAJTA.egyedi).std + '<br>Talajtakarás most: <b>' + PROFILE_PARAMS.cover.options[p.cover] + '</b>. A Kc-értékeket a fenti szöveg alapján kézzel írd át, ha kell.</div>' : '';
-  openModal('<h2>' + TYPE_ICON[p.type] + ' ' + esc(p.name) + ' <span class="muted">(' + TYPE_NAME[p.type] + ')</span></h2>' + formula + fajtaText +
+  openModal('<h2>' + TYPE_ICON[p.type] + ' ' + ut(p.name) + ' <span class="muted">(' + TYPE_NAME[p.type] + ')</span></h2>' + formula + fajtaText +
     '<h3>Arányszámok</h3><div id="ptab">' + paramTable(defs, p, std) + '</div>' +
     presetBar('profil:' + p.type) + actions('<button class="btn danger" id="mdelete">Profil törlése</button>'));
   const check = liveValidate(() => [[$('ptab'), defs]]);

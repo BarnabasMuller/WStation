@@ -81,6 +81,7 @@ namespace Idojaras
 
     class DayStat
     {
+        public const double FullCoverage = 0.8;   // ennyi lefedettség fölött „teljes” a nap: rangsorok, darabszámok, átlagok (8.6)
         public int Day;                 // napszám (2000-01-01 = 0), helyi idő szerint
         public DateTime Date;
         public long Start, End;         // a helyi nap határai UTC epochban
@@ -911,7 +912,7 @@ namespace Idojaras
             foreach (var g in ds.Days.GroupBy(d => d.Date.Year * 100 + d.Date.Month))
             {
                 var m = new MonthStat { Year = g.Key / 100, Month = g.Key % 100 };
-                var good = g.Where(d => d.Coverage >= 0.5).ToList();
+                var good = g.Where(d => d.Coverage >= DayStat.FullCoverage).ToList();   // közös küszöb (8.6)
                 m.Days = good.Count;
                 var ta = good.Where(d => !double.IsNaN(d.Tavg)).Select(d => d.Tavg).ToList();
                 if (ta.Count > 0) m.Tavg = ta.Average();

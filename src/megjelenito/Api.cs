@@ -479,7 +479,7 @@ namespace Idojaras
                 if ((ds.Flags[i] & Flag.RainRate) == 0 && !float.IsNaN(ds.C[Col.PRATE][i]) && (double.IsNaN(r1) || ds.C[Col.PRATE][i] > r1)) r1 = ds.C[Col.PRATE][i];
             }
             w.P("gust1h", g1, 1).P("rate1h", r1, 1);
-            var prevDays = ds.Days.Where(d => d.Day < ds.Day[last] && d.Coverage >= 0.8).Reverse().Take(3).Select(d => d.Tavg).ToList();
+            var prevDays = ds.Days.Where(d => d.Day < ds.Day[last] && d.Coverage >= DayStat.FullCoverage).Reverse().Take(3).Select(d => d.Tavg).ToList();
             w.Key("tavgPrev").Arr(); foreach (var x in prevDays) w.Num(x, 1); w.EndArr();
             int y = Nearest(ds, ds.T[last] - 86400, 900);
             w.P("tempYesterday", y >= 0 && (ds.Flags[y] & Flag.Temp) == 0 ? ds.C[Col.TA][y] : double.NaN, 1);
@@ -499,7 +499,8 @@ namespace Idojaras
 
                 // a mai nap az eddigi évhez képest (tiszta adatból, legalább 80%-ban lefedett napokkal)
                 int year = today.Date.Year;
-                var yd = ds.Days.Where(d => d.Date.Year == year && d.Day != today.Day && d.Coverage >= 0.8).ToList();
+                var yAll = ds.Days.Where(d => d.Date.Year == year && d.Day != today.Day).ToList();
+                var yd = yAll.Where(d => d.Coverage >= DayStat.FullCoverage).ToList();   // a rangsorok és darabszámok a teljes napokból (8.6)
                 w.Key("year").Obj();
                 w.P("year", year).P("days", yd.Count + 1);
                 if (!double.IsNaN(today.Tmax))
@@ -512,9 +513,10 @@ namespace Idojaras
                     w.P("monthDays", md.Count).P("monthTmaxAvg", md.Average(d => d.Tmax), 1).P("monthTminAvg", md.Where(d => !double.IsNaN(d.Tmin)).Average(d => d.Tmin), 1);
                 }
                 var all = yd.Concat(new[] { today }).ToList();
-                w.P("rain", all.Where(d => !double.IsNaN(d.Rain)).Sum(d => d.Rain), 1);
+                // a csapadékösszeg minden napból (a hiányos nap esője is esett)
+                w.P("rain", yAll.Concat(new[] { today }).Where(d => !double.IsNaN(d.Rain)).Sum(d => d.Rain), 1);
                 w.P("hotDays", all.Count(d => d.Tmax >= s.HotDay)).P("frostDays", all.Count(d => d.Tmin < s.FrostDay))
-                 .P("tropicalNights", all.Count(d => d.Tmin >= s.TropicalNight)).P("rainDays", all.Count(d => d.Rain >= 1.0));
+                 .P("tropicalNights", all.Count(d => d.Tmin >= s.TropicalNight)).P("rainDays", yAll.Concat(new[] { today }).Count(d => d.Rain >= 1.0));
                 var hot = all.Where(d => !double.IsNaN(d.Tmax)).OrderByDescending(d => d.Tmax).FirstOrDefault();
                 var cold = all.Where(d => !double.IsNaN(d.Tmin)).OrderBy(d => d.Tmin).FirstOrDefault();
                 if (hot != null) w.P("maxT", hot.Tmax, 1).Ms("maxTt", hot.TmaxT);

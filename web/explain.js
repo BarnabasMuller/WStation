@@ -160,7 +160,7 @@ function openDeplHelp(id) {
   openModal('<h2>Mit jelent a kiszáradás %?</h2>' +
     '<div class="bucket"><div class="bk-fill" style="height:' + Math.max(0, 100 - depl * 100) + '%"></div><div class="bk-raw" style="bottom:' + (100 - pf * 100) + '%"><span>stresszhatár</span></div></div>' +
     '<p><b>Képzeld el a gyökérzónát egy vödörként.</b> <b>0%</b> = tele van: a talaj a szántóföldi vízkapacitáson (amennyit a föld egy kiadós eső után megtart). <b>100%</b> = üres: a hervadásponton – a talajban még van víz, de a gyökér már nem tudja kiszívni.</p>' +
-    '<p>A „' + esc(p.name) + '” most <b style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '%</b>-on áll: a felvehető víz ennyi része fogyott el.</p>' +
+    '<p>A „' + ut(p.name) + '” most <b style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '%</b>-on áll: a felvehető víz ennyi része fogyott el.</p>' +
     '<h3>Sávok (ennek a profilnak a p = ' + num(pf, 2) + ' értékéből)</h3>' +
     '<table class="dtable"><thead><tr><th>Kiszáradás</th><th>Jelentése</th><th>Ks</th><th>Teendő</th></tr></thead><tbody>' +
     deplBands(pf).map((b, j, all) => '<tr' + (j === all.map(x => parseFloat(x[0]) <= depl * 100).lastIndexOf(true) ? ' class="cur"' : '') + '><td><span class="tag ' + b[4] + '">' + b[0] + '</span></td><td>' + b[1] + '</td><td>' + b[2] + '</td><td>' + b[3] + '</td></tr>').join('') + '</tbody></table>' +

@@ -75,6 +75,18 @@ function tr(s) {
   return out;
 }
 
+// mondatsablon: egész mondat helyőrzőkkel, a nyelvi fájlban is egészben (pl. "{n} m³-rel kevesebb víz" → "{n} m³ less water").
+// Ott kell, ahol a szórend nyelvenként más, vagy a magyar rag a számhoz tapad (6.33, 6.35, 6.37). A behelyettesített értékek nem fordulnak.
+function tf(tpl, vars) {
+  const t = (I18N && I18N.map.get(tpl)) || tpl;
+  return t.replace(/\{(\w+)\}/g, (m, k) => vars && vars[k] !== undefined ? vars[k] : m);
+}
+function trWhole(s) {
+  if (!I18N || s == null) return s;
+  const t = String(s).trim(), w = t && I18N.map.get(t);
+  return w ? String(s).replace(t, w) : s;
+}
+
 // ------------------------------------------------------------------ a DOM fordítása
 const I18N_SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'CODE']);
 function trNode(n) {
@@ -86,7 +98,9 @@ function trNode(n) {
     // ha a szöveg azóta nem változott, az eredetiből fordítunk újra (nyelvváltás); különben az új szöveg az eredeti
     const orig = done && done.out === cur ? I18N_ORIG.get(n) : cur;
     I18N_ORIG.set(n, orig);
-    const out = I18N ? tr(orig) : orig;
+    // a felhasználó saját szövege (.ut): csak egészében fordul (pl. az alap „Gyep” profilnév), darabokban soha (6.7)
+    const user = p.closest && p.closest('.ut');
+    const out = !I18N ? orig : user ? trWhole(orig) : tr(orig);
     I18N_DONE.set(n, { out, L });
     if (out !== cur) n.nodeValue = out;
     return;

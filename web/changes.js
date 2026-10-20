@@ -3,10 +3,18 @@
 
 let PREV_OPEN = null, CHG_CLOSED = false, CHG_DONE = false;
 // az indításkor egyszer: az előző megnyitás ideje, és az új mentése (a Frissítés gomb nem számít megnyitásnak)
+// 10.7: az új időpont csak akkor mentődik, ha a sáv legalább egy percig látszott – egy gyors újranyitás nem nyeli el a változásokat
 function markOpen() {
   PREV_OPEN = +UI.lastOpen || null;
-  UI.lastOpen = Date.now();
-  saveUi();
+  const now = Date.now();
+  setTimeout(() => { UI.lastOpen = now; saveUi(); }, 60000);
+}
+// a sáv címe a tényleges időpontból: „Ma 12:28 óta”, „Tegnap 21:00 óta”, régebben a dátum
+function changesTitle(from) {
+  const d = F.ymd.format(from), today = F.ymd.format(Date.now()), yest = F.ymd.format(Date.now() - D);
+  if (d === today) return tf('Ma {time} óta', { time: F.time.format(from) });
+  if (d === yest) return tf('Tegnap {time} óta', { time: F.time.format(from) });
+  return tf('Az előző megnyitás óta ({date})', { date: F.dayY.format(from) });
 }
 
 async function renderChanges() {
@@ -14,9 +22,10 @@ async function renderChanges() {
   if (!box || CHG_CLOSED || !META || !PREV_OPEN) { if (box) box.classList.add('hidden'); return; }
   const now = Date.now(), from = PREV_OPEN;
   const within24 = now - from < 24 * H;
-  const title = within24 ? 'Tegnap óta' : 'Az előző megnyitás óta (' + DS.fmt(F.ymd.format(from), { year: 'numeric', month: '2-digit', day: '2-digit' }) + ')';
-  // ha az utolsó mérés régebbi, mint az előző megnyitás, nincs új adat
+  const title = changesTitle(from);
+  // ha az utolsó mérés régebbi, mint az előző megnyitás, nincs új adat; ha a sárga „elavult adat” sáv ezt már mondja, nem ismételjük (6.11)
   if (META.last <= from) {
+    if (!$('staleBanner').classList.contains('hidden')) { box.classList.add('hidden'); return; }
     box.innerHTML = '<b>' + title + ':</b> nem érkezett új mérés. <button class="chg-x" title="Bezárás">×</button>';
     box.classList.remove('hidden'); wireClose(box); return;
   }
@@ -52,7 +61,7 @@ async function renderChanges() {
       const a = r.depl[j0], b = r.depl[j1], raw = r.raw[j1] / r.taw[j1];
       if (a == null || b == null || (Math.abs(b - a) < 0.1 && b < raw)) return;
       const act = b >= raw ? ' – <b class="neg">locsolni kell</b>' : b >= raw * 0.75 ? ' – hamarosan locsolni kell' : '';
-      items.push([b >= raw ? 8 : 4, TYPE_ICON[p.type] + ' ' + esc(p.name) + ' kiszáradása ' + num(a * 100, 0) + '% → <b>' + num(b * 100, 0) + '%</b>' + act, { tab: 'szarazsag' }]);
+      items.push([b >= raw ? 8 : 4, TYPE_ICON[p.type] + ' ' + ut(p.name) + ' kiszáradása ' + num(a * 100, 0) + '% → <b>' + num(b * 100, 0) + '%</b>' + act, { tab: 'szarazsag' }]);
     });
   }
   // új rekordok
