@@ -1,4 +1,4 @@
-DESCARGADOR – GUÍA
+﻿DESCARGADOR – GUÍA
 ==================
 
 Letöltő.exe descarga los datos de la estación desde la API PWS de Weather Underground y los guarda en

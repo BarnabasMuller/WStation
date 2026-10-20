@@ -1,82 +1,113 @@
-# WStation – Budaörsi időjárás
+# WStation – home weather station downloader & viewer
 
-Download and analyse the weather data from a home weather station. Uses the Weather Underground API to download the data.
+Download and analyse the weather data of a home weather station. Uses the
+[Weather Underground PWS API](https://www.wunderground.com/member/api-keys) to download the data,
+and shows it in an offline Windows app with charts, statistics and gardening tools.
 
-*Weather Underground PWS downloader and viewer for Windows – Hungarian, English, German and Spanish UI.*
+*Magyarul: [README.hu.md](README.hu.md)*
 
-Két program egy csomagban egy házi meteorológiai állomáshoz (Weather Underground PWS):
+The project was built for a station in Budaörs, Hungary ("Budaörsi időjárás" = "Budaörs weather"),
+but works with any Weather Underground personal weather station. The user interface is available in
+**Hungarian, English, German and Spanish**, and new languages can be added with a single JSON file.
 
-- **Letöltő** – a Weather Underground PWS API-ból CSV-be tölti az állomás adatait; maga dönti el, mit érdemes
-  lekérdezni (pillanatnyi állapot, napi összesítő, hiányzó napok részletesen), naplóz, ütemezhető, Windows-riasztásokat küld.
-- **Megjelenítő** – helyi, internet nélkül is működő felület (WebView2 + ECharts): idővonal, naptár-hőtérkép,
-  szárazság (FAO-56 párolgás és talajvíz-mérleg, kanadai FWI tűzveszély, VPD, hőösszeg), locsolási javaslat
-  és öntözési programok, vízfogyasztás/vízigény, eső- és szélstatisztikák (vitorlázáshoz tört Beaufort),
-  rekordok, futóruházat-tanácsadó, havi jelentés és évkönyv.
-- **Telepítő** – egyetlen exe, minden esetet kezel (üres mappa, régebbi verzió, régi elrendezés, futó program).
+## What is in the box
 
-A felület **többnyelvű** (magyar, angol, német, spanyol), és új nyelv egyetlen JSON-fájllal hozzáadható –
-lásd [docs/FORDITAS.md](docs/FORDITAS.md). Mértékegységek: °C/°F, mm/inch, km/h, m/s, csomó, mph, Beaufort, hPa/inHg.
+Three Windows programs, built from this repository with one command:
 
-## Buildelés
+| Program | File | What it does |
+|---|---|---|
+| **Downloader** | `Letöltő.exe` | Downloads the station's data from the WU PWS API into CSV files. Decides itself what is worth querying (current conditions, daily summary, missing days in 5-minute detail), keeps a log, respects the API limits, can run from Windows Task Scheduler and sends Windows notifications (frost, pressure drop, strong wind, cloudburst, heat). |
+| **Viewer** | `Megjelenítő.exe` | A local app (WebView2 + Apache ECharts) that works without internet: timeline with six linked charts, calendar heatmap, drought module, rain and wind statistics, records, reports. |
+| **Installer** | `Idojaras_telepito_v2.1.exe` | A single exe containing both programs and the guides. Handles fresh installs, updates, old folder layouts and running programs; suggests the language from Windows. |
+
+### Viewer highlights
+
+- **Timeline** – temperature/dew point, humidity, pressure, wind/gusts, rain, solar/UV; suspicious values and data gaps marked; front and thunderstorm detector; a band for your own formulas.
+- **Drought & watering** – FAO-56 Penman–Monteith evapotranspiration and a soil water balance per plant type (lawn, shrubs, pots, trees), watering advice, saved irrigation programs, rain gauge calibration, water use and water demand with costs.
+- **Fire danger** – Canadian Fire Weather Index (FFMC, DMC, DC, ISI, BUI, FWI) with a step-by-step "today's calculation" table; vapour pressure deficit; growing degree days.
+- **Statistics** – any number of date ranges (combined or side by side), records, month comparison, hour × day heatmaps, overlaid periods.
+- **For sailors** – wind in km/h, m/s, knots, mph or fractional Beaufort; wind rose; windy afternoons.
+- **Every computed value has an ƒx button** showing the formula, its parameters with standard values, a reset button and named presets.
+- Units: °C/°F, mm/inch, km/h, m/s, knots, mph, Beaufort, hPa/inHg. Adjustable minimum font size.
+
+## Quick start (users)
+
+1. Build the installer (see below) or get `Idojaras_telepito_v2.1.exe` from a release.
+2. Run it and choose a folder; it creates an `Időjárás` folder with both programs.
+3. Start `Letöltő.exe` once: it asks for your Weather Underground **API key** and **station ID**
+   (a PWS API key works with your own station that is actively sending data).
+4. Start `Megjelenítő.exe`. The **Refresh** button downloads new data.
+
+The guides shipped with the installer are in [`docs/`](docs) (Hungarian) and
+[`docs/en`](docs/en), [`docs/de`](docs/de), [`docs/es`](docs/es).
+
+## Building
+
+Requirements: Windows 10/11 with .NET Framework 4.8 (built in). Nothing else to install, no internet needed.
 
 ```
 build.bat
 ```
 
-A Windows beépített C# fordítóját használja (.NET Framework 4.8, `csc.exe`), így nem kell semmit telepíteni,
-és internet sem kell hozzá. Eredmény:
+Output:
 
-- `dist\Idojaras_telepito_v2.1.exe` – a telepítő (ezt kell elindítani),
-- `dist\bin\Megjelenito.exe`, `dist\bin\Letolto.exe` – a két program külön, teszteléshez.
+- `dist\Idojaras_telepito_v2.1.exe` – the installer,
+- `dist\bin\Megjelenito.exe`, `dist\bin\Letolto.exe` – the two programs, for testing.
 
-## Első használat
+`build.bat` uses the C# compiler that ships with Windows (`csc.exe`, C# 5). All web files, language files and
+guides are embedded into the executables.
 
-1. Indítsd el a telepítőt, válassz mappát (alapból a telepítő mellé `Időjárás` mappa készül).
-2. Indítsd el egyszer a `Letöltő.exe`-t: megkérdezi a Weather Underground **API kulcsot** és az **állomás azonosítóját**.
-   API kulcs: <https://www.wunderground.com/member/api-keys> (a PWS API kulcs saját, aktívan adatot küldő állomással működik).
-3. Indítsd el a `Megjelenítő.exe`-t.
-
-Az API kulcs és az állomás csak a telepített mappa `appdata_letöltő\beallitasok.ini` fájljába kerül, a forráskódban nincs.
+## Testing
 
 ```
-Időjárás\
-  Megjelenítő.exe, Letöltő.exe, leírások
-  data\                  ← a mérések (CSV)
-  appdata_letöltő\       ← a Letöltő beállításai (API kulcs), naplója, mentései
-  appdata_megjelenítő\   ← a Megjelenítő beállításai, cache, napló
+dist\bin\Megjelenito.exe --teszt --mappa <folder that contains a data\ subfolder>
 ```
 
-A programok csak a saját mappájukba írnak (kivétel: asztali parancsikon, ütemezett feladat, Excel-export a választott helyre).
+The self-test runs 40 checks (CSV merging and de-duplication, cache, daily rain, gaps, daylight saving time,
+downsampling, quality flags, FAO-56 and FWI reference examples, rain calibration, date-range filter,
+irrigation schedules, language files, write guard). Checks that need the developer's sample data are skipped
+without it.
 
-## Mappák
-
-| Mappa | Tartalom |
-|---|---|
-| `src\megjelenito\` | Megjelenítő: adatbetöltés, tisztítás, cache (`Data.cs`), API (`Api.cs`), szárazság-motor: FAO-56 ET₀, talajvíz-mérleg, SCS-lefolyás, FWI, GDD, öntözési programok (`Drought.cs`), elemzések (`Analysis.cs`), csapadék-kalibráció (`Calib.cs`), beállítás-szerkesztés, változásnapló, frissítés-ellenőrzés (`Maint.cs`), helyi szerver, ablak, önteszt |
-| `src\letolto\` | Letöltő: letöltés, mentés, Windows-riasztások |
-| `src\telepito\` | Telepítő |
-| `src\kozos\` | közös kód: írás-őr (`Guard.cs`), nyelvek (`Nyelv.cs`), Feladatütemező (`Utemezes.cs`), ini-frissítés |
-| `web\` | a felület (az exe-be ágyazva): `index.html`, `app.css`, `*.js`, `echarts.min.js` (5.5.1, Apache-2.0) |
-| `web\lang\` | nyelvi fájlok (`en.json`, `de.json`, `es.json`, `_sablon.json` új nyelvhez) |
-| `docs\` | a telepítőbe kerülő leírások (magyarul, valamint `docs\en`, `docs\de`, `docs\es`) |
-| `lib\` | Microsoft WebView2 SDK 1.0.4258.31 DLL-ek (licenc: `lib\WebView2_LICENSE.txt`) |
-| `tools\` | `forditas_kulcsok.ps1` – a fordítatlan kifejezések listája, a nyelvi sablon frissítése |
-
-## Tesztelés
+For UI work, run the Viewer against the source folder so edits appear after a browser reload:
 
 ```
-dist\bin\Megjelenito.exe --teszt --mappa <programmappa>
+dist\bin\Megjelenito.exe --bongeszo --web web --mappa <installed folder>
 ```
 
-40 ellenőrzés (egyesítés és duplikátumszűrés, cache, napi csapadék, hiányok, nyári időszámítás, ritkítás,
-minőségjelzők, FAO-56 és FWI referenciapéldák, kalibráció, időszak-szűrő, öntözési programok, nyelvi fájlok,
-írás-őr). Mérési adat nélkül a mintaadatra épülő ellenőrzések kimaradnak.
+## Repository layout
 
-Telepítés felület nélkül: `Idojaras_telepito_v2.1.exe --csendes [<célmappa>] [--atvetel <régi adatok>] [--parancsikon] [--utemezes <perc>] [--felmeres]`
+```
+build.bat                 one-command build (Windows built-in C# compiler)
+src/
+  megjelenito/            Viewer: data loading, analysis, drought engine, local HTTP API, WebView2 window, self-test
+  letolto/                Downloader: WU API client, CSV storage, backups, alerts
+  telepito/               Installer (WinForms)
+  kozos/                  shared code: write guard, languages, Task Scheduler, ini merging
+web/                      Viewer UI (HTML/CSS/JS + ECharts), embedded into the exe
+  lang/                   translations: en.json, de.json, es.json, _sablon.json (template for new languages)
+docs/                     user guides shipped with the installer (hu at the top level; en/, de/, es/)
+lib/                      Microsoft WebView2 SDK DLLs
+tools/                    helper scripts (translation key extraction)
+```
 
-Megjelenítő kapcsolók: `--bongeszo` · `--mappa <út>` · `--port <szám>` · `--web <út>` (a felület fájljait lemezről olvassa, fejlesztéshez).
-Letöltő kapcsolók: `--nowait` (ütemezett futáshoz) · `--mappa <út>` · `--mentes [--most]`.
+## Documentation for developers
 
-## Változások
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) – components, data flow, HTTP API, front-end modules. **Start here.**
+- [CONTRIBUTING.md](CONTRIBUTING.md) – conventions, file encodings, adding features and tests
+- [docs/GLOSSARY.md](docs/GLOSSARY.md) – the source code is written in Hungarian; this maps the common terms
+- [docs/TRANSLATING.md](docs/TRANSLATING.md) – adding a new language
+- [docs/en/VALTOZASOK.txt](docs/en/VALTOZASOK.txt) – change log
 
-Lásd [docs/VALTOZASOK.txt](docs/VALTOZASOK.txt).
+## Privacy and safety
+
+- The API key and station ID are stored only in the installed folder (`appdata_letöltő\beallitasok.ini`), never in the source.
+- The Viewer's HTTP server listens on `localhost` only, on a random port; state-changing requests need a custom header and the same origin.
+- All programs write only inside their own folder (exceptions: the desktop shortcut, the scheduled task, and an Excel export saved where the user chooses).
+
+## Licence
+
+Copyright © 2026 the WStation contributors.
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+**GNU General Public License version 3** as published by the Free Software Foundation. See [LICENSE](LICENSE).
+Bundled third-party components are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

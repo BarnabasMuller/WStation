@@ -1,4 +1,4 @@
-VIEWER – GUIDE
+﻿VIEWER – GUIDE
 ==============
 
 Megjelenítő.exe makes charts and statistics from the measurements in the data folder.

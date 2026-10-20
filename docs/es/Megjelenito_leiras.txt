@@ -1,4 +1,4 @@
-VISOR – GUÍA
+﻿VISOR – GUÍA
 ============
 
 Megjelenítő.exe crea gráficos y estadísticas a partir de las mediciones de la carpeta data.

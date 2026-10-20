@@ -1,5 +1,7 @@
 # Fordítás – új nyelv hozzáadása
 
+*English: [TRANSLATING.md](TRANSLATING.md)*
+
 A program magyarul készül; minden más nyelv **egy-egy fájl**, a kódot nem kell módosítani.
 
 ## 1. A felület, a Letöltő és a telepítő szövegei

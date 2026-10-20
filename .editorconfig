@@ -1,0 +1,21 @@
+# Kódolások és sorvégek / encodings and line endings (see CONTRIBUTING.md)
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+
+[*.{cs,txt}]
+charset = utf-8-bom
+indent_size = 4
+
+[*.{js,css,html,json,md}]
+indent_size = 2
+
+[*.{bat,cmd}]
+end_of_line = crlf
+charset = latin1
+
+[*.ps1]
+charset = utf-8-bom

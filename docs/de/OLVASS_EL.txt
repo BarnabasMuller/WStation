@@ -1,4 +1,4 @@
-WETTER BUDAÖRS
+﻿WETTER BUDAÖRS
 ==============
 
 Herunterladen und Anzeigen der Daten einer Wetterstation zu Hause (Weather Underground PWS).

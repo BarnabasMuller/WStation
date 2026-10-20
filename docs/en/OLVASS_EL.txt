@@ -1,4 +1,4 @@
-BUDAÖRS WEATHER
+﻿BUDAÖRS WEATHER
 ===============
 
 Downloads and displays the data of a home weather station (Weather Underground PWS).

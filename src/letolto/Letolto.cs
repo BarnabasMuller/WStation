@@ -1,5 +1,5 @@
 ﻿// Weather Underground PWS adatletöltő
-// Fordítás (.NET Framework 4.8, minden Windows 11-en megvan): build.cmd
+// Fordítás: a projekt gyökerében a build.bat (a Windows beépített .NET Framework 4.8 C# fordítójával)
 using System;
 using System.Collections;
 using System.Collections.Generic;

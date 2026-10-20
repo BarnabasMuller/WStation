@@ -1,4 +1,4 @@
-DOWNLOADER – GUIDE
+﻿DOWNLOADER – GUIDE
 ==================
 
 Letöltő.exe downloads the station's data from the Weather Underground PWS API and saves it into CSV

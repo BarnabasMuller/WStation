@@ -1,4 +1,4 @@
-WETTER BUDAÖRS – ÄNDERUNGEN
+﻿WETTER BUDAÖRS – ÄNDERUNGEN
 ===========================
 
 == 2.1 (2026-10-19) ==

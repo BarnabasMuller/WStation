@@ -1,4 +1,4 @@
-DOWNLOADER – ANLEITUNG
+﻿DOWNLOADER – ANLEITUNG
 ======================
 
 Letöltő.exe lädt die Daten der Station aus der Weather Underground PWS API und speichert sie in

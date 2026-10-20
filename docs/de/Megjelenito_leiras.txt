@@ -1,4 +1,4 @@
-ANZEIGE – ANLEITUNG
+﻿ANZEIGE – ANLEITUNG
 ===================
 
 Megjelenítő.exe erstellt aus den Messungen im Ordner data Diagramme und Statistiken.
