@@ -70,9 +70,11 @@ namespace Idojaras
                 p.WaitForExit();
                 int code = p.ExitCode;
                 DownloadOk = code == 0 && !netError;
+                if (code == 6) netError = true;   // a Letöltő 2.2-től kilépési kóddal jelzi a hálózati hibát
                 switch (code)
                 {
                     case 0: DownloadMessage = netError ? "A letöltés részben sikerült: hálózati hiba történt (van internet?)." : "Letöltés kész."; break;
+                    case 6: DownloadMessage = "A letöltés részben sikerült: hálózati hiba történt (van internet?)."; break;
                     case 1: DownloadMessage = "A letöltőnek hiányzik az API kulcs vagy az állomás azonosítója. Indítsd el egyszer a Letöltő.exe-t dupla kattintással, és add meg őket."; break;
                     case 2: DownloadMessage = "Az API kulcs érvénytelen vagy lejárt. Ellenőrizd: appdata_letöltő\\beallitasok.ini"; break;
                     case 3: DownloadMessage = "Az adatfájl zárolva volt (nyitva van Excelben?), nem minden új adat mentődött."; break;
@@ -123,7 +125,7 @@ namespace Idojaras
     }
     static class Api
     {
-        public const string Version = "2.1";
+        public const string Version = "2.2";
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
         delegate double Getter(int i);
 

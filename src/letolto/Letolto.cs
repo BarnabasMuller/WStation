@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("Budaörsi időjárás – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.1.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.0.0")]
 
 namespace WuLetolto
 {
@@ -119,9 +119,8 @@ ApiKey=
 # Az időjárás-állomás azonosítója (pl. IBUDAP123)
 StationId=
 
-# Mértékegység: m = metrikus (°C, km/h, mm, hPa)
-#               e = angolszász (°F, mph, in, inHg)
-#               h = brit hibrid, s = SI (m/s)
+# Mértékegység: a mérések mindig metrikusan (°C, km/h, mm, hPa) töltődnek le;
+# a kijelzés egységét a Megjelenítő Beállítások › Mértékegységek részében lehet állítani.
 Units=m
 
 # Első futáskor (és ha hiány van) hány napra visszamenőleg töltse le
@@ -218,12 +217,10 @@ CsendesIg=7
 
             ApiKey = Str(d, "ApiKey", "");
             StationId = Str(d, "StationId", "").ToUpperInvariant();
-            Units = Str(d, "Units", "m").ToLowerInvariant();
-            if (Units != "m" && Units != "e" && Units != "h" && Units != "s")
-            {
-                Log.Warn("Ismeretlen Units érték (" + Units + "), metrikust (m) használok.");
-                Units = "m";
-            }
+            // A Megjelenítő minden számítása metrikus adatot vár (ET₀, FWI, rekordok, riasztási küszöbök): más egység a CSV-t elrontaná.
+            string units = Str(d, "Units", "m").ToLowerInvariant();
+            if (units != "m") Log.Warn("A beallitasok.ini Units=" + units + " értéke már nem támogatott: a letöltés metrikus (m), a kijelzés egysége a Megjelenítőben állítható.");
+            Units = "m";
             BackfillDays = Int(d, "BackfillDays", 30, 0, 36500);
             MaxCallsPerRun = Int(d, "MaxCallsPerRun", 300, 1, 100000);
             DailyCallLimit = Int(d, "DailyCallLimit", 1450, 1, 100000);
@@ -565,6 +562,16 @@ CsendesIg=7
             Dirty = true;
         }
 
+        // csak a legutóbbi max sor marad (a pillanatnyi állapotból a Megjelenítő csak a legfrissebbet használja)
+        public void KeepLatest(int max)
+        {
+            if (Rows.Count <= max) return;
+            var list = Rows.ToList();
+            list.Sort((a, b) => cmp(a.Value, b.Value));
+            foreach (var kv in list.Take(list.Count - max)) Rows.Remove(kv.Key);
+            Dirty = true;
+        }
+
         public HashSet<string> DaysPresent(string station)
         {
             var set = new HashSet<string>();
@@ -795,6 +802,7 @@ CsendesIg=7
     {
         readonly State st;
         public int Calls;
+        public static int NetErrors;   // végleges hálózati hibák száma ebben a futásban (a kilépési kódhoz)
         DateTime lastCall = DateTime.MinValue;
 
         public Api(State st) { this.st = st; }
@@ -853,6 +861,7 @@ CsendesIg=7
                         status = -1;
                         Log.Warn(what + ": hálózati hiba (" + ex.Status + ": " + ex.Message + ")" + (attempt < 4 ? ", újrapróbálom..." : ""));
                         if (attempt < 4) { Thread.Sleep(5000 * attempt); continue; }
+                        NetErrors++;
                         return -1;
                     }
                 }
@@ -917,7 +926,14 @@ CsendesIg=7
             {
                 if (!AttachConsole(-1) && !noWait) AllocConsole();
             }
-            try { Console.OutputEncoding = Encoding.UTF8; } catch { }
+            // Átirányított kimenetnél (a Megjelenítő Frissítés gombja) a Console.OutputEncoding beállítása kivételt dobhat,
+            // és a kimenet a Windows ANSI kódlapján menne ki (ő, ű → �). Ilyenkor saját UTF-8 író kell (BOM nélkül).
+            if (Console.IsOutputRedirected)
+                try { Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true }); } catch { }
+            else
+                try { Console.OutputEncoding = Encoding.UTF8; } catch { }
+            if (Console.IsErrorRedirected)
+                try { Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true }); } catch { }
             if (args.Any(a => a.Equals("--teszt-ertesites", StringComparison.OrdinalIgnoreCase)))
             {
                 Alerts.Notify("Budaörsi időjárás – próba", "Így fognak kinézni a riasztások (fagy, nyomásesés, szél, felhőszakadás, hőség).");
@@ -1036,7 +1052,7 @@ CsendesIg=7
 
         static int Run(string appDir, string dir, bool interactive)
         {
-            Log.Info("===== Indítás (Letöltő 2.0) =====");
+            Log.Info("===== Indítás (Letöltő " + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(2) + ") =====");
             Cfg.Load(Path.Combine(appDir, "beallitasok.ini"), interactive && !Console.IsInputRedirected);
             try { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | (SecurityProtocolType)12288; }
             catch { ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12; }
@@ -1130,6 +1146,7 @@ CsendesIg=7
                             rec.Insert(0, new KeyValuePair<string, string>("letoltve", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", Inv)));
                             rec.Add(new KeyValuePair<string, string>("units", Cfg.Units));
                             cur.Merge(rec);
+                            cur.KeepLatest(500);
                         }
                         Log.Ok("Pillanatnyi állapot: utolsó mérés " + stn.LastObsLocal + " (helyi idő).");
                     }
@@ -1220,8 +1237,19 @@ CsendesIg=7
                             Log.Ok(label + ": " + list.Count + " mérés, új: " + (obs.Added - a0) + ".");
                         else
                             Log.Info(label + ": nincs adat ezen a napon (az állomás nem küldött).");
-                        pending[dk] = final ? (list.Count > 0 ? "ok:" + list.Count : "nincs_adat")
-                                            : "reszleges:" + today.ToString("yyyyMMdd", Inv);
+                        if (!final) pending[dk] = "reszleges:" + today.ToString("yyyyMMdd", Inv);
+                        else if (list.Count == 0) pending[dk] = "nincs_adat";
+                        else
+                        {
+                            // töredékes nap (pl. az állomás vagy a WU kiesése): legfeljebb kétszer, néhány nap múlva újra lekérjük,
+                            // hátha a WU utólag pótolta; utána végleges
+                            string prevState; stn.Days.TryGetValue(dk, out prevState);
+                            int tries = HianyosProba(prevState);
+                            pending[dk] = list.Count < 0.8 * TypicalCount(stn) && tries < 2
+                                ? "hianyos:" + (tries + 1) + ":" + today.ToString("yyyyMMdd", Inv) + ":" + list.Count
+                                : "ok:" + list.Count;
+                            if (pending[dk].StartsWith("hianyos")) Log.Info(label + ": töredékes nap (" + list.Count + " mérés), legalább 2 nap múlva újra megpróbálom (" + (tries + 1) + "/2).");
+                        }
                         historyDone++;
                     }
                     else if (s == 400)
@@ -1286,6 +1314,12 @@ CsendesIg=7
                 Log.Error("Nem minden adatot sikerült menteni. A következő futás újra letölti a hiányzó részt.");
                 return 3;
             }
+            if (Api.NetErrors > 0)
+            {
+                // a Megjelenítő a kilépési kódból ismeri fel (nem a naplószövegből, ami nyelvtől és kódlaptól függ)
+                Log.Warn("Kész, de " + Api.NetErrors + " lekérdezés hálózati hiba miatt elmaradt (van internet?).");
+                return 6;
+            }
             Log.Ok("Kész.");
             return 0;
         }
@@ -1331,11 +1365,36 @@ CsendesIg=7
                 stn.Days.TryGetValue(d.ToString("yyyyMMdd", Inv), out s);
                 bool isFinal = s != null && (s.StartsWith("ok") || s == "nincs_adat" || s == "hiba400");
                 if (isFinal) continue;
+                // töredékes nap: az utolsó próba után legalább 2 nappal kérjük újra
+                if (s != null && s.StartsWith("hianyos:"))
+                {
+                    var p = s.Split(':'); DateTime last;
+                    if (p.Length >= 3 && DateTime.TryParseExact(p[2], "yyyyMMdd", Inv, DateTimeStyles.None, out last) && (today - last).TotalDays < 2) continue;
+                }
                 // a tegnapi napot naponta egyszer töltjük le (éjfél után), másnap még egyszer véglegesen
                 if (d == today.AddDays(-1) && s == "reszleges:" + todayKey) continue;
                 res.Add(d);
             }
             return res;
+        }
+
+        // a "hianyos:<próba>:<nap>:<db>" állapot próbaszáma
+        static int HianyosProba(string s)
+        {
+            int n;
+            if (s == null || !s.StartsWith("hianyos:")) return 0;
+            var p = s.Split(':');
+            return p.Length > 1 && int.TryParse(p[1], out n) ? n : 0;
+        }
+
+        // egy teljes nap szokásos mérésszáma ennél az állomásnál (az eddigi "ok:N" napok mediánja; alapból 288 = 5 percenként)
+        static int TypicalCount(StationState stn)
+        {
+            var ns = new List<int>();
+            foreach (var v in stn.Days.Values) { int n; if (v.StartsWith("ok:") && int.TryParse(v.Substring(3), out n) && n > 0) ns.Add(n); }
+            if (ns.Count < 5) return 288;
+            ns.Sort();
+            return ns[ns.Count / 2];
         }
 
         static void UpdateTz(StationState stn, Dictionary<string, object> o)
