@@ -1,6 +1,14 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.5 (2026-10-20) – translation and minor fixes ==
+- Translation: the watering advice on the Drought tab, the dew point bands, the "unverified" record mark and the
+  "Yes" button of confirmations are whole sentences in English, German and Spanish; default profile names with
+  brackets (e.g. "Lawn (sprinkler)") are translated too.
+- Formula symbols of the suspicious-measurement rules are language-neutral (e.g. I_jump, P_melt, T_sun).
+- On phones the Running and Report tabs no longer scroll sideways; the "Record" buttons on the Drought tab tell
+  screen readers the profile name.
+
 == 2.2.4 (2026-10-20) – review fixes ==
 - Suspicious measurements: new rules for rain jumps (melting snow too) and a frozen anemometer; the maximum
   temperature above the plausibility limit (default 41.9 °C) is marked "unverified".
