@@ -85,7 +85,7 @@ async function monthReport(d, m) {
     const firstIdx = dr.date.findIndex(x => x.startsWith(m));
     if (lastIdx != null && firstIdx >= 0) drHtml = '<h3>Szárazság a hónap végén</h3><p class="muted small">Kiszáradás: 0% = a talaj tele van vízzel, 100% = a növény már nem tud vizet felvenni (nagyobb = szárazabb).</p>' + repTable(dr.config.profiles.filter(p => p.enabled).map(p => {
       const r = dr.profiles.find(x => x.id === p.id); return [ut(p.name), tf('{a}% kiszáradás (a hónap elején {b}%)', { a: num(r.depl[lastIdx] * 100, 0), b: num(r.depl[firstIdx] * 100, 0) })];   // a % iránya egyértelmű (7.33)
-    }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tlabel() + '·nap'], ['Legnagyobb tűzveszély (FWI)', (v => num(v, 0) + (typeof fwiClass === 'function' ? ' – ' + fwiClass(v)[0] : ''))(Math.max(0, ...dr.fwi.slice(firstIdx, lastIdx + 1).filter(x => x != null)))] /* kategóriával, mint az Áttekintésen (7.26) */]));
+    }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tf('{u}·nap', { u: tlabel() })], ['Legnagyobb tűzveszély (FWI)', (v => num(v, 0) + (typeof fwiClass === 'function' ? ' – ' + fwiClass(v)[0] : ''))(Math.max(0, ...dr.fwi.slice(firstIdx, lastIdx + 1).filter(x => x != null)))] /* kategóriával, mint az Áttekintésen (7.26) */]));
   }
   $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-jelentés · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + title + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + '</div></div>' +
     '<p class="rep-sum">' + summaryText(d, m, s) + '</p>' +
@@ -131,12 +131,15 @@ async function yearReport(d, y) {
   const total = rows.reduce((a, r) => a + r.s.rain, 0), sun = rows.reduce((a, r) => a + r.s.sun, 0);
   const dr = typeof getDrought === 'function' ? await getDrought().catch(() => null) : null;
   $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-évkönyv · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + y + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + (months.length < 12 ? '<br>(' + months.length + ' hónap adata)' : '') + '</div></div>' +
-    '<p class="rep-sum">Az év csapadéka <b>' + rtext(total, 0) + '</b>, napsütése <b>' + num(sun, 0) + ' óra</b>. ' + rec.counts.hotDays + ' hőségnap, ' + rec.counts.tropicalNights + ' trópusi éjszaka, ' + rec.counts.frostDays + ' fagyos nap.' +
-    (rec.frost.last ? ' Utolsó tavaszi fagy: ' + DS.fmt(rec.frost.last, { month: 'long', day: 'numeric' }) + '.' : '') + (rec.frost.first ? ' Első őszi fagy: ' + DS.fmt(rec.frost.first, { month: 'long', day: 'numeric' }) + '.' : '') +
-    (dr && gddIdx(dr, y) != null ? ' Hőösszeg: ' + num(tdconv(dr.gddCum[gddIdx(dr, y)]), 0) + ' ' + tlabel() + '·nap.' : '') + '</p>' +
-    '<h3>Hónapok</h3><table class="dtable rep-months"><thead><tr><th>Hónap</th><th>Átlag</th><th>Max.</th><th>Min.</th><th>Csapadék</th><th>Esős nap</th><th>Napsütés</th><th>Hőségnap</th><th>Fagyos nap</th></tr></thead><tbody>' +
+    // egész mondatos sablonok (darabokból spanyolul „80 día de helada”, „°F·nap” lett); a magyar dátum záró pontja
+    // a mondat pontjával nem duplázódik („március 26..”)
+    '<p class="rep-sum">' + tf('Az év csapadéka {r}, napsütése {s}.', { r: '<b>' + rtext(total, 0) + '</b>', s: '<b>' + tf('{h} óra', { h: num(sun, 0) }) + '</b>' }) + ' ' +
+    tf('{h} hőségnap, {t} trópusi éjszaka, {f} fagyos nap.', { h: rec.counts.hotDays, t: rec.counts.tropicalNights, f: rec.counts.frostDays }) +
+    (rec.frost.last ? ' ' + tf('Utolsó tavaszi fagy: {d}.', { d: DS.fmt(rec.frost.last, { month: 'long', day: 'numeric' }).replace(/\.$/, '') }) : '') + (rec.frost.first ? ' ' + tf('Első őszi fagy: {d}.', { d: DS.fmt(rec.frost.first, { month: 'long', day: 'numeric' }).replace(/\.$/, '') }) : '') +
+    (dr && gddIdx(dr, y) != null ? ' ' + tf('Hőösszeg: {v}.', { v: num(tdconv(dr.gddCum[gddIdx(dr, y)]), 0) + ' ' + tf('{u}·nap', { u: tlabel() }) }) : '') + '</p>' +
+    '<h3>Hónapok</h3><div class="rep-scroll"><table class="dtable rep-months"><thead><tr><th>Hónap</th><th>Átlag</th><th>Max.</th><th>Min.</th><th>Csapadék</th><th>Esős nap</th><th>Napsütés</th><th>Hőségnap</th><th>Fagyos nap</th></tr></thead><tbody>' +
     rows.map(r => '<tr><td>' + MONTHS_FULL[+r.m.slice(5) - 1] + '</td><td>' + ttext(r.s.tavg) + '</td><td>' + (r.s.imax != null ? num(tconv(d.tmax[r.s.imax])) : '–') + '</td><td>' + (r.s.imin != null ? num(tconv(d.tmin[r.s.imin])) : '–') + '</td><td>' + rtext(r.s.rain, 1) + '</td><td>' + r.s.rainy + '</td><td>' + num(r.s.sun, 0) + ' h</td><td>' + r.s.hot + '</td><td>' + r.s.frost + '</td></tr>').join('') +
-    '</tbody></table>' +
+    '</tbody></table></div>' +
     '<h3>Rekordok</h3><div class="rep-recs">' + rec.records.map(r => '<div><span>' + esc(recTitle(r)) + '</span><b>' + recValue(r) + recWarn(r) + '</b><small>' + (r.t ? F.dayY.format(r.t) : '') + '</small></div>').join('') + '</div>' +
     '<h3>Napi maximum-hőmérséklet</h3><div class="rep-chart small" id="repY1"></div><h3>Csapadék</h3><div class="rep-chart small" id="repY2"></div><h3>Havi átlaghőmérséklet és csapadék</h3><div class="rep-chart" id="repY3"></div>';
   const yi = d.date.map((s, i) => i).filter(i => d.date[i].startsWith(y));

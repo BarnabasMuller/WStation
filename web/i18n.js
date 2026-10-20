@@ -77,16 +77,21 @@ function tr(s) {
 
 // mondatsablon: egész mondat helyőrzőkkel, a nyelvi fájlban is egészben (pl. "{n} m³-rel kevesebb víz" → "{n} m³ less water").
 // Ott kell, ahol a szórend nyelvenként más, vagy a magyar rag a számhoz tapad (6.33, 6.35, 6.37). A behelyettesített értékek nem fordulnak.
+// a kulcsgyűjtő a szélső írásjeleket levágja (pl. „…({avg}).” → „…({avg}”, „Gyep (szórófejes)” → „Gyep (szórófejes”):
+// a szótárban így szereplő kulcsot keressük meg, és az írásjeleket visszarakjuk
+const I18N_EDGE = /^([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)([\s\S]*?)([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)$/;
+function trEdge(s) {
+  const m = s.match(I18N_EDGE), w = m && m[2] && I18N.map.get(m[2]);
+  return w ? m[1] + w + m[3] : null;
+}
 function tf(tpl, vars) {
-  let t = I18N && I18N.map.get(tpl);
-  // a kulcsgyűjtő a szélső írásjeleket levágja (pl. „…({avg}).” → „…({avg}”): azokat visszarakjuk
-  if (I18N && !t) { const m = tpl.match(/^([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)([\s\S]*?)([\s·:,;()–\-—→.!?+=\/*•⚠✔"']*)$/); const w = m && I18N.map.get(m[2]); if (w) t = m[1] + w + m[3]; }
+  let t = I18N && (I18N.map.get(tpl) || trEdge(tpl));
   t = t || tpl;
   return t.replace(/\{(\w+)\}/g, (m, k) => vars && vars[k] !== undefined ? vars[k] : m);
 }
 function trWhole(s) {
   if (!I18N || s == null) return s;
-  const t = String(s).trim(), w = t && I18N.map.get(t);
+  const t = String(s).trim(), w = t && (I18N.map.get(t) || trEdge(t));
   return w ? String(s).replace(t, w) : s;
 }
 

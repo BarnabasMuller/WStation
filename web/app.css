@@ -624,3 +624,11 @@ small, .small, .muted.small, .wk-sum, .wk-row small { font-size: max(.86em, var(
 .unsaved { color: var(--warn-ink); background: var(--warn-bg); border-radius: 6px; padding: 1px 6px; font-size: max(11px, var(--minf)); text-transform: none; letter-spacing: 0; }
 .font-fine summary { cursor: pointer; color: var(--accent); font-size: max(13px, var(--minf)); margin-top: 6px; }
 .fx-f summary { cursor: pointer; color: var(--accent); font-weight: 600; margin: 6px 0; }
+
+/* Futás fül: keskeny kijelzőn a sorok tördelnek, a csúszka összemegy (2.2.5) */
+.run-grid .row2 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.run-grid .fld { flex-wrap: wrap; max-width: 100%; }
+.run-grid .feel-fld { flex: 1 1 260px; }
+/* Jelentés: a 9 oszlopos havi táblázat keskeny ablakban önmagában görgethető, nem az egész oldal */
+.rep-scroll { overflow-x: auto; max-width: 100%; }
+@media print { .rep-scroll { overflow: visible; } }

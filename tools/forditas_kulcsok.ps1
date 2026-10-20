@@ -54,7 +54,7 @@ foreach ($f in Get-ChildItem $langDir -Filter '*.json' | Where-Object { $_.Name 
   if ($Out) { [IO.File]::WriteAllLines((Join-Path $Out ($f.BaseName + '_hianyzik.txt')), $miss, (New-Object Text.UTF8Encoding($false))) }
 }
 $sb = New-Object System.Text.StringBuilder
-[void]$sb.Append("{`n  `"_meta`": { `"code`": `"xx`", `"name`": `"A nyelv neve a saját nyelvén`", `"locale`": `"xx-XX`", `"dirs`": [`"N`",`"NNE`",`"NE`",`"ENE`",`"E`",`"ESE`",`"SE`",`"SSE`",`"S`",`"SSW`",`"SW`",`"WSW`",`"W`",`"WNW`",`"NW`",`"NNW`"] }")
+[void]$sb.Append("{`n  `"_meta`": { `"code`": `"xx`", `"name`": `"A nyelv neve a saját nyelvén`", `"locale`": `"xx-XX`", `"dirs`": [`"N`",`"NNE`",`"NE`",`"ENE`",`"E`",`"ESE`",`"SE`",`"SSE`",`"S`",`"SSW`",`"SW`",`"WSW`",`"W`",`"WNW`",`"NW`",`"NNW`"], `"files`": { `"viewer`": `"A Megjelenítő exe neve ezen a nyelven, pl. Viewer.exe`", `"downloader`": `"A Letöltő exe neve, pl. Downloader.exe`" } }")
 foreach ($k in $all) { [void]$sb.Append(",`n  " + $js.Serialize($k) + ": `"`"") }
 [void]$sb.Append("`n}`n")
 $o = [regex]::Replace($sb.ToString(), '\\u([0-9a-fA-F]{4})', { param($m) $c = [char][Convert]::ToInt32($m.Groups[1].Value, 16); if ($c -eq '"' -or $c -eq '\' -or [int]$c -lt 32) { $m.Value } else { [string]$c } })

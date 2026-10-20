@@ -107,7 +107,7 @@ function psigned(h, dec = 1) { const v = pconv(h); return v == null ? '–' : si
 const QTY = {
   temp: { c: v => tconv(v), l: () => tlabel(), d: d => d },
   tdiff: { c: v => tdconv(v), l: () => tlabel(), d: d => d },
-  gdd: { c: v => tdconv(v), l: () => tlabel() + '·nap', d: d => d },
+  gdd: { c: v => tdconv(v), l: () => tf('{u}·nap', { u: tlabel() }), d: d => d },
   rain: { c: v => rconv(v), l: () => rlabel(), d: d => rdec(d) },
   rate: { c: v => rconv(v), l: () => rrlabel(), d: d => rdec(d) },
   wind: { c: v => wconv(v), l: () => wlabel(), d: d => (windUnit() === 'kmh' || windUnit() === 'mph') ? d : Math.max(1, d) },
@@ -967,7 +967,8 @@ function recTitle(r) {
 }
 // a hihetőségi határ fölötti hőmérséklet-csúcs jelzése (8.5)
 function recWarn(r) {
-  return r.unverified ? ' <span class="neg small" title="' + esc('A hihetőségi határ (' + ttext(r.thr) + ') fölött: valószínűleg a napsütés melegítette fel a hőmérő árnyékolóját. Beállítások › Helyszín') + '">⚠ ellenőrizetlen</span>' : '';
+  // egész mondatos sablonok: a címke egy tag közepén van, a súgóban szám is van (a kulcsgyűjtő így megtalálja)
+  return r.unverified ? ' <span class="neg small" title="' + esc(tf('A hihetőségi határ ({v}) fölött: valószínűleg a napsütés melegítette fel a hőmérő árnyékolóját. Beállítások › Helyszín', { v: ttext(r.thr) })) + '">' + esc(tf('⚠ ellenőrizetlen')) + '</span>' : '';
 }
 function recDetail(r) {
   // a szerver ÉÉÉÉ.HH.NN dátumai helyi formában (pl. „2026. ápr. 1.”), mint a többi dátum (6.5)

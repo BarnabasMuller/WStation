@@ -139,5 +139,7 @@ $('logSave').addEventListener('click', async () => {
 // a harmatpont-sávok a választott hőmérséklet-egységben
 function dewBands() {
   const t = x => num(tconv(x), 0);
-  return '&lt; ' + t(10) + ' ' + tlabel() + ' száraz, kellemes · ' + t(10) + '–' + t(16) + ' kellemes · ' + t(16) + '–' + t(18) + ' kissé párás · ' + t(18) + '–' + t(21) + ' fülledt · &gt; ' + t(21) + ' nagyon fülledt';
+  // egész sor egy sablon (a „kellemes” önállóan nem fordulna); a < > jel változóban, hogy a sablonban ne legyen HTML
+  return tf('{lt} {a} {u} száraz, kellemes · {a}–{b} kellemes · {b}–{c} kissé párás · {c}–{d} fülledt · {gt} {d} nagyon fülledt',
+    { lt: '&lt;', gt: '&gt;', u: tlabel(), a: t(10), b: t(16), c: t(18), d: t(21) });
 }

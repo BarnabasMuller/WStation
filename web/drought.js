@@ -261,21 +261,29 @@ function lawnAdvice(p, r) {
   let status, cls;
   if (tmax != null && tmax < 5) { status = 'Most nem kell locsolni (hideg van).'; cls = 'ok'; }
   else if (rain2 >= 5 && dr < raw) { status = 'Az elmúlt 2 napban ' + rtext(rain2, 1) + ' eső esett – várj vele.'; cls = 'ok'; }
-  else if (dr < raw * 0.5) { status = 'Nem kell locsolni.'; cls = 'ok'; out.push('Még kb. <b>' + Math.max(1, Math.round((raw - dr) / etcAvg)) + ' nap</b> elég a talajban lévő víz (eső nélkül).'); }
-  else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; out.push('Kb. <b>' + Math.max(1, Math.round((raw - dr) / etcAvg)) + ' nap</b> múlva éri el a stresszhatárt.'); }
+  else if (dr < raw * 0.5) { status = 'Nem kell locsolni.'; cls = 'ok'; out.push(tf('Még kb. {d} elég a talajban lévő víz (eső nélkül).', { d: '<b>' + dayN(Math.max(1, Math.round((raw - dr) / etcAvg))) + '</b>' })); }
+  else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; out.push(tf('Kb. {d} múlva éri el a stresszhatárt.', { d: '<b>' + dayN(Math.max(1, Math.round((raw - dr) / etcAvg))) + '</b>' })); }
   else { status = 'Locsolni kell.'; cls = 'strong'; }
   if (cls !== 'ok' || dr >= raw * 0.5) {
     const amount = Math.max(0, dr);
     const ses = Math.max(1, Math.ceil(amount / Math.max(1, p.maxSession)));
     const per = amount / ses, minutes = per / Math.max(1, p.sprinklerRate) * 60;
-    if (amount >= 2) out.push('A feltöltéshez kb. <b>' + rtext(amount, 0) + '</b> kell: <b>' + ses + ' × ' + rtext(per, 0) + '</b> (zónánként kb. <b>' + num(minutes, 0) + ' perc</b>' + (ses > 1 ? ', a menetek között 30–60 perc szünettel – agyagos talajon így nem folyik el' : '') + '), kora reggel.');
+    const fv = { amt: '<b>' + rtext(amount, 0) + '</b>', plan: '<b>' + ses + ' × ' + rtext(per, 0) + '</b>', min: '<b>' + tf('{m} perc', { m: num(minutes, 0) }) + '</b>' };
+    if (amount >= 2) out.push(ses > 1
+      ? tf('A feltöltéshez kb. {amt} kell: {plan} (zónánként kb. {min}, a menetek között 30–60 perc szünettel – agyagos talajon így nem folyik el), kora reggel.', fv)
+      : tf('A feltöltéshez kb. {amt} kell: {plan} (zónánként kb. {min}), kora reggel.', fv));
   }
-  out.push('A gyep most kb. <b>' + rtext(etcAvg, 1) + '/nap</b> vizet párologtat (heti ' + rtext(etcAvg * 7, 0) + ').');
+  out.push(tf('A gyep most naponta kb. {v} vizet párologtat (hetente {w}).', { v: '<b>' + rtext(etcAvg, 1) + '</b>', w: rtext(etcAvg * 7, 0) }));
   if (tmin != null && tmin <= 1) out.push('⚠ Fagy közeli éjszaka volt: csak délelőtt locsolj.');
   const pa = typeof programAdvice === 'function' ? programAdvice(p, r) : null;
   if (pa) out.push(pa);
   return { status, cls, lines: out };
 }
+
+// a címben lévő HTML (pl. ut()) sima szövegként, az aria-labelhez
+function plainText(html) { const d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
+// „1 nap” / „{d} nap”: külön sablon, hogy egy napnál se legyen többes szám (pl. „1 days”)
+function dayN(d) { return d === 1 ? tf('1 nap') : tf('{d} nap', { d }); }
 
 // csepegtetési idő: 90 perc alatt percben, 48 óráig órában (pl. „7,6 óra”), fölötte napban is
 function durText(min) { return fmtDuration(Math.round(min / 5) * 5); }   // egységes időtartam-formátum (6.22), 5 percre kerekítve
@@ -292,8 +300,9 @@ function shrubAdvice(p, r) {
   else if (dr < raw) { status = 'Hamarosan locsolni kell.'; cls = 'mild'; }
   else { status = 'Locsolni kell.'; cls = 'strong'; }
   const fill = dr * p.area;
-  if (fill >= 0.5 && cls !== 'ok') out.push('Feltöltéshez bokronként kb. <b>' + fmtL(fill) + '</b> → <b>' + durText(fill / lph * 60) + '</b> (' + num(p.dripCount, 0) + ' × ' + num(p.dripLph, 1) + ' l/h csepegtető).');
-  out.push('Napi fenntartás: bokronként kb. <b>' + fmtL(daily) + '</b> (≈ <b>' + durText(daily / lph * 60) + '</b> csepegtetés naponta' + (p.count > 1 ? '; ' + num(p.count, 0) + ' bokorra összesen ' + fmtL(daily * p.count) : '') + ').');
+  if (fill >= 0.5 && cls !== 'ok') out.push(tf('Feltöltéshez bokronként kb. {l} → {t} ({n} × {lph} csepegtető).', { l: '<b>' + fmtL(fill) + '</b>', t: '<b>' + durText(fill / lph * 60) + '</b>', n: num(p.dripCount, 0), lph: num(p.dripLph, 1) + ' l/h' }));
+  const dv = { l: '<b>' + fmtL(daily) + '</b>', t: '<b>' + durText(daily / lph * 60) + '</b>', n: num(p.count, 0), tot: fmtL(daily * p.count) };
+  out.push(p.count > 1 ? tf('Napi fenntartás: bokronként kb. {l} (≈ {t} csepegtetés naponta; {n} bokorra összesen {tot}).', dv) : tf('Napi fenntartás: bokronként kb. {l} (≈ {t} csepegtetés naponta).', dv));
   const pa = typeof programAdvice === 'function' ? programAdvice(p, r) : null;
   if (pa) out.push(pa);
   return { status, cls, lines: out };
@@ -312,11 +321,12 @@ function potAdvice(pots) {
     const every = Math.max(0.5, tawL * p.p / need);
     // a cserép mostani állapota (11.3): ha a stresszhatáron túl van, előbb most kell meglocsolni
     const dr = last(r.dr), raw = last(r.raw), nowL = Math.max(0, dr) * A;
-    let txt = '<b>' + ut(p.name) + '</b> (' + num(p.potLiters, 0) + ' l, ' + PROFILE_PARAMS.place.options[p.place] + '): az utolsó adatnapon kb. <b>' + fmtL(need) + '</b> vizet párologtatott. ';
-    if (dr != null && raw != null && dr >= raw) { txt += '<b class="neg">Most locsold meg</b>: kb. <b>' + fmtL(nowL) + '</b> kell a feltöltéshez. Utána '; worst = 'strong'; }
-    if (rainL >= need && !(dr >= raw)) txt += 'Az utolsó adatnap esője elég volt.';
-    else if (every < 1) { txt += '<b class="neg">Naponta kétszer</b> locsold, alkalmanként kb. ' + fmtL(need / 2 + 0.05) + '.'; worst = 'strong'; }
-    else { txt += 'Kb. <b>' + (every < 1.5 ? 'naponta' : Math.round(every) + ' naponta') + '</b> locsold, alkalmanként kb. <b>' + fmtL(Math.min(tawL, need * Math.max(1, Math.round(every)))) + '</b>.'; if (every < 2 && order[worst] < 1) worst = 'mild'; }
+    // egész mondatos sablonok (6.37): a számok és a kiemelés a változókban
+    let txt = tf('{name} ({size}, {place}): az utolsó adatnapon kb. {l} vizet párologtatott.', { name: '<b>' + ut(p.name) + '</b>', size: num(p.potLiters, 0) + ' l', place: tr(PROFILE_PARAMS.place.options[p.place]), l: '<b>' + fmtL(need) + '</b>' }) + ' ';
+    if (dr != null && raw != null && dr >= raw) { txt += tf('{now}: kb. {l} kell a feltöltéshez.', { now: '<b class="neg">' + tf('Most locsold meg') + '</b>', l: '<b>' + fmtL(nowL) + '</b>' }) + ' '; worst = 'strong'; }
+    if (rainL >= need && !(dr >= raw)) txt += tf('Az utolsó adatnap esője elég volt.');
+    else if (every < 1) { txt += tf('{twice} locsold, alkalmanként kb. {l}.', { twice: '<b class="neg">' + tf('Naponta kétszer') + '</b>', l: fmtL(need / 2 + 0.05) }); worst = 'strong'; }
+    else { txt += tf('Kb. {every} locsold, alkalmanként kb. {l}.', { every: '<b>' + (every < 1.5 ? tf('naponta') : tf('{n} naponta', { n: Math.round(every) })) + '</b>', l: '<b>' + fmtL(Math.min(tawL, need * Math.max(1, Math.round(every)))) + '</b>' }); if (every < 2 && order[worst] < 1) worst = 'mild'; }
     out.push(txt);
   }
   const dry = pots.some(p => { const r = resById(p.id); return last(r.dr) >= last(r.raw); });
@@ -337,7 +347,7 @@ function renderWater() {
       '<input type="date" class="w-date" value="' + DS.today() + '">' +
       '<input type="number" class="w-amount" min="0" step="0.5" placeholder="mennyiség">' +
       '<select class="sel w-unit">' + zoneOpts[0][2].map(u => '<option value="' + u + '">' + ({ mm: 'mm', perc: 'perc', l: 'liter' })[u] + '</option>').join('') + '</select>' +
-      '<button class="btn primary w-add">Rögzítés</button></div>' +
+      '<button class="btn primary w-add" aria-label="' + esc(tf('Rögzítés – {name}', { name: trWhole(plainText(title)) })) + '">Rögzítés</button></div>' +
       (logs.length ? '<div class="w-hist">' + logs.map(l => '<span>' + esc(l.date) + ': ' + num(l.amount, 1) + ' ' + ({ mm: 'mm', perc: 'perc', l: 'l' })[l.unit] + (ids.length > 1 ? ' (' + esc((profById(l.zone) || {}).name || '') + ')' : '') + ' <a href="#" data-del="' + l.i + '" title="Törlés">✕</a></span>').join('') + '</div>' : '') +
       (logs.some(l => l.date > last(DR.date)) ? '<div class="w-note">⚠ Az adatok ' + esc(last(DR.date)) + '-ig tartanak: a későbbi locsolás a következő adatfrissítés után számít bele.</div>' : '') +
       '<div class="w-note">A rögzített locsolást a talajvíz-mérleg beszámítja.</div></details></div>';
@@ -584,7 +594,7 @@ async function renderDroughtExtras() {
   } catch (e) { }
   cards.push('<div class="card dr-card"><button class="qbtn" data-q2="gdd" title="Képlet és beállítások" aria-label="Hőösszeg – képlet és beállítások">ƒx</button><h3>🌡️ Hőösszeg (GDD)</h3>' +
     '<div class="big">' + num(tdconv(cum), 0) + '<small>' + tlabel() + '·nap (' + ttext(g.baseT, 0) + ' felett)</small></div>' +
-    '<div class="line">' + ttext(5, 0) + ' felett: <b>' + num(tdconv(pcum), 0) + '</b> ' + tlabel() + '·nap' + (ph ? ' · rügyfakadás: <b>' + DS.fmt(ph[0], { month: 'short', day: 'numeric' }) + '</b>, teljes lomb: <b>' + DS.fmt(ph[1], { month: 'short', day: 'numeric' }) + '</b>' : '')   /* egy dátumformátum (7.24) */ + '</div>' +
+    '<div class="line">' + ttext(5, 0) + ' felett: <b>' + num(tdconv(pcum), 0) + '</b> ' + tf('{u}·nap', { u: tlabel() }) + (ph ? ' · rügyfakadás: <b>' + DS.fmt(ph[0], { month: 'short', day: 'numeric' }) + '</b>, teljes lomb: <b>' + DS.fmt(ph[1], { month: 'short', day: 'numeric' }) + '</b>' : '')   /* egy dátumformátum (7.24) */ + '</div>' +
     '<ul class="mini-list">' + reach + '</ul>' + diaryLine +
     '<div class="line small">' + (g.kcByGdd ? '✔ A vízigény-szakaszok (Kc) a hőösszegből lépnek.' : 'A vízigény-szakaszok most fix dátumokból lépnek (a ? ablakban átállítható).') + '</div></div>');
   const box = $('drTech');
@@ -606,10 +616,10 @@ function renderFwiChart() {
     animation: false, legend: { top: 0, textStyle: { color: muted } }, grid: { left: 52, right: 112, top: 36, bottom: 30 },
     tooltip: { trigger: 'axis', confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink },
       formatter: ps => '<b>' + F.dayY.format(ps[0].axisValue) + '</b><br>' + ps.filter(p => p.value && p.value[1] != null).map(p => p.marker + ' ' + p.seriesName + ': <b>' +
-        (p.seriesIndex === 2 ? rtext(p.value[2], 1) : p.seriesIndex === 1 ? num(p.value[1], 0) + ' ' + tlabel() + '·nap' : num(p.value[1], 1) + ' (' + fwiClass(p.value[1])[0] + ')') + '</b>').join('<br>') },
+        (p.seriesIndex === 2 ? rtext(p.value[2], 1) : p.seriesIndex === 1 ? num(p.value[1], 0) + ' ' + tf('{u}·nap', { u: tlabel() }) : num(p.value[1], 1) + ' (' + fwiClass(p.value[1])[0] + ')') + '</b>').join('<br>') },
     xAxis: { type: 'time', min: start, max: end + D / 2, axisLabel: { color: muted, formatter: dayAxisFmt, hideOverlap: true } },
     yAxis: [{ type: 'value', name: 'FWI', min: 0, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .5 } } },
-            { type: 'value', name: tlabel() + '·nap', min: 0, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { show: false } },
+            { type: 'value', name: tf('{u}·nap', { u: tlabel() }), min: 0, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { show: false } },
             { type: 'value', name: 'eső, ' + rlabel(), min: 0, position: 'right', offset: 56, nameTextStyle: { color: cssVar('--c-rain') }, axisLabel: { color: cssVar('--c-rain') }, splitLine: { show: false } }],
     series: [
       { name: 'Tűzveszély (FWI)', type: 'bar', barMaxWidth: 6, data: DR.fwi.map((v, i) => ({ value: [x[i], v], itemStyle: { color: fwiClass(v)[1] } })) },
