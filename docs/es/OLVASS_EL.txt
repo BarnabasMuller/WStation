@@ -1,4 +1,4 @@
-﻿TIEMPO EN BUDAÖRS
+﻿WSTATION
 =================
 
 Descarga y muestra los datos de una estación meteorológica doméstica (Weather Underground PWS).

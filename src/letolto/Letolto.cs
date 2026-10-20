@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.1.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.1.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.2.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.2.0")]
 
 namespace WuLetolto
 {

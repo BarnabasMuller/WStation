@@ -1,5 +1,14 @@
-﻿BUDAÖRSI IDŐJÁRÁS – VÁLTOZÁSOK
+﻿WSTATION – VÁLTOZÁSOK
 ==============================
+
+== 2.2.2 (2026-10-20) – WStation, helyszín, nyelvfüggő fájlnevek ==
+- Új név: WStation (ablak, telepítő: WStation_setup_v*.exe, parancsikon, ütemezett feladat, értesítések).
+  Frissítéskor a régi „Időjárás” mappa, a régi parancsikon és a régi nevű ütemezett feladat is rendben átáll.
+- Beállítások › Helyszín: a hely neve (alapból az állomás WU-helyneve), időzóna, tartalék koordináták
+  (csak ha az adatokban nincs), tengerszint feletti magasság, hőség-figyelő küszöbei (25 / 27 °C), pénznem.
+  Az alapértékek a mostani budaörsi esetet adják.
+- A telepítő nyelvén kapják a nevüket a programok és a leírások (pl. angolul Viewer.exe és Downloader.exe);
+  nyelvváltáskor a régi nevű példányok törlődnek.
 
 == 2.2.1 (2026-10-20) – hibajavítások ==
 - Letöltés: az állapotsorban helyesek az ékezetek; a hálózati hibát a Letöltő kilépési kóddal jelzi.

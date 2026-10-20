@@ -1,4 +1,4 @@
-﻿BUDAÖRSI IDŐJÁRÁS
+﻿WSTATION
 =================
 
 A házi meteorológiai állomás (Weather Underground PWS) adatainak letöltése és megjelenítése.
