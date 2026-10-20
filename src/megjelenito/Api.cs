@@ -319,7 +319,11 @@ namespace Idojaras
             var s = AppState.S;
             var w = new JW().Obj();
             w.P("status", AppState.Status).P("version", Version);
-            w.P("station", ds.Station).P("lat", ds.Lat, 6).P("lon", ds.Lon, 6).P("dir", ds.Dir).P("baseDir", AppState.L.Base);
+            // koordináták: az adatokból, ha nincs, a Beállítások › Helyszín tartalékértéke (latSource jelzi)
+            bool dataLL = !double.IsNaN(ds.Lat) && !double.IsNaN(ds.Lon);
+            w.P("station", ds.Station).P("lat", dataLL ? ds.Lat : s.FallbackLat, 6).P("lon", dataLL ? ds.Lon : s.FallbackLon, 6)
+             .P("latSource", dataLL ? "adat" : "beállítás").P("dir", ds.Dir).P("baseDir", AppState.L.Base);
+            w.P("place", s.PlaceName.Length > 0 ? s.PlaceName : ds.Neighborhood.Length > 0 ? ds.Neighborhood : ds.Station).P("neighborhood", ds.Neighborhood);
             w.P("n", ds.N).Ms("first", ds.T[0]).Ms("last", ds.T[ds.N - 1]);
             if (ds.CalibRes != null) w.Key("calib").Obj().P("active", ds.CalibRes.Active).P("factor", ds.CalibRes.Global, 3).P("mode", ds.CalibRes.Cfg.mode).P("period", ds.CalibRes.ByDay != null).End();
             w.P("fromCache", ds.FromCache).P("loadMs", ds.LoadMs).P("newRows", ds.NewRows).P("parsedRows", ds.ParsedRows).P("duplicates", ds.DuplicateRows);
@@ -339,6 +343,7 @@ namespace Idojaras
             w.Key("settings").Obj()
                 .P("hotDay", s.HotDay).P("tropicalNight", s.TropicalNight).P("frostDay", s.FrostDay).P("iceDay", s.IceDay)
                 .P("gapMinutes", s.GapMinutes).P("windUnit", s.WindUnit).P("excludeSuspect", s.ExcludeSuspect)
+                .P("tz", Tz.Iana).P("heatWarn1", s.HeatWarn1).P("heatWarn3", s.HeatWarn3).P("currency", s.Currency)
                 .End();
             return w.End().ToString();
         }

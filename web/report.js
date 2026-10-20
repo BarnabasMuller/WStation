@@ -76,7 +76,7 @@ async function monthReport(d, m) {
       const r = dr.profiles.find(x => x.id === p.id); return [esc(p.name), num(r.depl[lastIdx] * 100, 0) + '% (hónap elején ' + num(r.depl[firstIdx] * 100, 0) + '%)'];
     }).concat([['Hőösszeg (' + ttext(dr.config.gdd.baseT, 0) + ' felett), hónap végéig', num(tdconv(dr.gddCum[lastIdx]), 0) + ' ' + tlabel() + '·nap'], ['Legnagyobb tűzveszély (FWI)', num(Math.max(...dr.fwi.slice(firstIdx, lastIdx + 1)), 0)]]));
   }
-  $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-jelentés · ' + esc(META.station) + ' · Budaörs</div><h1>' + title + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + '</div></div>' +
+  $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-jelentés · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + title + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + '</div></div>' +
     '<p class="rep-sum">' + summaryText(d, m, s) + '</p>' +
     '<div class="rep-grid"><div>' + '<h3>Hőmérséklet</h3>' + repTable([
       ['Átlag', ttext(s.tavg)], ['Legmagasabb', (s.imax != null ? ttext(d.tmax[s.imax]) + day(s.imax) : '–')], ['Legalacsonyabb', (s.imin != null ? ttext(d.tmin[s.imin]) + day(s.imin) : '–')],
@@ -119,7 +119,7 @@ async function yearReport(d, y) {
   const rec = await api('/api/records?clean=1&year=' + y);
   const total = rows.reduce((a, r) => a + r.s.rain, 0), sun = rows.reduce((a, r) => a + r.s.sun, 0);
   const dr = typeof getDrought === 'function' ? await getDrought().catch(() => null) : null;
-  $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-évkönyv · ' + esc(META.station) + ' · Budaörs</div><h1>' + y + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + (months.length < 12 ? '<br>(' + months.length + ' hónap adata)' : '') + '</div></div>' +
+  $('repBody').innerHTML = '<div class="rep-head"><div><div class="rep-kicker">Időjárás-évkönyv · ' + esc(META.station) + ' · ' + esc(placeName()) + '</div><h1>' + y + '</h1></div><div class="rep-date">Készült: ' + F.dayY.format(Date.now()) + (months.length < 12 ? '<br>(' + months.length + ' hónap adata)' : '') + '</div></div>' +
     '<p class="rep-sum">Az év csapadéka <b>' + rtext(total, 0) + '</b>, napsütése <b>' + num(sun, 0) + ' óra</b>. ' + rec.counts.hotDays + ' hőségnap, ' + rec.counts.tropicalNights + ' trópusi éjszaka, ' + rec.counts.frostDays + ' fagyos nap.' +
     (rec.frost.last ? ' Utolsó tavaszi fagy: ' + DS.fmt(rec.frost.last, { month: 'long', day: 'numeric' }) + '.' : '') + (rec.frost.first ? ' Első őszi fagy: ' + DS.fmt(rec.frost.first, { month: 'long', day: 'numeric' }) + '.' : '') +
     (dr && gddIdx(dr, y) != null ? ' Hőösszeg: ' + num(tdconv(dr.gddCum[gddIdx(dr, y)]), 0) + ' ' + tlabel() + '·nap.' : '') + '</p>' +

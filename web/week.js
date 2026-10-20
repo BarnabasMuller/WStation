@@ -48,7 +48,7 @@ function windText(kmh, unit, dec) {
 function dayLength(dateStr, latDeg) {
   const n = Math.round((DS.ms(dateStr) - Date.UTC(+dateStr.slice(0, 4), 0, 0)) / D);
   const decl = 23.44 * Math.sin(2 * Math.PI * (284 + n) / 365) * Math.PI / 180;
-  const lat = (latDeg || 47.46) * Math.PI / 180;
+  const lat = (latDeg != null ? latDeg : (META && META.lat) || 47.46) * Math.PI / 180;
   const x = -Math.tan(lat) * Math.tan(decl);
   return x <= -1 ? 24 : x >= 1 ? 0 : 2 * Math.acos(x) * 12 / Math.PI;
 }

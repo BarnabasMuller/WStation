@@ -77,7 +77,7 @@ namespace Idojaras
             epoch = 0;
             DateTime d;
             if (!DateTime.TryParseExact(s ?? "", new[] { "yyyy-MM-ddTHH:mm", "yyyy-MM-dd HH:mm", "yyyy-MM-dd" }, Inv, DateTimeStyles.None, out d)) return false;
-            try { epoch = (long)(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(d, DateTimeKind.Unspecified), Tz.Budapest) - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds; }
+            try { epoch = (long)(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(d, DateTimeKind.Unspecified), Tz.Zone) - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds; }
             catch { epoch = (long)(d - new DateTime(1970, 1, 1)).TotalSeconds - 3600; }
             return true;
         }
@@ -158,7 +158,7 @@ namespace Idojaras
                 var mids = valid.Select(x => new { mid = (x.A + x.B) / 2, x.A, x.B, x.Ratio }).ToList();
                 foreach (int day in ds.Day.Distinct())
                 {
-                    long noon = (long)(Tz.DateOf(day).AddHours(12) - new DateTime(1970, 1, 1)).TotalSeconds - 3600;
+                    long noon = Tz.LocalMidnightEpoch(Tz.DateOf(day)) + 12 * 3600;   // helyi dél (nyári időszámítással is)
                     var inside = mids.FirstOrDefault(m => noon >= m.A && noon <= m.B);
                     res.ByDay[day] = inside != null ? inside.Ratio : mids.OrderBy(m => Math.Abs(m.mid - noon)).First().Ratio;
                 }

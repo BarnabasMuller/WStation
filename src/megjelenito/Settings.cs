@@ -35,6 +35,12 @@ namespace Idojaras
         // gyanús mérések: melyik szabály jelöljön
         public bool FlagQc0 = true, FlagQcNeg = true, FlagRange = true, FlagSpike = true, FlagSun = true, FlagRestart = true;
         public int RestartMin = 60;         // ennél hosszabb kiesés utáni első mérés gyanús
+        // helyszín (Beállítások › Helyszín)
+        public string PlaceName = "";       // üres: az állomás WU-helyneve (pl. Budaörs)
+        public string TimeZone = "Europe/Budapest";
+        public double FallbackLat = 47.46, FallbackLon = 18.96;   // csak ha az adatokban nincs koordináta
+        public double HeatWarn1 = 25, HeatWarn3 = 27;              // hőség-figyelő: napi középhőmérséklet (I., ill. III. fokozat)
+        public string Currency = "Ft";
 
         public List<string> Warnings = new List<string>();
 
@@ -44,6 +50,20 @@ namespace Idojaras
 #  A '#' kezdetű sorok megjegyzések. Formátum: Kulcs=Érték
 #  Tizedesjelnek pontot vagy vesszőt is írhatsz.
 # =====================================================================
+
+# --- Helyszín (a Beállítások › Helyszín részben is állítható) ---
+# A hely neve a felületen és a jelentésekben; üresen az állomás WU-helyneve
+HelyNev=
+# Időzóna (IANA-név, pl. Europe/Budapest, Europe/Vienna, Europe/London)
+Idozona=Europe/Budapest
+# Tartalék koordináták – csak ha az adatokban nincs lat/lon (napkelte, hold, párolgás)
+TartalekSzelesseg=47.46
+TartalekHosszusag=18.96
+# Hőség-figyelő: napi középhőmérséklet (°C) – I. fokozat 1 napig, II. 3 napig, III. 3 napig
+HosegFigyelo1=25
+HosegFigyelo3=27
+# Pénznem a vízdíjhoz
+Penznem=Ft
 
 # --- Statisztikai küszöbök (°C) ---
 # Hőségnap: a napi maximum legalább ennyi
@@ -131,7 +151,9 @@ SzelesDelutanKmh=20
             }
             catch (Exception ex) { s.Warnings.Add("A megjelenito.ini nem hozható létre: " + ex.Message); }
 
-            return FromDict(ReadIni(path), L, s);
+            var res = FromDict(ReadIni(path), L, s);
+            Tz.Set(res.TimeZone);   // minden napváltás, dátum és óra ebben az időzónában
+            return res;
         }
 
         // a beállítások egy kulcs–érték listából (a fájlból, vagy az előnézethez módosított másolatból)
@@ -179,6 +201,18 @@ SzelesDelutanKmh=20
             s.FlagRange = Bool(d, "JelolLehetetlen", true); s.FlagSpike = Bool(d, "JelolUgras", true);
             s.FlagSun = Bool(d, "JelolNapsutes", true); s.FlagRestart = Bool(d, "JelolKieses", true);
             s.RestartMin = Math.Max(10, Math.Min(1440, (int)Num(d, "KiesesPerc", s.RestartMin, s)));
+            // helyszín
+            if (d.TryGetValue("HelyNev", out v)) s.PlaceName = v.Trim().Length > 40 ? v.Trim().Substring(0, 40) : v.Trim();
+            if (d.TryGetValue("Idozona", out v) && v.Trim().Length > 0)
+            {
+                if (Tz.WindowsId(v.Trim()) != null) s.TimeZone = v.Trim();
+                else s.Warnings.Add("Ismeretlen időzóna: " + v.Trim() + " – marad: " + s.TimeZone);
+            }
+            s.FallbackLat = Math.Max(-90, Math.Min(90, Num(d, "TartalekSzelesseg", s.FallbackLat, s)));
+            s.FallbackLon = Math.Max(-180, Math.Min(180, Num(d, "TartalekHosszusag", s.FallbackLon, s)));
+            s.HeatWarn1 = Num(d, "HosegFigyelo1", s.HeatWarn1, s);
+            s.HeatWarn3 = Num(d, "HosegFigyelo3", s.HeatWarn3, s);
+            if (d.TryGetValue("Penznem", out v) && v.Trim().Length > 0) s.Currency = v.Trim().Length > 6 ? v.Trim().Substring(0, 6) : v.Trim();
 
             // a letöltő beállításából az állomás
             var dl = ReadIni(L.DlIni);
@@ -209,8 +243,12 @@ SzelesDelutanKmh=20
             { "DelutanTol", new double[] { 0, 23, 1, 0 } }, { "DelutanIg", new double[] { 1, 24, 1, 0 } }, { "SzelesDelutanKmh", new double[] { 5, 100, 0, 0 } },
             { "JelolWuBizonytalan", new double[] { 0, 1, 0, 1 } }, { "JelolWuHibas", new double[] { 0, 1, 0, 1 } }, { "JelolLehetetlen", new double[] { 0, 1, 0, 1 } },
             { "JelolUgras", new double[] { 0, 1, 0, 1 } }, { "JelolNapsutes", new double[] { 0, 1, 0, 1 } }, { "JelolKieses", new double[] { 0, 1, 0, 1 } },
-            { "KiesesPerc", new double[] { 10, 1440, 1, 0 } }, { "GyanusKizarasa", new double[] { 0, 1, 0, 1 } }
+            { "KiesesPerc", new double[] { 10, 1440, 1, 0 } }, { "GyanusKizarasa", new double[] { 0, 1, 0, 1 } },
+            { "TartalekSzelesseg", new double[] { -90, 90, 0, 0 } }, { "TartalekHosszusag", new double[] { -180, 180, 0, 0 } },
+            { "HosegFigyelo1", new double[] { 15, 40, 0, 0 } }, { "HosegFigyelo3", new double[] { 15, 40, 0, 0 } }
         };
+        // szöveges, szerkeszthető kulcsok (a helyszínhez)
+        public static readonly HashSet<string> TextKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "HelyNev", "Idozona", "Penznem" };
 
         // az alapértékek a sablonból
         public static Dictionary<string, string> Defaults()
@@ -230,6 +268,16 @@ SzelesDelutanKmh=20
         public static string Check(string key, string val, out string norm)
         {
             norm = null;
+            if (TextKeys.Contains(key))
+            {
+                string t = (val ?? "").Trim();
+                if (t.IndexOfAny(new[] { '\r', '\n', '=', '#' }) >= 0) return key + ": nem tartalmazhat sortörést, „=” vagy „#” jelet";
+                if (key.Equals("HelyNev", StringComparison.OrdinalIgnoreCase) && t.Length > 40) return "A hely neve legfeljebb 40 karakter.";
+                if (key.Equals("Penznem", StringComparison.OrdinalIgnoreCase) && (t.Length < 1 || t.Length > 6)) return "A pénznem 1–6 karakter (pl. Ft, €, EUR).";
+                if (key.Equals("Idozona", StringComparison.OrdinalIgnoreCase) && Tz.WindowsId(t) == null) return "Ismeretlen időzóna: " + t;
+                norm = t;
+                return null;
+            }
             double[] r;
             if (!Editable.TryGetValue(key, out r)) return "Nem szerkeszthető kulcs: " + key;
             val = (val ?? "").Trim();

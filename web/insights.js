@@ -88,7 +88,7 @@ function comfort(dew) {
 async function renderInsights() {
   if (!TODAY || !META) return;
   const n = TODAY.now || {}, t = TODAY.today || {};
-  const lat = META.lat || 47.46, lon = META.lon || 18.96;
+  const lat = META.lat, lon = META.lon;   // a szerver ad tartalékot, ha az adatokban nincs (Beállítások › Helyszín)
   const now = Date.now(), lastT = n.t || META.last;
   const hour = +F.hour.format(lastT).slice(0, 2), month = +F.ymd.format(lastT).slice(5, 7);
   const isToday = t.date === DS.today();
@@ -113,9 +113,11 @@ async function renderInsights() {
   // hőség (a magyar hőségriasztási fokozatok logikája szerint, a napi középhőmérsékletből)
   const means = (TODAY.now.tavgPrev || []).slice().reverse().concat(t.tavg != null ? [t.tavg] : []);
   const last3 = means.slice(-3);
-  if (last3.length >= 3 && last3.every(x => x >= 27)) L('🔥', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(27, 0) + ' (a hőségriasztás III. fokozatának megfelelő).', 'severe');
-  else if (last3.length >= 3 && last3.every(x => x >= 25)) L('🌡️', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(25, 0) + ' (II. fokozat).', 'strong');
-  else if (t.tavg != null && t.tavg >= 25) L('🌡️', '<b>Meleg nap</b>: a napi középhőmérséklet ' + ttext(t.tavg) + ' (I. fokozat).', 'mild');
+  // a küszöbök a Beállítások › Helyszín részben (alapból a magyar hőségriasztás: 25 / 27 °C)
+  const hw1 = META.settings.heatWarn1 != null ? META.settings.heatWarn1 : 25, hw3 = META.settings.heatWarn3 != null ? META.settings.heatWarn3 : 27;
+  if (last3.length >= 3 && last3.every(x => x >= hw3)) L('🔥', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(hw3, 0) + ' (a hőségriasztás III. fokozatának megfelelő).', 'severe');
+  else if (last3.length >= 3 && last3.every(x => x >= hw1)) L('🌡️', '<b>Hőség</b>: a napi középhőmérséklet 3 napja legalább ' + ttext(hw1, 0) + ' (II. fokozat).', 'strong');
+  else if (t.tavg != null && t.tavg >= hw1) L('🌡️', '<b>Meleg nap</b>: a napi középhőmérséklet ' + ttext(t.tavg) + ' (I. fokozat).', 'mild');
   // nyomás
   const p3 = n.pres3h;
   if (p3 != null && p3 <= -3) L('📉', '<b>Gyorsan esik a légnyomás</b>: ' + psigned(p3) + ' / 3 óra – front közeledhet.', p3 <= -5 ? 'strong' : 'mild');

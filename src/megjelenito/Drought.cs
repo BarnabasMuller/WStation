@@ -760,7 +760,7 @@ namespace Idojaras
             var r = new DResult();
             var g = cfg.global;
             if (ds == null || ds.Days.Count == 0) return r;
-            double lat = double.IsNaN(ds.Lat) ? 47.46 : ds.Lat;
+            double lat = double.IsNaN(ds.Lat) ? (AppState.S != null ? AppState.S.FallbackLat : 47.46) : ds.Lat;   // tartalék: Beállítások › Helyszín
 
             // --- napsugárzás-kalibráció havonta: a 3 legtisztább nap Rs/Rso aránya
             var byMonth = new Dictionary<int, List<double>>();

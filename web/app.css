@@ -519,3 +519,8 @@ ol.steps li { margin: 6px 0; line-height: 1.5; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 .btn.primary:focus-visible, .tabs button.on:focus-visible { outline-color: #ffd54a; }
+
+/* Beállítások › Helyszín */
+.pl-row { margin: 8px 0 12px; }
+.pl-row > label { display: block; font-weight: 600; margin-bottom: 4px; font-size: max(13.5px, var(--minf)); }
+.pl-row .hint { margin-top: 3px; }

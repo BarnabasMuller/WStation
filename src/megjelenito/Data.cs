@@ -124,6 +124,7 @@ namespace Idojaras
     class Dataset
     {
         public string Dir = "", Station = "";
+        public string Neighborhood = "";   // a WU szerinti hely (a pillanatnyi állapotból), a hely nevének alapértéke
         public double Lat = double.NaN, Lon = double.NaN;
         public int N;
         public long[] T;
@@ -162,17 +163,66 @@ namespace Idojaras
 
     static class Tz
     {
-        public static readonly TimeZoneInfo Budapest = Find();
+        // a helyi időzóna (Beállítások › Helyszín, megjelenito.ini Idozona; alapból Europe/Budapest)
+        public static TimeZoneInfo Zone = Find("Central Europe Standard Time");
+        public static string Iana = "Europe/Budapest";
         public static readonly DateTime Base = new DateTime(2000, 1, 1);
         static readonly DateTime Unix = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        static TimeZoneInfo Find()
+        // a választható időzónák: IANA (a felületnek) ↔ Windows-azonosító (a .NET-nek)
+        public static readonly string[][] Zones =
         {
-            try { return TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time"); }
+            new[] { "Europe/Budapest", "Central Europe Standard Time" }, new[] { "Europe/Vienna", "W. Europe Standard Time" },
+            new[] { "Europe/Berlin", "W. Europe Standard Time" }, new[] { "Europe/Rome", "W. Europe Standard Time" },
+            new[] { "Europe/Zurich", "W. Europe Standard Time" }, new[] { "Europe/Amsterdam", "W. Europe Standard Time" },
+            new[] { "Europe/Prague", "Central Europe Standard Time" }, new[] { "Europe/Bratislava", "Central Europe Standard Time" },
+            new[] { "Europe/Belgrade", "Central Europe Standard Time" }, new[] { "Europe/Ljubljana", "Central Europe Standard Time" },
+            new[] { "Europe/Warsaw", "Central European Standard Time" }, new[] { "Europe/Zagreb", "Central European Standard Time" },
+            new[] { "Europe/Paris", "Romance Standard Time" }, new[] { "Europe/Madrid", "Romance Standard Time" },
+            new[] { "Europe/Brussels", "Romance Standard Time" }, new[] { "Europe/London", "GMT Standard Time" },
+            new[] { "Europe/Lisbon", "GMT Standard Time" }, new[] { "Atlantic/Canary", "GMT Standard Time" },
+            new[] { "Europe/Bucharest", "GTB Standard Time" }, new[] { "Europe/Athens", "GTB Standard Time" },
+            new[] { "Europe/Helsinki", "FLE Standard Time" }, new[] { "Europe/Kiev", "FLE Standard Time" },
+            new[] { "Europe/Istanbul", "Turkey Standard Time" }, new[] { "Europe/Moscow", "Russian Standard Time" },
+            new[] { "America/New_York", "Eastern Standard Time" }, new[] { "America/Toronto", "Eastern Standard Time" },
+            new[] { "America/Chicago", "Central Standard Time" }, new[] { "America/Mexico_City", "Central Standard Time (Mexico)" },
+            new[] { "America/Denver", "Mountain Standard Time" }, new[] { "America/Phoenix", "US Mountain Standard Time" },
+            new[] { "America/Los_Angeles", "Pacific Standard Time" }, new[] { "America/Anchorage", "Alaskan Standard Time" },
+            new[] { "Pacific/Honolulu", "Hawaiian Standard Time" }, new[] { "America/Sao_Paulo", "E. South America Standard Time" },
+            new[] { "America/Argentina/Buenos_Aires", "Argentina Standard Time" }, new[] { "Africa/Johannesburg", "South Africa Standard Time" },
+            new[] { "Asia/Dubai", "Arabian Standard Time" }, new[] { "Asia/Kolkata", "India Standard Time" },
+            new[] { "Asia/Shanghai", "China Standard Time" }, new[] { "Asia/Tokyo", "Tokyo Standard Time" },
+            new[] { "Australia/Sydney", "AUS Eastern Standard Time" }, new[] { "Pacific/Auckland", "New Zealand Standard Time" },
+            new[] { "UTC", "UTC" }
+        };
+
+        public static string WindowsId(string iana)
+        {
+            foreach (var z in Zones) if (string.Equals(z[0], iana, StringComparison.OrdinalIgnoreCase)) return z[1];
+            return null;
+        }
+
+        // false, ha ismeretlen az időzóna (ilyenkor marad az előző)
+        public static bool Set(string iana)
+        {
+            string win = WindowsId(iana);
+            if (win == null) return false;
+            try
+            {
+                Zone = TimeZoneInfo.FindSystemTimeZoneById(win);
+                foreach (var z in Zones) if (string.Equals(z[0], iana, StringComparison.OrdinalIgnoreCase)) Iana = z[0];
+                return true;
+            }
+            catch { return false; }
+        }
+
+        static TimeZoneInfo Find(string id)
+        {
+            try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
             catch { return TimeZoneInfo.Local; }
         }
 
-        public static DateTime Local(long epoch) { return TimeZoneInfo.ConvertTimeFromUtc(Unix.AddSeconds(epoch), Budapest); }
+        public static DateTime Local(long epoch) { return TimeZoneInfo.ConvertTimeFromUtc(Unix.AddSeconds(epoch), Zone); }
         public static int DayNumber(DateTime local) { return (int)(local.Date - Base).TotalDays; }
         public static DateTime DateOf(int day) { return Base.AddDays(day); }
 
@@ -180,7 +230,7 @@ namespace Idojaras
         public static long LocalMidnightEpoch(DateTime localDate)
         {
             var d = DateTime.SpecifyKind(localDate.Date, DateTimeKind.Unspecified);
-            return (long)(TimeZoneInfo.ConvertTimeToUtc(d, Budapest) - Unix).TotalSeconds;
+            return (long)(TimeZoneInfo.ConvertTimeToUtc(d, Zone) - Unix).TotalSeconds;
         }
     }
 
@@ -901,6 +951,8 @@ namespace Idojaras
                         int ie;
                         if (!idx.TryGetValue("epoch", out ie) || ie >= r.Count || !long.TryParse(r[ie].Trim(), out t)) continue;
                         if (ds.Station.Length > 0 && idx.ContainsKey("stationID") && !string.Equals(r[idx["stationID"]].Trim(), ds.Station, StringComparison.OrdinalIgnoreCase)) continue;
+                        int inb;
+                        if (idx.TryGetValue("neighborhood", out inb) && inb < r.Count && r[inb].Trim().Length > 0) ds.Neighborhood = r[inb].Trim();
                         if (best != null && t <= best.T) continue;
                         best = new Current
                         {

@@ -15,11 +15,13 @@ function wState() {
   if (!(w.cmp >= 0)) w.cmp = 20;
   return w;
 }
+// pénznem: Beállítások › Helyszín (alapból Ft)
+function cur() { return esc((META && META.settings && META.settings.currency) || 'Ft'); }
 function wPrice() { const w = wState(); return w.detailed ? w.price + w.sewer : w.simple; }
 function costText(m3) {
   const w = wState();
-  if (!w.detailed) return num(m3 * w.simple, 0) + ' Ft';
-  return num(m3 * w.price, 0) + ' Ft + ' + num(m3 * w.sewer, 0) + ' Ft = <b>' + num(m3 * (w.price + w.sewer), 0) + ' Ft</b> <span class="muted">(vízdíj + csatornadíj)</span>';
+  if (!w.detailed) return num(m3 * w.simple, 0) + ' ' + cur();
+  return num(m3 * w.price, 0) + ' ' + cur() + ' + ' + num(m3 * w.sewer, 0) + ' ' + cur() + ' = <b>' + num(m3 * (w.price + w.sewer), 0) + ' ' + cur() + '</b> <span class="muted">(vízdíj + csatornadíj)</span>';
 }
 // egy profil teljes területe (m²) a literekhez
 function totalArea(p, r) { return ((r && r.area) || 1) * (p.type === 'bokor' ? Math.max(1, p.count || 1) : 1); }
@@ -79,16 +81,16 @@ function renderWaterUse() {
     '<div class="row2 w-ctrl"><span class="muted">Növények:</span> <span class="daypick" id="wTypes">' + Object.entries(WTYPES).map(([k, v]) => '<label><input type="checkbox" value="' + k + '"' + (w.types[k] !== false ? ' checked' : '') + '>' + v + '</label>').join('') + '</span>' +
     '<label class="switch small"><input type="checkbox" id="wEff"' + (w.eff ? ' checked' : '') + '><span class="slider"></span><span>hatékonysági veszteséggel (szórófej ~75%, csepegtető ~90%)</span></label></div>' +
     '<div class="row2 w-ctrl"><span class="muted">Vízdíj:</span> <div class="seg" id="wPriceMode"><button data-v="0">egy ár</button><button data-v="1">vízdíj + csatornadíj</button></div>' +
-    (w.detailed ? '<label>vízdíj <input class="inp num" id="wPrice" inputmode="decimal" style="width:70px" value="' + w.price + '"> Ft/m³</label> <label>csatornadíj <input class="inp num" id="wSewer" inputmode="decimal" style="width:70px" value="' + w.sewer + '"> Ft/m³</label> <span class="muted small">(külön locsolómérőnél a csatornadíj 0)</span>'
-      : '<label><input class="inp num" id="wSimple" inputmode="decimal" style="width:80px" value="' + w.simple + '"> Ft/m³</label>') + ' <span class="perr" id="wPErr"></span></div>' +
+    (w.detailed ? '<label>vízdíj <input class="inp num" id="wPrice" inputmode="decimal" style="width:70px" value="' + w.price + '"> ' + cur() + '/m³</label> <label>csatornadíj <input class="inp num" id="wSewer" inputmode="decimal" style="width:70px" value="' + w.sewer + '"> ' + cur() + '/m³</label> <span class="muted small">(külön locsolómérőnél a csatornadíj 0)</span>'
+      : '<label><input class="inp num" id="wSimple" inputmode="decimal" style="width:80px" value="' + w.simple + '"> ' + cur() + '/m³</label>') + ' <span class="perr" id="wPErr"></span></div>' +
     '<h3 class="sub-h">Célállapot – legfeljebb ennyi kiszáradást engedj</h3><div class="w-targets">' +
     shown.map(({ p, r }) => { const t = Math.round(targetOf(p, r) * 100), raw = Math.round(baseP(p, r) * 100); return '<div class="w-t"><span>' + TYPE_ICON[p.type] + ' ' + esc(p.name) + '</span><input type="range" min="10" max="90" step="5" data-wt="' + p.id + '" value="' + t + '"><b>' + t + '%</b> <span class="muted small">' + (t < raw - 5 ? 'üde zöld' : t > raw + 10 ? 'takarékos, de stresszes' : 'a stresszhatár körül') + ' · stresszhatár ' + raw + '%</span></div>'; }).join('') + '</div>' +
     '<div class="today w-cards">' +
     '<div class="card mini"><h3>Vízigény</h3><div class="big">' + num(needM3, needM3 < 10 ? 2 : 1) + '<small> m³</small></div><div class="line small">' + costText(needM3) + '</div></div>' +
     '<div class="card mini"><h3>Tényleges öntözés</h3><div class="big">' + num(useM3, useM3 < 10 ? 2 : 1) + '<small> m³</small></div><div class="line small">' + costText(useM3) + '</div><div class="line small muted">a rögzített és a programozott locsolásból</div></div>' +
-    '<div class="card mini"><h3>Legdrágább hónap</h3><div class="big">' + (topM ? MONTHS_FULL[+topM.slice(5) - 1] : '–') + '</div><div class="line small">' + (topM ? num(months[topM].need, 2) + ' m³ · ' + num(months[topM].need * wPrice(), 0) + ' Ft' : '') + '</div></div>' +
+    '<div class="card mini"><h3>Legdrágább hónap</h3><div class="big">' + (topM ? MONTHS_FULL[+topM.slice(5) - 1] : '–') + '</div><div class="line small">' + (topM ? num(months[topM].need, 2) + ' m³ · ' + num(months[topM].need * wPrice(), 0) + ' ' + cur() : '') + '</div></div>' +
     '<div class="card mini"><h3>Csúcsnap</h3><div class="big">' + (peak >= 0 ? DS.fmt(DR.date[peak], { month: 'short', day: 'numeric' }) : '–') + '</div><div class="line small">' + (peak >= 0 ? fmtL(dayNeed[peak]) + ' egyszerre (a vödör visszatöltése)' : '') + '</div></div></div>' +
-    '<p class="w-cmp">Ha mindenhol <select class="sel" id="wCmp">' + [10, 20, 30].map(x => '<option value="' + x + '"' + (x === w.cmp ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> százalékponttal szárazabban tartod a növényeket, ebben az időszakban kb. <b>' + num(Math.max(0, needM3 - cmpM3), 1) + ' m³</b>-rel (≈ ' + num(Math.max(0, needM3 - cmpM3) * wPrice(), 0) + ' Ft) kevesebb víz kellett volna: ' + num(needM3, 1) + ' m³ helyett ' + num(cmpM3, 1) + ' m³.</p>' +
+    '<p class="w-cmp">Ha mindenhol <select class="sel" id="wCmp">' + [10, 20, 30].map(x => '<option value="' + x + '"' + (x === w.cmp ? ' selected' : '') + '>' + x + '</option>').join('') + '</select> százalékponttal szárazabban tartod a növényeket, ebben az időszakban kb. <b>' + num(Math.max(0, needM3 - cmpM3), 1) + ' m³</b>-rel (≈ ' + num(Math.max(0, needM3 - cmpM3) * wPrice(), 0) + ' ' + cur() + ') kevesebb víz kellett volna: ' + num(needM3, 1) + ' m³ helyett ' + num(cmpM3, 1) + ' m³.</p>' +
     '<div id="wBars" style="height:300px"></div><div id="wCal"></div>' +
     '<p class="hint">A vízigény: a talajvíz-mérleg a mért időjárással fut, és amikor egy növény kiszáradása eléri a célt, egy virtuális locsolás visszatölti a vödrét. Ezek összege literben (a terület × mm), m³-ben és forintban. A fák területe a lombkorona, a bokroké bokronként × darabszám.</p>';
 
@@ -98,7 +100,7 @@ function renderWaterUse() {
   box.querySelectorAll('#wPriceMode button').forEach(b => { b.classList.toggle('on', (b.dataset.v === '1') === w.detailed); b.addEventListener('click', () => { w.detailed = b.dataset.v === '1'; saveUi(); renderWaterUse(); }); });
   const priceIn = (id, key) => { const el = $(id); if (!el) return; el.addEventListener('change', () => {
     const s = String(el.value).trim().replace(',', '.');
-    if (!/^\d+(\.\d+)?$/.test(s) || +s > 100000) { el.classList.add('bad'); $('wPErr').textContent = '⚠ 0 és 100 000 Ft/m³ között'; return; }
+    if (!/^\d+(\.\d+)?$/.test(s) || +s > 100000) { el.classList.add('bad'); $('wPErr').textContent = '⚠ 0 és 100 000 ' + cur() + '/m³ között'; return; }
     w[key] = +s; saveUi(); renderWaterUse();
   }); };
   priceIn('wPrice', 'price'); priceIn('wSewer', 'sewer'); priceIn('wSimple', 'simple');

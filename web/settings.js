@@ -293,11 +293,58 @@ async function checkUpdate() {
   } catch (e) { }
 }
 
+// ------------------------------------------------------------------ helyszín (megjelenito.ini + a szárazság-modul magassága)
+async function renderPlace() {
+  const ini = await getIni(true), v = ini.values || {};
+  const dr = typeof getDrought === 'function' ? await getDrought().catch(() => null) : null;
+  const elev = dr && dr.config && dr.config.global ? dr.config.global.elevation : null;
+  const fromData = META && META.latSource === 'adat';
+  const f = (id, label, input, hint) => '<div class="pl-row"><label for="' + id + '">' + label + '</label>' + input + (hint ? '<div class="hint">' + hint + '</div>' : '') + '<div class="perr" id="' + id + 'Err"></div></div>';
+  const numIn = (id, val, w) => '<input class="inp num" id="' + id + '" inputmode="decimal" style="width:' + (w || 90) + 'px" value="' + (val == null || val === '' ? '' : String(val).replace('.', decSep())) + '">';
+  const t1 = tconv(parseFloat(String(v.HosegFigyelo1 || 25).replace(',', '.'))), t3 = tconv(parseFloat(String(v.HosegFigyelo3 || 27).replace(',', '.')));
+  $('placeBox').innerHTML =
+    f('plName', 'A hely neve', '<input class="inp" id="plName" maxlength="40" style="width:220px" value="' + esc(v.HelyNev || '') + '" placeholder="' + esc((META && META.neighborhood) || (META && META.station) || '') + '">',
+      'Üresen az állomás WU-helyneve' + (META && META.neighborhood ? ' (most: ' + esc(META.neighborhood) + ')' : '') + '. A fejlécben és a jelentésekben látszik.') +
+    f('plTz', 'Időzóna', '<select class="sel" id="plTz">' + (ini.zones || []).map(z => '<option value="' + esc(z) + '"' + (z === (v.Idozona || 'Europe/Budapest') ? ' selected' : '') + '>' + esc(z.replace(/_/g, ' ')) + '</option>').join('') + '</select>',
+      'Ebben az időzónában kezdődik a nap, és ebben látszik minden időpont.') +
+    f('plLat', 'Tartalék koordináták', numIn('plLat', v.TartalekSzelesseg) + ' É  ' + numIn('plLon', v.TartalekHosszusag) + ' K',
+      fromData ? 'Most nem használt: az adatokban van koordináta (' + num(META.lat, 4) + '; ' + num(META.lon, 4) + ').' : '<b>Most ez számít</b>: az adatokban nincs koordináta (napkelte, hold, párolgás).') +
+    f('plElev', 'Tengerszint feletti magasság', numIn('plElev', elev, 80) + ' m', 'A párolgás (ET₀) számításához.') +
+    f('plH1', 'Hőség-figyelő (napi középhőmérséklet)', numIn('plH1', +t1.toFixed(1), 70) + ' ' + tlabel() + ' (I–II.)  ' + numIn('plH3', +t3.toFixed(1), 70) + ' ' + tlabel() + ' (III.)',
+      'A magyar hőségriasztás szerint 25 és 27 °C. A „Hőség” jelzés az Áttekintés Figyelő kártyáján.') +
+    f('plCur', 'Pénznem', '<input class="inp" id="plCur" maxlength="6" style="width:70px" value="' + esc(v.Penznem || 'Ft') + '">', 'A Víz alfül költségeihez.');
+}
+function plNum(id, lo, hi) {
+  const el = $(id), s = String(el.value).trim().replace(',', '.'), x = /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN;
+  const bad = isNaN(x) || x < lo || x > hi;
+  el.classList.toggle('bad', bad);
+  const err = $(id + 'Err') || $(id.replace(/Lon$/, 'Lat').replace(/H3$/, 'H1') + 'Err');
+  if (bad && err) err.textContent = '⚠ ' + num(lo, 0) + ' és ' + num(hi, 0) + ' között';
+  return bad ? null : x;
+}
+$('placeSave').addEventListener('click', async () => {
+  document.querySelectorAll('#placeBox .perr').forEach(e => e.textContent = '');
+  const lat = plNum('plLat', -90, 90), lon = plNum('plLon', -180, 180), elev = plNum('plElev', -500, 9000);
+  const h1 = plNum('plH1', units().temp === 'F' ? 59 : 15, units().temp === 'F' ? 104 : 40), h3 = plNum('plH3', units().temp === 'F' ? 59 : 15, units().temp === 'F' ? 104 : 40);
+  const name = $('plName').value.trim(), curc = $('plCur').value.trim();
+  if (/[=#]/.test(name)) { $('plNameErr').textContent = '⚠ „=” és „#” nem lehet benne'; return; }
+  if (!curc || /[=#]/.test(curc)) { $('plCurErr').textContent = '⚠ 1–6 karakter, pl. Ft, €, EUR'; return; }
+  if ([lat, lon, elev, h1, h3].some(x => x == null)) { $('placeMsg').className = 'msg err'; $('placeMsg').textContent = 'Javítsd a pirossal jelölt mezőket – nem mentettem.'; return; }
+  const msg = $('placeMsg'); msg.className = 'msg'; msg.textContent = 'Mentés…';
+  try {
+    await post('/api/ini', { HelyNev: name, Idozona: $('plTz').value, TartalekSzelesseg: lat, TartalekHosszusag: lon, HosegFigyelo1: +qback('temp', h1).toFixed(1), HosegFigyelo3: +qback('temp', h3).toFixed(1), Penznem: curc });
+    if (typeof DR !== 'undefined' && DR && DR.config.global.elevation !== elev) { DR.config.global.elevation = elev; await saveDroughtConfig(); }
+    if (typeof waitReload === 'function') await waitReload();
+    msg.className = 'msg ok'; msg.textContent = '✔ Mentve és újraszámolva.';
+    renderPlace();
+  } catch (e) { msg.className = 'msg err'; msg.textContent = '⚠ ' + e.message; }
+});
+
 // ------------------------------------------------------------------ a Beállítások fül megnyitásakor
 async function renderSettingsV2() {
   applyFont(); syncUnitButtons(); $('langSel').value = lang();
   try { renderScheduleV2(await api('/api/schedule')); } catch (e) { $('schedNow').textContent = 'nem lekérdezhető'; }
-  loadBackup(); loadChangelog();
+  loadBackup(); loadChangelog(); renderPlace().catch(e => { $('placeBox').textContent = 'Nem tölthető be: ' + e.message; });
   if (typeof renderCalib === 'function') renderCalib();
   if (typeof renderSuspect === 'function') renderSuspect($('suCard')).catch(e => { $('suCard').textContent = 'Nem tölthető be: ' + e.message; });
 }

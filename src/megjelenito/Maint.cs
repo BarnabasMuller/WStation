@@ -191,12 +191,15 @@ namespace Idojaras
             }
             var defs = Settings.Defaults();
             var o = new JW().Obj().Key("values").Obj();
-            foreach (var k in Settings.Editable.Keys) { string v; o.P(k, cur.TryGetValue(k, out v) ? v : (defs.ContainsKey(k) ? defs[k] : "")); }
+            var keys = Settings.Editable.Keys.Concat(Settings.TextKeys).ToList();
+            foreach (var k in keys) { string v; o.P(k, cur.TryGetValue(k, out v) ? v : (defs.ContainsKey(k) ? defs[k] : "")); }
             o.End().Key("defaults").Obj();
-            foreach (var k in Settings.Editable.Keys) o.P(k, defs.ContainsKey(k) ? defs[k] : "");
+            foreach (var k in keys) o.P(k, defs.ContainsKey(k) ? defs[k] : "");
             o.End().Key("ranges").Obj();
             foreach (var kv in Settings.Editable) { o.Key(kv.Key).Arr(); foreach (var x in kv.Value) o.Num(x, 2); o.EndArr(); }
             o.End();
+            // a választható időzónák (Beállítások › Helyszín)
+            o.Key("zones").Arr(); foreach (var z in Tz.Zones) o.Str(z[0]); o.EndArr();
             return o.End().ToString();
         }
     }

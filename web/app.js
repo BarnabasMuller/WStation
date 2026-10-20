@@ -1,7 +1,9 @@
 'use strict';
 /* Budaörsi időjárás – felület */
 
-const TZ = 'Europe/Budapest';
+let TZ = 'Europe/Budapest';   // a META-ból felülíródik (Beállítások › Helyszín › Időzóna)
+// a hely neve a felületen (Beállítások › Helyszín; alapból az állomás WU-helyneve)
+function placeName() { return (typeof META !== 'undefined' && META && (META.place || META.station)) || ''; }
 const $ = id => document.getElementById(id);
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -255,6 +257,7 @@ async function start() {
 
 async function loadAll(first) {
   META = await api('/api/meta');
+  if (META.settings && META.settings.tz && META.settings.tz !== TZ) { TZ = META.settings.tz; buildFormatters(); }
   TODAY = await api('/api/today');
   renderHeader(); renderToday(); renderFooter();
   if (typeof onDataLoaded === 'function') onDataLoaded();
@@ -306,7 +309,7 @@ function toast(msg, ms) {
 // ------------------------------------------------------------------ fejléc, lábléc
 function renderHeader() {
   const n = TODAY.now || {};
-  $('sub').textContent = META.station + ' · Budaörs · utolsó mérés: ' + dayLabel(Math.max(META.last, n.t || 0));
+  $('sub').textContent = META.station + (placeName() !== META.station ? ' · ' + placeName() : '') + ' · utolsó mérés: ' + dayLabel(Math.max(META.last, n.t || 0));
   const b = $('staleBanner');
   if (n.ageMin > 90) {
     b.textContent = 'Az utolsó mérés ' + relTime(n.t) + ' készült (' + F.full.format(n.t) + '). Kattints a Frissítés gombra az új adatok letöltéséhez.';
@@ -365,7 +368,7 @@ function renderToday() {
   $('today').innerHTML = `
     <div class="card hero">
       <div>
-        <h3>${isToday ? 'Most' : 'Utolsó mérés'} · Budaörs</h3>
+        <h3>${isToday ? 'Most' : 'Utolsó mérés'} · ${esc(placeName())}</h3>
         <div class="temp">${num(tconv(n.temp))}<sup>${tlabel()}</sup></div>
         <div class="line">Hőérzet <b>${ttext(n.feels)}</b> · Harmatpont <b>${ttext(n.dew)}</b>${yLine}</div>
       </div>
@@ -780,7 +783,7 @@ async function renderSettings() {
       '<dt>CSV fájlok</dt><dd>' + m.files.map(esc).join(', ') + '</dd>';
     $('about').innerHTML =
       '<dt>Verzió</dt><dd>' + esc(m.version) + '</dd>' +
-      '<dt>Állomás</dt><dd>' + esc(m.station) + ' · Budaörs (' + num(m.lat, 4) + ', ' + num(m.lon, 4) + ')</dd>' +
+      '<dt>Állomás</dt><dd>' + esc(m.station) + ' · ' + esc(placeName()) + ' (' + num(m.lat, 4) + ', ' + num(m.lon, 4) + (m.latSource === 'beállítás' ? ' – az adatokban nincs koordináta, a Beállítások › Helyszín tartalékértéke' : '') + ')</dd>' +
       '<dt>Mérések</dt><dd>' + num(m.n, 0) + ' db, ' + F.dayY.format(m.first) + ' – ' + F.dayY.format(m.last) + '</dd>' +
       '<dt>Gyanús mérések</dt><dd>' + num(m.flaggedRows, 0) + ' jelölve (semmi nincs törölve)</dd>' +
       '<dt>Adathiányok</dt><dd>' + m.gaps.length + ' db (> ' + m.settings.gapMinutes + ' perc)</dd>' +
