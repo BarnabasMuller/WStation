@@ -27,30 +27,48 @@ namespace Telepito
         public const string Root = "WStation";
         public const string LegacyRoot = "Időjárás";                  // 2.2.1-ig ez volt az alapmappa neve
         public const string LegacyShortcut = "Budaörsi időjárás.lnk"; // 2.2.1-ig ez volt a parancsikon neve
-        public const string Downloader = "Letöltő.exe";
-        public const string Viewer = "Megjelenítő.exe";
+        // a programfájlok neve a telepítő nyelvén (TERV_4 2. pont: pl. angolul Viewer.exe / Downloader.exe)
+        public static string Downloader { get { return Langs.FileName("downloader", Langs.Current); } }
+        public static string Viewer { get { return Langs.FileName("viewer", Langs.Current); } }
         public const string Data = "data";
         public const string DlApp = "appdata_letöltő";
         public const string ViewApp = "appdata_megjelenítő";
         public const string Shortcut = "WStation.lnk";
         public const string Changelog = "Változások.txt";
 
-        // beágyazott erőforrás -> fájlnév a telepített mappában
-        public static readonly string[][] Files =
+        // beágyazott erőforrás -> fájlnév a telepített mappában (a programok neve nyelvfüggő)
+        public static string[][] Files
         {
-            new[] { "bin/Letolto.exe", Downloader },
-            new[] { "bin/Megjelenito.exe", Viewer },
-            new[] { "docs/OLVASS_EL.txt", "OLVASS_EL.txt" },
-            new[] { "docs/Letolto_leiras.txt", "Letöltő – leírás.txt" },
-            new[] { "docs/Megjelenito_leiras.txt", "Megjelenítő – leírás.txt" },
-            new[] { "docs/VALTOZASOK.txt", Changelog },
-        };
+            get
+            {
+                return new[]
+                {
+                    new[] { "bin/Letolto.exe", Downloader },
+                    new[] { "bin/Megjelenito.exe", Viewer },
+                    new[] { "docs/OLVASS_EL.txt", "OLVASS_EL.txt" },
+                    new[] { "docs/Letolto_leiras.txt", "Letöltő – leírás.txt" },
+                    new[] { "docs/Megjelenito_leiras.txt", "Megjelenítő – leírás.txt" },
+                    new[] { "docs/VALTOZASOK.txt", Changelog },
+                };
+            }
+        }
+
+        // az első meglévő program a mappában, bármelyik nyelvi néven (null, ha nincs)
+        public static string FindExe(string dir, string kind)
+        {
+            foreach (var n in Langs.AllFileNames(kind)) { string p = Path.Combine(dir, n); if (File.Exists(p)) return p; }
+            return null;
+        }
 
         // korábbi verziók gyökérben hagyott fájljai -> hova kerülnek
         public static readonly string[] OldDownloaderFiles = { "WU_Letolto.exe", "OLVASS_EL.md", "Letolto.exe" };
         public static readonly string[] OldViewerFiles = { "Idojaras.exe", "Megjelenito.exe", "OLVASS_EL_megjelenito.md", "Microsoft.Web.WebView2.Core.dll",
                                                            "Microsoft.Web.WebView2.WinForms.dll", "WebView2Loader.dll", "WebView2_LICENSE.txt" };
-        public static readonly string[] ProcessNames = { "Megjelenítő", "Letöltő", "Megjelenito", "Letolto", "Idojaras", "WU_Letolto" };
+        static readonly string[] LegacyProcessNames = { "Megjelenito", "Letolto", "Idojaras", "WU_Letolto" };
+        public static IEnumerable<string> ProcessNames
+        {
+            get { return Langs.AllFileNames("viewer").Concat(Langs.AllFileNames("downloader")).Select(Path.GetFileNameWithoutExtension).Concat(LegacyProcessNames).Distinct(StringComparer.OrdinalIgnoreCase); }
+        }
     }
 
     enum Found { Empty, Current, Older, Newer, OldLayout }
@@ -80,7 +98,7 @@ namespace Telepito
         {
             try
             {
-                return File.Exists(Path.Combine(d, Names.Viewer)) || File.Exists(Path.Combine(d, Names.Downloader))
+                return Names.FindExe(d, "viewer") != null || Names.FindExe(d, "downloader") != null
                     || (Directory.Exists(Path.Combine(d, Names.Data)) && Directory.Exists(Path.Combine(d, Names.DlApp)))
                     || (File.Exists(Path.Combine(d, "Idojaras.exe")) && File.Exists(Path.Combine(d, "WebView2Loader.dll")));
             }
@@ -117,8 +135,8 @@ namespace Telepito
             if (!Directory.Exists(target)) { s.Kind = Found.Empty; s.Text = "Új telepítés: létrejön az „" + Path.GetFileName(target) + "” mappa a programokkal, leírásokkal és a data, " + Names.DlApp + ", " + Names.ViewApp + " mappákkal."; }
             else
             {
-                var vv = ExeVersion(Path.Combine(target, Names.Viewer));
-                var vd = ExeVersion(Path.Combine(target, Names.Downloader));
+                var vv = ExeVersion(Names.FindExe(target, "viewer") ?? Path.Combine(target, Names.Viewer));
+                var vd = ExeVersion(Names.FindExe(target, "downloader") ?? Path.Combine(target, Names.Downloader));
                 var v1 = ExeVersion(Path.Combine(target, "Idojaras.exe"));
                 s.Installed = new[] { vv, vd, v1 }.Where(v => v != null).OrderByDescending(v => v).FirstOrDefault();
                 bool rootCsv = Directory.GetFiles(target, "*.csv").Any(IsObsCsv);
@@ -266,6 +284,29 @@ namespace Telepito
                 }
                 r.Log.Add("programok és leírások: " + (r.Updated ? "frissítve" : "telepítve"));
 
+                // más nyelvű nevek eltávolítása (nyelvváltás, ill. a 2.2.1-es magyar nevekről), hogy ne legyen két Megjelenítő
+                foreach (var kind in new[] { "viewer", "downloader" })
+                {
+                    string keep = kind == "viewer" ? Names.Viewer : Names.Downloader;
+                    foreach (var n in Langs.AllFileNames(kind))
+                    {
+                        string p = Path.Combine(target, n);
+                        if (n.Equals(keep, StringComparison.OrdinalIgnoreCase) || !File.Exists(p)) continue;
+                        try { Guard.Delete(p); r.Log.Add("más nyelvű program törölve: " + n); } catch { }
+                    }
+                }
+                foreach (var f in Names.Files.Where(x => x[0].StartsWith("docs/")))
+                {
+                    string cur = LocalDoc(asm, f[0]) != f[0] ? Langs.T(f[1]) : f[1];
+                    foreach (var c in new[] { "hu" }.Concat(Langs.Codes()))
+                    {
+                        string other = c == "hu" ? f[1] : Langs.T(f[1], c);
+                        string p = Path.Combine(target, other);
+                        if (other.Equals(cur, StringComparison.OrdinalIgnoreCase) || !File.Exists(p)) continue;
+                        try { Guard.Delete(p); } catch { }
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(importFrom) && Norm(importFrom) != Norm(target))
                 {
                     progress("Meglévő adatok átvétele...", 75);
@@ -291,7 +332,15 @@ namespace Telepito
                 string msg;
                 try
                 {
-                    if (scheduleMinutes < 0) msg = "Automatikus letöltés: változatlan (" + Utemezes.Text(Utemezes.QuerySpec()) + ").";
+                    if (scheduleMinutes < 0)
+                    {
+                        // marad az ütemezés, de ha a feladat egy (most törölt) más nevű Letöltőre mutat, átirányítjuk
+                        var spec = Utemezes.QuerySpec();
+                        string dl = Path.Combine(target, Names.Downloader);
+                        if (spec.kind != "off" && (spec.exe == null || Norm(spec.exe) != Norm(dl)) && (spec.exe == null || Norm(Path.GetDirectoryName(spec.exe)) == Norm(target)))
+                            Utemezes.SetSpec(dl, spec, out msg);
+                        else msg = "Automatikus letöltés: változatlan (" + Utemezes.Text(spec) + ").";
+                    }
                     else if (scheduleMinutes > 0) Utemezes.Set(Path.Combine(target, Names.Downloader), scheduleMinutes, out msg);
                     else if (survey.ScheduleMinutes > 0) Utemezes.Remove(out msg);
                     else msg = "Automatikus letöltés: kikapcsolva.";

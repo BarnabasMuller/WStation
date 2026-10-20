@@ -16,7 +16,8 @@ namespace Idojaras
         public const string DataName = "data";
         public const string AppName = "appdata_megjelenítő";
         public const string DlAppName = "appdata_letöltő";
-        public static readonly string[] DownloaderNames = { "Letöltő.exe", "Letolto.exe", "WU_Letolto.exe" };
+        // a Letöltő bármelyik nyelvi nevén (a telepítő nyelvétől függ, pl. Downloader.exe), és a régi nevein
+        public static IEnumerable<string> DownloaderNames { get { return Langs.AllFileNames("downloader").Concat(new[] { "Letolto.exe", "WU_Letolto.exe" }); } }
 
         public string Base, Data, App, Cache, Lib, DlApp;
 

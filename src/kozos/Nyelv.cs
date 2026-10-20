@@ -60,6 +60,31 @@ static class Langs
         return d != null && d.TryGetValue("_meta", out m) ? m as Dictionary<string, object> : null;
     }
 
+    // a programfájlok neve az adott nyelven (a telepítő nyelve szerint): _meta.files.viewer / .downloader
+    public static readonly Dictionary<string, string> HuFiles = new Dictionary<string, string> { { "viewer", "Megjelenítő.exe" }, { "downloader", "Letöltő.exe" } };
+    public static string FileName(string kind, string code)
+    {
+        if (code != null && code != "hu")
+        {
+            var m = Meta(code);
+            object f, v;
+            if (m != null && m.TryGetValue("files", out f) && f is Dictionary<string, object> && ((Dictionary<string, object>)f).TryGetValue(kind, out v))
+            {
+                string s = Convert.ToString(v).Trim();
+                // csak egyszerű fájlnév (mappa, tiltott karakter nélkül), .exe végződéssel
+                if (s.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && s.Length > 4 && s.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0) return s;
+            }
+        }
+        return HuFiles[kind];
+    }
+    // minden ismert név (minden nyelv), a régi telepítések és a nyelvváltás felismeréséhez
+    public static List<string> AllFileNames(string kind)
+    {
+        var res = new List<string> { HuFiles[kind] };
+        foreach (var c in Codes()) { string n = FileName(kind, c); if (!res.Contains(n, StringComparer.OrdinalIgnoreCase)) res.Add(n); }
+        return res;
+    }
+
     // [{code, name, locale}] – a magyar mindig az első
     public static string ListJson()
     {

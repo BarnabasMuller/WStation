@@ -1,5 +1,5 @@
 {
-  "_meta": { "code": "xx", "name": "A nyelv neve a saját nyelvén", "locale": "xx-XX", "dirs": ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"] },
+  "_meta": { "code": "xx", "name": "A nyelv neve a saját nyelvén", "locale": "xx-XX", "dirs": ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"], "files": { "viewer": "A Megjelenítő exe neve ezen a nyelven, pl. Viewer.exe", "downloader": "A Letöltő exe neve, pl. Downloader.exe" } },
   "% (hónap elején": "",
   "% (stresszhatár, RAW": "",
   "% kiszáradás": "",

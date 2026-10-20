@@ -11,11 +11,14 @@ A program magyarul készül; minden más nyelv **egy-egy fájl**, a kódot nem k
 2. Töltsd ki a `_meta` részt:
    ```json
    "_meta": { "code": "it", "name": "Italiano", "locale": "it-IT",
-              "dirs": ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"] }
+              "dirs": ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+              "files": { "viewer": "Visualizzatore.exe", "downloader": "Scaricatore.exe" } }
    ```
    - `name`: a nyelv neve a saját nyelvén (ez jelenik meg a listában),
    - `locale`: a szám- és dátumformátumhoz (pl. `it-IT`),
-   - `dirs`: a 16 égtáj rövidítése, északtól az óramutató járása szerint.
+   - `dirs`: a 16 égtáj rövidítése, északtól az óramutató járása szerint,
+   - `files`: a két program fájlneve ezen a nyelven (a telepítő ezen a néven másolja be őket;
+     ha üres vagy hiányzik, a magyar `Megjelenítő.exe` / `Letöltő.exe` marad).
 3. Írd be a fordításokat: minden sor `"magyar szöveg": "fordítás"`. Ami üresen marad, az magyarul jelenik meg.
    - A hónapok és a napok nevét a program magától adja a `locale` alapján.
    - Ahol a magyar szöveg darabokban áll (pl. `"A feltöltéshez kb"`), a fordítás is darab legyen.

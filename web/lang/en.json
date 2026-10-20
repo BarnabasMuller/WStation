@@ -1,5 +1,5 @@
 {
-  "_meta": { "code": "en", "name": "English", "locale": "en-GB", "dirs": ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"] },
+  "_meta": { "code": "en", "name": "English", "locale": "en-GB", "dirs": ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"], "files": { "viewer": "Viewer.exe", "downloader": "Downloader.exe" } },
   "% (hónap elején": "% (start of month",
   "% (stresszhatár, RAW": "% (stress threshold, RAW",
   "% kiszáradás": "% depletion",

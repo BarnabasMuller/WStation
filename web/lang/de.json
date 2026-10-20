@@ -1,5 +1,5 @@
 {
-  "_meta": { "code": "de", "name": "Deutsch", "locale": "de-DE", "dirs": ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"] },
+  "_meta": { "code": "de", "name": "Deutsch", "locale": "de-DE", "dirs": ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"], "files": { "viewer": "Anzeige.exe", "downloader": "Downloader.exe" } },
   "% (hónap elején": "% (Monatsanfang",
   "% (stresszhatár, RAW": "% (Stressgrenze, RAW",
   "% kiszáradás": "% Austrocknung",

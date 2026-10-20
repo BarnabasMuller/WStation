@@ -1,5 +1,5 @@
 {
-  "_meta": { "code": "es", "name": "Español", "locale": "es-ES", "dirs": ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"] },
+  "_meta": { "code": "es", "name": "Español", "locale": "es-ES", "dirs": ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO"], "files": { "viewer": "Visor.exe", "downloader": "Descargador.exe" } },
   "% (hónap elején": "% (inicio del mes",
   "% (stresszhatár, RAW": "% (umbral de estrés, RAW",
   "% kiszáradás": "% de agotamiento",
