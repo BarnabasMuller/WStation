@@ -177,7 +177,7 @@ function renderDrCards() {
   const n = DR.n, h = [];
   // ET0 kártya
   const et7 = sumLast(DR.et0, 7), rain7 = sumLast(DR.rain, 7);
-  h.push('<div class="card dr-card"><button class="qbtn" data-q="et0" title="Képlet és beállítások">ƒx</button><h3>☀️ Párolgás (ET₀)</h3>' +
+  h.push('<div class="card dr-card"><button class="qbtn" data-q="et0" title="Képlet és beállítások" aria-label="Párolgás – képlet és beállítások">ƒx</button><h3>☀️ Párolgás (ET₀)</h3>' +
     '<div class="big">' + num(rconv(last(DR.et0)), rdec(1)) + '<small>' + rlabel() + '/nap</small></div>' +
     '<div class="line">Utolsó 7 nap: <b>' + rtext(et7, 1) + '</b> párolgás · <b>' + rtext(rain7, 1) + '</b> eső</div>' +
     '<div class="line">Vízmérleg (7 nap): <b class="' + (rain7 - et7 < 0 ? 'neg' : 'pos') + '">' + signed(rconv(rain7 - et7), rdec(1)) + ' ' + rlabel() + '</b></div>' +
@@ -199,7 +199,7 @@ function renderDrCards() {
         (r.reserveL ? '<div class="line small">Belső víztartalék ≈ ' + fmtL(r.reserveL) + (r.reserveDays ? ' (~' + num(r.reserveDays, 1) + ' napi szükséglet)' : '') + '</div>' : '');
     }
     if (p.type === 'felszin') extra += '<div class="line small">A felső 10 cm: egy eső után gyorsan nedves, napok alatt kiszárad.</div>';
-    h.push('<div class="card dr-card"><button class="qbtn" data-q="p:' + p.id + '" title="Képlet és beállítások">ƒx</button>' +
+    h.push('<div class="card dr-card"><button class="qbtn" data-q="p:' + p.id + '" title="Képlet és beállítások" aria-label="' + esc(p.name) + ' – képlet és beállítások">ƒx</button>' +
       '<h3>' + TYPE_ICON[p.type] + ' ' + ut(p.name) + '</h3>' +
       '<div class="big" style="color:' + drColor(depl) + '">' + num(depl * 100, 0) + '<small>% kiszáradás</small> <button class="qmini" data-depl="' + p.id + '" title="0% = a gyökérzóna „vödre” tele, 100% = üres (hervadáspont). A jelölt vonal a stresszhatár. Kattints a részletekért.">?</button></div>' +
       '<div class="bar"><span style="width:' + Math.min(100, depl * 100) + '%;background:' + drColor(depl) + '"></span><i style="left:' + (raw / taw * 100) + '%" title="stresszhatár (RAW)"></i></div>' +
@@ -240,7 +240,7 @@ function renderDrChart() {
     tooltip: { trigger: 'axis', confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink, fontSize: fs(12.5) },
       formatter: ps => '<b>' + DS.fmt(DS.str(ps[0].axisValue), { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + '</b><br>' +
         ps.filter(p => p.data[1] != null).map(p => p.marker + ' ' + esc(p.seriesName) + ': <b>' + (series[p.seriesIndex] && series[p.seriesIndex].yAxisIndex === 0 ? num(p.data[1], 1) + ' %' : num(p.data[1], rdec(1)) + ' ' + rlabel()) + '</b>').join('<br>') },
-    xAxis: { type: 'time', min: start, max: end + D / 2, axisLabel: { color: muted, formatter: v => F.day.format(v) }, axisLine: { lineStyle: { color: line } } },
+    xAxis: { type: 'time', min: start, max: end + D / 2, axisLabel: { color: muted, formatter: dayAxisFmt, hideOverlap: true }, axisLine: { lineStyle: { color: line } } },
     yAxis: [
       { type: 'value', min: 0, max: 100, name: 'kiszáradás %', nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .6 } } },
       { type: 'value', min: 0, name: rlabel(), nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { show: false } }
@@ -553,7 +553,7 @@ async function renderDroughtExtras() {
   const c = DR.config, cards = [];
   // FWI
   const fwi = last(DR.fwi), [fname, fcol] = fwiClass(fwi);
-  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="fwi">?</button><h3>🔥 Tűzveszély (kanadai FWI)</h3>' +
+  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="fwi" title="Képlet és beállítások" aria-label="Tűzveszély – képlet és beállítások">ƒx</button><h3>🔥 Tűzveszély (kanadai FWI)</h3>' +
     '<div class="big" style="color:' + fcol + '">' + num(fwi, 0) + '<small>' + fname + '</small></div>' +
     (DR.fwiEst && last(DR.fwiEst) ? '<div class="line small muted" title="Az utolsó adatnapon délben nem volt mérés: a legközelebbi méréssel vagy a nap értékeivel pótolva.">⚠ becsült (hiányos dél)</div>' : '') +
     '<div class="line">Fű, avar (FFMC): <b>' + num(last(DR.ffmc), 0) + '</b> · felső talaj (DMC): <b>' + num(last(DR.dmc), 0) + '</b> · mély talaj, fák (DC): <b>' + num(last(DR.dc), 0) + '</b></div>' +
@@ -562,7 +562,7 @@ async function renderDroughtExtras() {
   const v = c.vpd, nowV = TODAY && TODAY.now && TODAY.now.temp != null && TODAY.now.hum != null ? 0.6108 * Math.exp(17.27 * TODAY.now.temp / (TODAY.now.temp + 237.3)) * (1 - TODAY.now.hum / 100) : null;
   const vband = x => x == null ? ['–', ''] : x < v.low ? ['túl nedves', 'mild'] : x < v.idealLo ? ['alacsony', 'ok'] : x <= v.idealHi ? ['ideális', 'ok'] : x <= v.high ? ['emelkedett', 'mild'] : x <= v.severe ? ['stressz', 'strong'] : ['erős stressz', 'severe'];
   const vmax = d.vpd[d.vpd.length - 1], v7 = d.vpd.slice(-7).filter(x => x != null);
-  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="vpd">?</button><h3>🍃 Páranyomás-hiány (VPD)</h3>' +
+  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="vpd" title="Képlet és beállítások" aria-label="Páranyomás-hiány – képlet és beállítások">ƒx</button><h3>🍃 Páranyomás-hiány (VPD)</h3>' +
     '<div class="big">' + num(nowV, 2) + '<small>kPa most</small></div>' +
     '<div class="line"><span class="tag ' + vband(nowV)[1] + '">' + vband(nowV)[0] + '</span> napi max: <b>' + num(vmax, 2) + ' kPa</b> (' + vband(vmax)[0] + ')</div>' +
     '<div class="line small">Az utolsó 7 nap napi maximumainak átlaga: ' + num(v7.length ? v7.reduce((a, b) => a + b, 0) / v7.length : null, 2) + ' kPa</div></div>');
@@ -577,7 +577,7 @@ async function renderDroughtExtras() {
     const bloom = (Array.isArray(diary) ? diary : []).filter(x => x.tag === 'virágzás' && x.date && DR.idx[x.date] !== undefined);
     if (bloom.length) diaryLine = '<div class="line small">A naplód szerint: ' + bloom.map(x => esc(x.text || 'virágzás') + ' – ' + num(tdconv(DR.gddPheno[DR.idx[x.date]]), 0) + ' ' + tlabel() + '·nap (' + x.date.slice(5) + ')').join('; ') + '</div>';
   } catch (e) { }
-  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="gdd">?</button><h3>🌡️ Hőösszeg (GDD)</h3>' +
+  cards.push('<div class="card dr-card"><button class="qbtn" data-q2="gdd" title="Képlet és beállítások" aria-label="Hőösszeg – képlet és beállítások">ƒx</button><h3>🌡️ Hőösszeg (GDD)</h3>' +
     '<div class="big">' + num(tdconv(cum), 0) + '<small>' + tlabel() + '·nap (' + ttext(g.baseT, 0) + ' felett)</small></div>' +
     '<div class="line">' + ttext(5, 0) + ' felett: <b>' + num(tdconv(pcum), 0) + '</b> ' + tlabel() + '·nap' + (ph ? ' · rügyfakadás: <b>' + ph[0].slice(5).replace('-', '.') + '.</b>, teljes lomb: <b>' + ph[1].slice(5).replace('-', '.') + '.</b>' : '') + '</div>' +
     '<ul class="mini-list">' + reach + '</ul>' + diaryLine +
@@ -602,7 +602,7 @@ function renderFwiChart() {
     tooltip: { trigger: 'axis', confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink },
       formatter: ps => '<b>' + F.dayY.format(ps[0].axisValue) + '</b><br>' + ps.filter(p => p.value && p.value[1] != null).map(p => p.marker + ' ' + p.seriesName + ': <b>' +
         (p.seriesIndex === 2 ? rtext(p.value[2], 1) : p.seriesIndex === 1 ? num(p.value[1], 0) + ' ' + tlabel() + '·nap' : num(p.value[1], 1) + ' (' + fwiClass(p.value[1])[0] + ')') + '</b>').join('<br>') },
-    xAxis: { type: 'time', min: start, max: end + D / 2, axisLabel: { color: muted, formatter: v => F.day.format(v) } },
+    xAxis: { type: 'time', min: start, max: end + D / 2, axisLabel: { color: muted, formatter: dayAxisFmt, hideOverlap: true } },
     yAxis: [{ type: 'value', name: 'FWI', min: 0, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .5 } } },
             { type: 'value', name: tlabel() + '·nap', min: 0, nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { show: false } },
             { type: 'value', name: 'eső, ' + rlabel(), min: 0, position: 'right', offset: 56, nameTextStyle: { color: cssVar('--c-rain') }, axisLabel: { color: cssVar('--c-rain') }, splitLine: { show: false } }],

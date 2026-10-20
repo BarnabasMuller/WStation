@@ -52,7 +52,7 @@ async function renderRain() {
     title: [{ text: 'Havi csapadék', left: 4, top: 4, textStyle: { color: ink, fontSize: fs(13) } }, { text: 'Esőesemények (pont mérete: max. intenzitás)', left: 4, top: 210, textStyle: { color: ink, fontSize: fs(13) } }],
     tooltip: { confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink } },
     xAxis: [{ type: 'category', gridIndex: 0, data: mk.map(m => MONTHS_HU[+m.slice(5) - 1] + (st.year ? '' : ' ' + m.slice(2, 4))), axisLabel: { color: muted } },
-            { type: 'time', gridIndex: 1, axisLabel: { color: muted, formatter: v => F.day.format(v) } }],
+            { type: 'time', gridIndex: 1, axisLabel: { color: muted, formatter: dayAxisFmt, hideOverlap: true } }],
     yAxis: [{ type: 'value', gridIndex: 0, name: rlabel(), nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .5 } } },
             { type: 'value', gridIndex: 1, name: rlabel(), nameTextStyle: { color: muted }, axisLabel: { color: muted }, splitLine: { lineStyle: { color: line, opacity: .5 } } }],
     series: [

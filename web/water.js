@@ -142,8 +142,10 @@ function renderWaterUse() {
 
   // csempés naptár: napi vízigény literben
   const years = [...new Set(DR.date.filter(inR).map(s => s.slice(0, 4)))];
-  const el = $('wCal'), W = el.clientWidth || 900, cs = Math.max(9, Math.min(20, Math.floor((W - 110) / 54)));
-  el.style.height = (50 + years.length * (cs * 7 + 40)) + 'px';
+  // a cellaméret és a feliratközök a betűmérettel nőnek (6.32), a magasság pont akkora, amennyi kell (6.20)
+  const el = $('wCal'), W = el.clientWidth || 900, cs = Math.max(fs(9) + 4, Math.min(20, Math.floor((W - 110) / 54)));
+  const top0 = fs(13) + fs(10) * 2 + 24, yGap = fs(10) * 2 + 18, left0 = 30 + fs(9) * 3;
+  el.style.height = (top0 + years.length * (cs * 7 + yGap)) + 'px';
   if (wCal && !wCal.isDisposed()) wCal.dispose();
   wCal = echarts.init(el);
   const data = DR.date.map((s, i) => inR(s) ? [s, Math.round(dayNeed[i])] : null).filter(Boolean);
@@ -152,8 +154,8 @@ function renderWaterUse() {
     animation: false,
     title: { text: 'Napi vízigény (liter)', left: 4, top: 0, textStyle: { color: ink, fontSize: fs(13) } },
     tooltip: { confine: true, backgroundColor: card, borderColor: line, textStyle: { color: ink }, formatter: p => { const i = DR.idx[p.data[0]]; return DS.fmt(p.data[0], { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + '<br>vízigény: <b>' + fmtL(p.data[1]) + '</b><br>öntözés: ' + fmtL(dayUse[i]) + ' · eső: ' + rtext(DR.rain[i], 1) + ' · ET₀: ' + rtext(DR.et0[i], 1); } },
-    visualMap: { min: 0, max: mx, orient: 'horizontal', right: 10, top: 0, itemHeight: 140, textStyle: { color: muted }, inRange: { color: ['#f1f5f9', '#fde68a', '#f59e0b', '#c2410c'] }, calculable: false },
-    calendar: years.map((y, k) => ({ range: y, top: 44 + k * (cs * 7 + 40), left: 60, cellSize: [cs, cs], splitLine: { show: false }, itemStyle: { color: cssVar('--empty'), borderColor: card, borderWidth: 2 },
+    visualMap: { min: 0, max: mx, orient: 'horizontal', right: 10, top: 0, itemHeight: 140, text: [fmtL(mx), '0 l'], textStyle: { color: muted }, inRange: { color: ['#f1f5f9', '#fde68a', '#f59e0b', '#c2410c'] }, calculable: false },
+    calendar: years.map((y, k) => ({ range: y, top: top0 + k * (cs * 7 + yGap), left: left0, cellSize: [cs, cs], splitLine: { show: false }, itemStyle: { color: cssVar('--empty'), borderColor: card, borderWidth: 2 },
       yearLabel: { position: 'left', color: ink }, dayLabel: { firstDay: 1, nameMap: DAY_NAMES, color: muted, fontSize: fs(9) }, monthLabel: { nameMap: MONTHS_HU, color: muted, fontSize: fs(10) } })),
     series: years.map((y, k) => ({ type: 'heatmap', coordinateSystem: 'calendar', calendarIndex: k, data: data.filter(d => d[0].startsWith(y)) }))
   }, true);

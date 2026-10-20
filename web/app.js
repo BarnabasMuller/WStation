@@ -155,6 +155,10 @@ function resizeVisibleCharts() {
 }
 window.addEventListener('resize', () => { clearTimeout(resizeVisibleCharts._t); resizeVisibleCharts._t = setTimeout(resizeVisibleCharts, 100); });
 
+// sima görgő = oldalgörgetés a grafikonok fölött is; nagyítás csak Ctrl + görgővel (6.14).
+// Az ECharts a vásznon elkapná a görgetést, ezért Ctrl nélkül a szülőn megállítjuk, mielőtt odaérne.
+document.addEventListener('wheel', e => { if (!e.ctrlKey && e.target.closest && e.target.closest('[_echarts_instance_]')) e.stopPropagation(); }, { capture: true, passive: true });
+
 // a grafikonok alap betűmérete (tengelyfeliratok stb.) is kövesse a beállítást
 (function () {
   const init0 = echarts.init;
@@ -403,7 +407,7 @@ function renderToday() {
   const dayLong = t.date ? new Intl.DateTimeFormat(numLocale(), { timeZone: 'UTC', weekday: 'long' }).format(Date.parse(t.date + 'T12:00:00Z')) : '';
   if (y.monthTmaxAvg != null && t.tmax != null) {
     const d = t.tmax - y.monthTmaxAvg, mi = new Date(t.date + 'T12:00:00').getMonth();
-    const v = { day: dayLong, t: '<b>' + ttext(t.tmax) + '</b>', d: '<b>' + tdtext(Math.abs(d)) + '</b>', month: MONTH_ADJ[mi], avg: ttext(y.monthTmaxAvg) };
+    const v = { day: dayLong.charAt(0).toUpperCase() + dayLong.slice(1), t: '<b>' + ttext(t.tmax) + '</b>', d: '<b>' + num(tdconv(Math.abs(d)), 1) + '</b>', month: MONTH_ADJ[mi], avg: ttext(y.monthTmaxAvg) };
     year.push(Math.abs(d) < 0.5
       ? tf(isToday ? 'Ma eddig {t} volt a legmelegebb – nagyjából annyi, mint egy átlagos {month} napon ({avg}).' : '{day}: {t} volt a legmelegebb – nagyjából annyi, mint egy átlagos {month} napon ({avg}).', v)
       : d > 0 ? tf(isToday ? 'Ma eddig {t} volt a legmelegebb – {d} fokkal melegebb egy átlagos {month} napnál ({avg}).' : '{day}: {t} volt a legmelegebb – {d} fokkal melegebb egy átlagos {month} napnál ({avg}).', v)
@@ -496,6 +500,8 @@ const PANELS = [
 ];
 const SERIES_INFO = {}; // id -> { unit, dec }
 
+// napos időtengely felirata: a hónap első napján csak a hónapnév, és az ütköző feliratok elrejtve (6.16: „aug. 29 aug. 1.”)
+function dayAxisFmt(v) { const s = F.ymd.format(v); return s.endsWith('-01') ? new Intl.DateTimeFormat(numLocale(), { timeZone: TZ, month: 'short' }).format(v) : F.day.format(v); }
 function axisFmt(v) {
   if (span > 120 * D) return F.month.format(v);
   const hm = F.hour.format(v);

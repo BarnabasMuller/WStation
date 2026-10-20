@@ -100,11 +100,16 @@ main { padding: 20px 28px 8px; max-width: 1800px; margin: 0 auto; }
 
 /* Ma kártyák */
 .today {
+  /* 4 oszlop, sűrű kitöltéssel: a kis kártyák befoltozzák a széles kártyák melletti réseket (6.12, 7.16) */
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: row dense;
   gap: 16px;
   margin-bottom: 20px;
 }
+.today > .wide, .today > .sky { grid-column: span 2; }
+@media (max-width: 1100px) { .today { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .today { grid-template-columns: minmax(0, 1fr); } .today > .wide, .today > .sky, .today > .hero { grid-column: auto; } }
 .card {
   background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
   padding: 16px 18px; min-height: 150px; position: relative;
@@ -264,7 +269,8 @@ svg.dir { fill: var(--c-wind); vertical-align: middle; }
 .pop-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; font-size: max(13.5px, var(--minf)); }
 .pop-list label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
 .pop-note { color: var(--muted); font-size: max(11.5px, var(--minf)); margin-top: 10px; }
-@media (max-width: 1250px) { .wk-grid { grid-template-columns: repeat(7, 150px); } }
+/* keskenyebb ablakban a 7 nap több sorba törik, nincs vízszintes görgetés (6.13) */
+@media (max-width: 1250px) { .wk-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); overflow-x: visible; } }
 /* szárazság */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; font-size: max(13px, var(--minf)); font-weight: 600; user-select: none; }
@@ -275,7 +281,8 @@ svg.dir { fill: var(--c-wind); vertical-align: middle; }
 .dr-card { background: var(--bg); box-shadow: none; min-height: 0; }
 .dr-card .line { font-size: max(13px, var(--minf)); }
 .dr-card .small, .line.small { font-size: max(12px, var(--minf)); }
-.qbtn { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--accent); font-weight: 700; cursor: pointer; }
+/* ƒx = képlet és beállítások, ? = magyarázat – egységesen (6.19) */
+.qbtn { position: absolute; top: 12px; right: 12px; min-width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--accent); font: italic 600 max(12px, var(--minf)) Georgia, serif; cursor: pointer; }
 .qbtn:hover { background: var(--accent-bg); color: var(--accent-ink); }
 .bar { position: relative; height: 8px; background: var(--line); border-radius: 8px; margin: 8px 0 6px; overflow: visible; }
 .bar span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; }
@@ -341,6 +348,7 @@ b.pos, .pos { color: #16a34a; }
 .watch-list .wi { width: 22px; text-align: center; flex: none; }
 .watch-list a { color: var(--accent); }
 .moon { position: absolute; right: 16px; top: 12px; font-size: 40px; }
+.sky .line:first-of-type { padding-right: 52px; }   /* a holdikon ne takarja a napnyugtát */
 .mini-list { margin: 4px 0; padding-left: 18px; font-size: max(13px, var(--minf)); }
 .card.mini { min-height: 0; background: var(--bg); box-shadow: none; }
 .card.mini .big { font-size: max(24px, calc(var(--minf) + 6px)); }
@@ -531,3 +539,40 @@ ol.steps li { margin: 6px 0; line-height: 1.5; }
 .cdlg-card .cdlg-msg { color: var(--ink); font-size: max(16px, calc(var(--minf) + 2px)); font-weight: 600; margin: 0 0 6px; }
 .cdlg-btns { justify-content: flex-end; margin-top: 16px; }
 [inert] { pointer-events: none; }
+
+/* fejléc: ha nem fér ki, a fülsor új sorba törik, semmi nem lóg ki (7.12: 1366 px-en is vízszintes görgetés volt) */
+.topbar { flex-wrap: wrap; row-gap: 10px; }
+.brand { flex: 0 1 auto; min-width: 0; }
+.tabs { flex: 1 1 560px; min-width: 0; }
+.actions { flex: none; }
+.kv dd, .kv dt { overflow-wrap: anywhere; }   /* hosszú mappaútvonalak (6.31) */
+/* keskeny ablak (~400 px), nagy betűvel is (6.31): nem ragadós, összecsukott fejléc, egysoros görgethető fülsor */
+@media (max-width: 700px) {
+  .topbar { position: static; padding: 8px 12px; }
+  .brand .sub { display: none; }
+  .logo { width: 32px; height: 32px; }
+  .tabs { order: 3; flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+  .tabs button { flex: none; }
+  main { padding: 12px 12px 8px; }
+  #ranges, .seg { flex-wrap: wrap; }
+}
+/* keskeny ablakban semmi ne lógjon ki (6.31) */
+.two-col > *, .rep-grid > *, .settings > * { min-width: 0; }
+#alertBox, .su-params, .tablewrap { overflow-x: auto; max-width: 100%; }
+.settings .row2 > label { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .rep-grid { grid-template-columns: minmax(0, 1fr); }
+  .rep-recs { grid-template-columns: minmax(0, 1fr); }
+  .settings { grid-template-columns: minmax(0, 1fr); }
+}
+select.sel, .settings select { max-width: 100%; }
+/* Riasztások: címke | mező + egység + irány egy sorban, a hibaüzenet alatta (6.27) */
+.al-tab td:nth-child(2) { white-space: nowrap; padding-right: 12px; }
+.al-tab td:nth-child(3) { white-space: nowrap; }
+.al-tab td:nth-child(3) .perr { display: block; white-space: normal; }
+/* Beállítások: hasábos (falazott) elrendezés – a különböző magasságú kártyák alatt nem marad üres hely (6.28) */
+.settings { display: block; column-width: 380px; column-gap: 16px; }
+.settings > .card { break-inside: avoid; margin-bottom: 16px; width: 100%; display: inline-block; vertical-align: top; }
+.settings > .card.wide { column-span: all; display: block; }
+.seg button { white-space: nowrap; }
+.settings .seg { flex-wrap: wrap; }

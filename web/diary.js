@@ -72,18 +72,19 @@ function diaryFor(dateStr) { return (DIARY || []).filter(x => x.date === dateStr
 // ------------------------------------------------------------------ riasztások (a Letöltő beállításai)
 // [kapcsoló, érték, felirat, egység utáni szöveg, mennyiség, érvényes tartomány (metrikusan)]
 const ALERT_UI = [
-  ['RiasztasFagy', 'FagyHatar', 'Fagyveszély', 'alatt (vagy egyenlő)', 'temp', [-30, 10]],
-  ['RiasztasNyomas', 'NyomasEses3h', 'Gyors nyomásesés', '/ 3 óra', 'presd', [0.5, 20]],
-  ['RiasztasSzel', 'LokesHatar', 'Erős szél (lökés)', 'felett', 'wind', [10, 200]],
-  ['RiasztasEso', 'EsoIntenzitas', 'Felhőszakadás', 'felett', 'rate', [1, 300]],
-  ['RiasztasHoseg', 'HosegHatar', 'Hőség', 'felett', 'temp', [20, 45]]
+  // a feliratok közérthetően, az egység és az irány mindig a mező mögött, egy sorban (6.27, 7.31)
+  ['RiasztasFagy', 'FagyHatar', 'Fagyveszély', 'vagy hidegebb', 'temp', [-30, 10]],
+  ['RiasztasNyomas', 'NyomasEses3h', 'Gyors nyomásesés', 'csökkenés 3 óra alatt', 'presd', [0.5, 20]],
+  ['RiasztasSzel', 'LokesHatar', 'Erős széllökés', 'vagy erősebb', 'wind', [10, 200]],
+  ['RiasztasEso', 'EsoIntenzitas', 'Felhőszakadás', 'vagy hevesebb', 'rate', [1, 300]],
+  ['RiasztasHoseg', 'HosegHatar', 'Hőség', 'vagy melegebb', 'temp', [20, 45]]
 ];
 async function renderAlerts() {
   let a;
   try { a = await api('/api/alerts'); } catch (e) { return; }
   // teendővel (7.28): mi a gond, és mit tegyen a felhasználó
   $('alertBox').innerHTML = (a.hasIni ? '' : '<p class="msg err">A riasztások még nem állíthatók, mert a program még nem töltött le adatot. Kattints a <b>Frissítés</b> gombra (jobb felül), utána itt beállíthatod őket. <button class="btn small" id="alertRefresh">Frissítés most</button></p>') +
-    '<table class="ptable small"><tbody>' + ALERT_UI.map(([on, val, label, unit, q]) => {
+    '<table class="ptable small al-tab"><tbody>' + ALERT_UI.map(([on, val, label, unit, q]) => {
       const orig = parseFloat(String(a[val]).replace(',', '.')), v = qv(q, orig);
       // a megjelenített érték a nyelv tizedesjelével; ha a felhasználó nem írja át, mentéskor az eredeti (metrikus) érték marad (9.4)
       const shown = v == null ? '' : String(+v.toFixed(qd(q, 1) + 1)).replace('.', decSep());

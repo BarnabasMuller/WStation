@@ -171,6 +171,7 @@ function initCalendarControls() {
   $('calPrev').addEventListener('click', () => shiftMonth(-1));
   $('calNext').addEventListener('click', () => shiftMonth(1));
   $('calClean').addEventListener('change', e => { calState().clean = e.target.checked; saveUi(); renderCalendar(); });
+  $('calFixed').addEventListener('change', e => { calState().fixedScale = e.target.checked; saveUi(); renderCalendar(); });
   document.addEventListener('keydown', e => {
     if (currentTab !== 'naptar' || calState().view !== 'month' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
     if (e.key === 'ArrowLeft') shiftMonth(-1);
@@ -205,6 +206,7 @@ async function renderCalendar() {
   }
   $('calMetric').value = m.k;
   $('calClean').checked = c.clean;
+  $('calFixed').checked = !!c.fixedScale;
   document.querySelectorAll('#calView button').forEach(b => b.classList.toggle('on', b.dataset.v === c.view));
   $('calNav').classList.toggle('hidden', c.view !== 'month');
   if (!calMonth) calMonth = c.month && d.date.some(s => s.startsWith(c.month)) ? c.month : d.date[d.date.length - 1].slice(0, 7);
@@ -245,8 +247,10 @@ async function renderCalendar() {
     // hónapnézet: sorok = hetek, oszlopok = a hét napjai; a cellában a nap és az érték
     const cw = Math.max(54, Math.min(150, Math.floor((W - 40) / 7)));
     const chh = Math.max(46, Math.min(84, Math.round(cw * 0.62)));
-    const weeks = 6;
-    el.style.height = (70 + weeks * chh + 40) + 'px';
+    // annyi sor, ahány hétre a hónap ténylegesen kiterjed (6.17: alul nem marad üres hely)
+    const y0 = +calMonth.slice(0, 4), m0 = +calMonth.slice(5, 7), dim = new Date(Date.UTC(y0, m0, 0)).getUTCDate();
+    const off = (new Date(Date.UTC(y0, m0 - 1, 1)).getUTCDay() + 6) % 7, weeks = Math.ceil((off + dim) / 7);
+    el.style.height = (70 + weeks * chh + 16) + 'px';
     $('calTitle').textContent = calMonth.slice(0, 4) + '. ' + MONTHS_FULL[+calMonth.slice(5, 7) - 1];
     const label = {
       show: true, formatter: p => {
@@ -269,12 +273,16 @@ async function renderCalendar() {
         dayLabel: { firstDay: 1, nameMap: ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'].map(x => cw < 90 ? x.slice(0, 3) : x), color: muted, fontSize: fs(12), margin: 8 },
         monthLabel: { show: false }
       }],
-      series: [{ type: 'heatmap', coordinateSystem: 'calendar', data }]
+      series: [{ type: 'heatmap', coordinateSystem: 'calendar', data },
+        // a mérés nélküli (pl. jövőbeli) napokon is látszik a napszám (6.17)
+        { type: 'scatter', coordinateSystem: 'calendar', symbolSize: 0, silent: true, data: [...Array(dim).keys()].map(k => calMonth + '-' + String(k + 1).padStart(2, '0')).filter(s => !data.some(o => o.value[0] === s)).map(s => [s, 0]),
+          label: { show: true, formatter: p => String(+p.value[0].slice(8, 10)), color: muted, fontSize: fs(11), position: 'inside' } }]
     };
   }
 
-  const values = d.date.map((s, i) => (c.view === 'year' || s.startsWith(calMonth)) ? d[m.k][i] : null);
-  option.visualMap = Object.assign(visualMapFor(m, values, ink, muted), { seriesIndex: option.series.map((s, i) => i) });
+  // állandó skála: az egész mért időszak értékeiből, így a hónapok összevethetők (6.17)
+  const values = d.date.map((s, i) => (c.view === 'year' || c.fixedScale || s.startsWith(calMonth)) ? d[m.k][i] : null);
+  option.visualMap = Object.assign(visualMapFor(m, values, ink, muted), { seriesIndex: option.series.map((s, i) => i).filter(i => option.series[i].type === 'heatmap') });
   if (c.view === 'month') {
     // a cella szövegének színe a cella színéhez igazodik (sötét cellán fehér, világoson sötét)
     option.series[0].data.forEach(o => {

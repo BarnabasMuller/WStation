@@ -169,7 +169,7 @@ async function renderInsights() {
   card.querySelectorAll('[data-goto]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); showTab(a.dataset.goto, true); }));
 
   let skyCard = document.getElementById('skyCard');
-  if (!skyCard) { skyCard = document.createElement('div'); skyCard.id = 'skyCard'; skyCard.className = 'card'; $('today').appendChild(skyCard); }
+  if (!skyCard) { skyCard = document.createElement('div'); skyCard.id = 'skyCard'; skyCard.className = 'card sky'; $('today').appendChild(skyCard); }
   // felhőzet-becslés (TERV_4 5. pont)
   const cl = await getCloudNow().catch(() => null);
   const cn = cl && cl.now;

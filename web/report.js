@@ -97,7 +97,7 @@ async function monthReport(d, m) {
   const c1 = echarts.init($('repC1'));
   c1.setOption({
     animation: false, grid: { left: 44, right: 44, top: 26, bottom: 26 }, legend: { top: 0, textStyle: { color: REP_MUTED } },
-    xAxis: { type: 'time', axisLabel: { formatter: v => F.day.format(v), color: REP_MUTED } },
+    xAxis: { type: 'time', axisLabel: { formatter: dayAxisFmt, hideOverlap: true, color: REP_MUTED } },
     yAxis: [{ type: 'value', name: tlabel(), scale: true, axisLabel: { color: REP_MUTED } }, { type: 'value', name: rlabel(), min: 0, splitLine: { show: false }, axisLabel: { color: REP_MUTED } }],
     series: [
       { name: 'Max.', type: 'line', data: s.ix.map((i, k) => [x[k], tconv(d.tmax[i])]), lineStyle: { color: '#e4572e' }, itemStyle: { color: '#e4572e' }, symbolSize: 4 },

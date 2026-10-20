@@ -102,6 +102,9 @@
         <button class="icon-btn" id="calPrev" title="Előző hónap (←)">‹</button>
         <span id="calTitle"></span>
         <button class="icon-btn" id="calNext" title="Következő hónap (→)">›</button>
+        <label class="switch small" title="A színskála az egész mért időszakhoz igazodik, így két hónap összevethető">
+          <input type="checkbox" id="calFixed"><span class="slider"></span><span>Állandó színskála</span>
+        </label>
       </div>
       <label class="switch" title="A gyanús (minőségjelzős) mérések kihagyása a napi értékekből">
         <input type="checkbox" id="calClean"><span class="slider"></span><span>Gyanús értékek kizárása</span>
@@ -306,12 +309,12 @@
     <div class="panel dr-merleg">
       <div class="panel-head">
         <h2>Szárazság</h2>
-        <button class="btn" id="drEt0" title="A párolgás képlete és a közös beállítások (napsugárzás-korrekció, szélmérő-magasság…)">☀️ Párolgás ?</button>
-        <button class="btn" id="drSoil" title="Talajtípus és lefolyás">🟫 Talaj: <span id="drSoilName"></span> ?</button>
+        <button class="btn" id="drEt0" title="A párolgás képlete és a közös beállítások (napsugárzás-korrekció, szélmérő-magasság…)">☀️ Párolgás <span class="fx" aria-hidden="true">ƒx</span></button>
+        <button class="btn" id="drSoil" title="Talajtípus és lefolyás">🟫 Talaj: <span id="drSoilName"></span> <span class="fx" aria-hidden="true">ƒx</span></button>
         <button class="btn primary" id="drAdd">+ Új növény / cserép</button>
       </div>
       <div class="chips" id="drChips"></div>
-      <div class="hint">FAO-56 talajvíz-mérleg növényzettípusonként. A kiszáradás azt mutatja, a gyökérzóna felvehető vizéből mennyi fogyott el. Öntözést csak akkor számol, ha rögzíted (lent: „Locsoltam…”), vagy beállítod az automata programot a ? ablakban.</div>
+      <div class="hint">FAO-56 talajvíz-mérleg növényzettípusonként. A kiszáradás azt mutatja, a gyökérzóna felvehető vizéből mennyi fogyott el. Öntözést csak akkor számol, ha rögzíted (lent: „Locsoltam…”), vagy ha egy öntözési programnak van érvényes időszaka (lent: Öntözési programok).</div>
       <div class="dr-grid" id="drCards"></div>
       <div class="panel-head" style="margin-top:14px">
         <h2 style="font-size:15px">Alakulás</h2>
@@ -327,7 +330,7 @@
     </div>
     <div class="panel dr-merleg" style="margin-top:16px">
       <div class="panel-head"><h2>Öntözési programok</h2></div>
-      <div class="hint">Egy program névvel elmenthető (zóna, napok, mennyiség). Új időszakhoz csak kiválasztod, és megadod a tól–ig dátumot. Az egyszeri locsolást a fenti kártyákon rögzítheted („Locsoltam…”). A locsolórendszer vezérlése későbbi kör.</div>
+      <div class="hint">Egy program névvel elmenthető (zóna, napok, mennyiség). Új időszakhoz csak kiválasztod, és megadod a tól–ig dátumot. Az egyszeri locsolást a fenti kártyákon rögzítheted („Locsoltam…”).</div>
       <div id="irrBox"></div>
     </div>
     <div class="panel hidden" id="waterPanel">
@@ -449,16 +452,6 @@
         <div class="msg" id="bkMsg" role="status"></div>
       </div>
 
-      <div class="card wide">
-        <h3>Csapadékmérő-kalibráció</h3>
-        <div id="calCard"></div>
-      </div>
-
-      <div class="card wide">
-        <h3>Gyanús mérések <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">– mit jelöljön a WU és mit a program</span></h3>
-        <div id="suCard"></div>
-      </div>
-
       <div class="card">
         <h3>Excel-export</h3>
         <p>A napi összesítő tábla (egy sor = egy nap: hőmérséklet, pára, nyomás, szél, csapadék, napsütés…) CSV-fájlba, Excelhez, a felület nyelvén és a választott mértékegységekkel. Alapból a gyanús mérések nélkül (tisztított adat).</p>
@@ -476,6 +469,16 @@
           <button class="btn" data-open="backup">Biztonsági mentések</button>
         </div>
         <div class="hint">Biztonság: a program csak ebbe a mappába ír (kivétel: az asztali parancsikon és az ütemezett feladat, amit a telepítő hoz létre, valamint az Excel-export, amelynek helyét te választod).</div>
+      </div>
+
+      <div class="card wide">
+        <h3>Csapadékmérő-kalibráció</h3>
+        <div id="calCard"></div>
+      </div>
+
+      <div class="card wide">
+        <h3>Gyanús mérések <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">– mit jelöljön a WU és mit a program</span></h3>
+        <div id="suCard"></div>
       </div>
 
       <div class="card wide">
