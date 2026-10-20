@@ -12,6 +12,8 @@
   labels, the fire danger classes and the spoken names of the formula buttons are translated too; translated
   sentences no longer end in a double full stop. Even on very narrow (320 px) screens the Drought, Running and
   Settings tabs fit.
+- Installer and Viewer: if the Windows Task Scheduler does not respond, they move on after 20 seconds (until now
+  they could wait for minutes).
 
 == 2.2.4 (2026-10-20) – review fixes ==
 - Suspicious measurements: new rules for rain jumps (melting snow too) and a frozen anemometer; the maximum

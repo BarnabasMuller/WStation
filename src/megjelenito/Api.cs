@@ -100,6 +100,7 @@ namespace Idojaras
                     Interlocked.Increment(ref DownloadSerial);
                     return;
                 }
+                p.WaitForExit();   // az aszinkron kimenet utolsó sorai (pl. „hálózati hiba”) is feldolgozódjanak
                 int code = p.ExitCode;
                 DownloadOk = code == 0 && !netError;
                 if (code == 6) netError = true;   // a Letöltő 2.2-től kilépési kóddal jelzi a hálózati hibát

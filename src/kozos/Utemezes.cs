@@ -42,15 +42,18 @@ namespace Kozos
             };
             using (var p = Process.Start(psi))
             {
+                // mindkét kimenet aszinkron: egy szinkron ReadToEnd a kilépésig blokkolna, és az időkorlát
+                // sosem lépne életbe (egy beragadt schtasks percekig feltartotta a telepítőt)
+                var oTask = p.StandardOutput.ReadToEndAsync();
                 var eTask = p.StandardError.ReadToEndAsync();
-                string o = p.StandardOutput.ReadToEnd();
                 if (!p.WaitForExit(20000))
                 {
                     try { p.Kill(); } catch { }
                     output = "Az ütemező (schtasks) 20 másodperc alatt nem válaszolt.";
                     return -1;
                 }
-                output = (o + eTask.Result).Trim();
+                p.WaitForExit();   // a kimenetek teljes kiolvasása
+                output = (oTask.Result + eTask.Result).Trim();
                 return p.ExitCode;
             }
         }

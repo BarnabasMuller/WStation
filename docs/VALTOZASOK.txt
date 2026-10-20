@@ -11,6 +11,8 @@
 - Fordítás: a fák locsolási javaslata, a futás-tanácsadó megbízhatósági sora, a Helyszín és a felhőzet
   feliratai, a tűzveszély-fokozatok és a képlet-gombok felolvasott neve is fordul; a fordított mondatok végén
   nincs dupla pont. Nagyon keskeny (320 px) képernyőn sem lóg ki a Szárazság, a Futás és a Beállítások fül.
+- Telepítő és Megjelenítő: ha a Windows Feladatütemezője nem válaszol, 20 másodperc után továbblép (eddig
+  percekig várhatott).
 
 == 2.2.4 (2026-10-20) – átnézési javítások ==
 - Gyanús mérések: új szabályok a csapadékugrásra (olvadó hó is) és a befagyott szélmérőre; a napsütés miatti

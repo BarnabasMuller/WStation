@@ -12,6 +12,8 @@
   von Standort und Bewölkung, die Waldbrand-Gefahrenstufen und die vorgelesenen Namen der Formel-Schaltflächen
   werden übersetzt; übersetzte Sätze enden nicht mehr mit doppeltem Punkt. Auch auf sehr schmalen (320 px)
   Bildschirmen passen die Reiter Trockenheit, Laufen und Einstellungen.
+- Installer und Anzeige: antwortet die Windows-Aufgabenplanung nicht, geht es nach 20 Sekunden weiter (bisher
+  konnte das minutenlang dauern).
 
 == 2.2.4 (2026-10-20) – Korrekturen nach Durchsicht ==
 - Verdächtige Messungen: neue Regeln für Niederschlagssprünge (auch Schneeschmelze) und eingefrorenen

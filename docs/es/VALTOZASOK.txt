@@ -12,6 +12,8 @@
   carrera, las etiquetas de Ubicación y nubosidad, los niveles de peligro de incendio y los nombres leídos de los
   botones de fórmula; las frases traducidas ya no terminan con doble punto. Incluso en pantallas muy estrechas
   (320 px) caben las pestañas Sequía, Correr y Ajustes.
+- Instalador y Visor: si el Programador de tareas de Windows no responde, continúan tras 20 segundos (hasta
+  ahora podían esperar minutos).
 
 == 2.2.4 (2026-10-20) – correcciones tras revisión ==
 - Mediciones sospechosas: nuevas reglas para saltos de lluvia (también nieve fundida) y anemómetro congelado;
