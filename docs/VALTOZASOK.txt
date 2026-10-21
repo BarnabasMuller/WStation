@@ -2,6 +2,7 @@
 ==============================
 
 == 2.2.7.2 (2026-10-21) – kisebb hibák javítása ==
+- Biztonsági mentések: legfeljebb 52 tartható meg (heti mentésnél egy év); egy nagyobb beállítás 52-re csökken.
 - Kézi biztonsági mentés: nagy adatnál is legfeljebb 10 percet vár, utána érthető hibát ad.
 - Párolgás (ET₀): nagyon borult napon sem nő paradox módon.
 - Saját képlet 5 perces felbontással: görgetés és nagyítás után is végig kirajzolódik.

@@ -2,6 +2,7 @@
 ===========================
 
 == 2.2.7.2 (2026-10-21) – kleinere Korrekturen ==
+- Sicherungen: höchstens 52 werden behalten (ein Jahr wöchentlicher Sicherungen); ein größerer Wert wird auf 52 gesenkt.
 - Manuelle Sicherung: wartet auch bei großen Daten bis zu 10 Minuten und meldet dann einen klaren Fehler.
 - Verdunstung (ET₀): steigt an sehr bewölkten Tagen nicht mehr paradox an.
 - Eigene Formel mit 5-Minuten-Auflösung: nach Scrollen und Zoomen vollständig gezeichnet.

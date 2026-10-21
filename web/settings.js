@@ -217,7 +217,7 @@ async function loadBackup() { try { renderBackup(await api('/api/backup')); } ca
 $('bkSave').addEventListener('click', async () => {
   const keep = String($('bkKeep').value).trim();
   $('bkErr').textContent = '';
-  if (!/^\d+$/.test(keep) || +keep < 1 || +keep > 1000) { $('bkErr').textContent = '⚠ 1 és 1000 közötti egész szám'; return; }
+  if (!/^\d+$/.test(keep) || +keep < 1 || +keep > 52) { $('bkErr').textContent = '⚠ ' + tf('1 és 52 közötti egész szám'); return; }
   try {
     const r = await post('/api/dlsettings', { MentesNaponta: $('bkDays').value, MentesekSzama: keep });
     $('bkMsg').className = 'msg ' + (r.error ? 'err' : 'ok'); $('bkMsg').textContent = r.error || 'Mentve.';

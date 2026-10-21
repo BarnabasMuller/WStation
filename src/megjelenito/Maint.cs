@@ -213,7 +213,7 @@ namespace Idojaras
         static readonly Dictionary<string, Func<string, bool>> Allowed = new Dictionary<string, Func<string, bool>>
         {
             { "MentesNaponta", v => { int n; return int.TryParse(v, out n) && n >= 0 && n <= 365; } },
-            { "MentesekSzama", v => { int n; return int.TryParse(v, out n) && n >= 1 && n <= 1000; } },
+            { "MentesekSzama", v => { int n; return int.TryParse(v, out n) && n >= 1 && n <= 52; } },
             { "Nyelv", v => v == "hu" || Langs.Exists(v) },
             // felhőzet-ellenőrzés a repülőtér METAR-jelentéseivel (opcionális)
             { "MetarEllenorzes", v => v == "true" || v == "false" },

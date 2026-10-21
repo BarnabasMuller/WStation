@@ -2,6 +2,7 @@
 ===========================
 
 == 2.2.7.2 (2026-10-21) – correcciones menores ==
+- Copias de seguridad: se conservan como máximo 52 (un año de copias semanales); un ajuste mayor se reduce a 52.
 - Copia manual: espera hasta 10 minutos incluso con muchos datos y luego da un error claro.
 - Evaporación (ET₀): ya no aumenta paradójicamente en días muy nublados.
 - Fórmula propia con resolución de 5 minutos: se dibuja completa tras desplazar y ampliar.

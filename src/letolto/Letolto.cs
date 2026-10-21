@@ -247,7 +247,8 @@ MetarKod=LHBP
             AlRain = Bool(d, "RiasztasEso", true); AlHeat = Bool(d, "RiasztasHoseg", true);
             FrostT = Dbl(d, "FagyHatar", 1); PresDrop = Dbl(d, "NyomasEses3h", 4); GustT = Dbl(d, "LokesHatar", 60); RainT = Dbl(d, "EsoIntenzitas", 30); HeatT = Dbl(d, "HosegHatar", 33);
             AlRepeat = Int(d, "RiasztasIsmetlesOra", 6, 1, 168); QuietFrom = Int(d, "CsendesTol", 22, 0, 24); QuietTo = Int(d, "CsendesIg", 7, 0, 24);
-            BackupKeep = Int(d, "MentesekSzama", 8, 1, 1000);
+            // legfeljebb 52 mentés (heti mentésnél egy év); egy korábban nagyobbra állított érték 52-re csökken (2.2.7.2)
+            BackupKeep = Math.Min(52, Int(d, "MentesekSzama", 8, 1, 1000));
             string nyelv = Str(d, "Nyelv", "hu").Trim();
             Langs.Current = nyelv == "hu" || Langs.Exists(nyelv) ? nyelv : "hu";
 
@@ -997,7 +998,7 @@ MetarKod=LHBP
                         }
                     string v; int n;
                     if (ini.TryGetValue("MentesNaponta", out v) && int.TryParse(v, out n)) Cfg.BackupDays = Math.Max(0, n);
-                    if (ini.TryGetValue("MentesekSzama", out v) && int.TryParse(v, out n)) Cfg.BackupKeep = Math.Max(1, n);
+                    if (ini.TryGetValue("MentesekSzama", out v) && int.TryParse(v, out n)) Cfg.BackupKeep = Math.Min(52, Math.Max(1, n));
                     bool force = args.Any(a => a.Equals("--most", StringComparison.OrdinalIgnoreCase));
                     Backup.Weekly(appDir, dataDir, force);
                     return 0;

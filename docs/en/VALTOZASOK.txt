@@ -2,6 +2,7 @@
 =========================
 
 == 2.2.7.2 (2026-10-21) – minor fixes ==
+- Backups: at most 52 are kept (one year of weekly backups); a larger setting is reduced to 52.
 - Manual backup: waits up to 10 minutes even with large data, then gives a clear error.
 - Evaporation (ET₀): no longer paradoxically rises on very overcast days.
 - Own formula at 5-minute resolution: drawn fully after scrolling and zooming.

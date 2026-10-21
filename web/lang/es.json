@@ -2255,5 +2255,6 @@
   "Az utolsó adatnap ({day}) az idei évben": "El último día con datos ({day}) en este año",
   "a nap még tart": "el día aún no ha terminado",
   "liter / bokor": "litros / arbusto",
-  "l / bokor": "l / arbusto"
+  "l / bokor": "l / arbusto",
+  "1 és 52 közötti egész szám": "un número entero entre 1 y 52"
 }
