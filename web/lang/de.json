@@ -2233,5 +2233,16 @@
   "RO = (P − Ia)² / (P − Ia + S), ha P > Ia": "RO = (P − Ia)² / (P − Ia + S), wenn P > Ia",
   "5 napos előzetes csapadék": "5-Tage-Vorniederschlag",
   "a talajvíz-mérlegből: a felső réteg telítettsége fokozatmentesen tolja a CN-t (száraz → AMC I, telített → AMC III); 5 napos csapadék: a szabványos SCS-határok szerint": "aus der Bodenwasserbilanz: die Sättigung der oberen Schicht verschiebt den CN stufenlos (trocken → AMC I, gesättigt → AMC III); 5-Tage-Niederschlag: nach den Standard-SCS-Grenzen",
-  "pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1": "z. B. rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1"
+  "pl. eső(t) / (napsütés(t-1nap) * légnyomás(t-3nap) * 0.98 - 1": "z. B. rate(t) / (solar(t-1d) * pres(t-3d) * 0.98 - 1",
+  "Adj nevet a presetnek": "Gib der Vorlage einen Namen",
+  "a profil neve 1–60 karakter legyen": "der Profilname muss 1–60 Zeichen lang sein",
+  "a program kimaradt": "das Programm wurde ausgelassen",
+  "időszak: a „tól” későbbi, mint az „ig": "Zeitraum: das „Von“-Datum liegt nach dem „Bis“-Datum",
+  "napok: 1–7 vesszővel": "Tage: 1–7, durch Kommas getrennt",
+  "x naponta: 0–60": "alle x Tage: 0–60",
+  "HH-NN formában kell, pl. 04-01": "muss im Format MM-TT sein, z. B. 04-01",
+  "A háttérben futó letöltés befejezésére várok": "Warte, bis der Download im Hintergrund fertig ist",
+  "v m/s-ban (WMO: v = 0,836 · B": "v in m/s (WMO: v = 0,836 · B",
+  "Van Wagner (1987): 15 (csapadékos tél után; száraz tél után nagyobb": "Van Wagner (1987): 15 (nach einem nassen Winter; nach einem trockenen Winter höher",
+  "kb. 400–500 fokcelsiusnap 5 °C felett": "etwa 400–500 Gradtage über 5 °C"
 }

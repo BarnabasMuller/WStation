@@ -176,7 +176,9 @@ function paramTable(defs, obj, std) {
       const sv = shown != null ? '<span class="stdv">alapérték: ' + esc(shown) + '</span> ' : '';
       const sym = SYM[k] ? ' <span class="sym">' + esc(SYM[k]) + '</span>' : '';
       const rangeTxt = Array.isArray(r) ? '<div class="prange">megengedett: ' + num(r[0], r[0] % 1 ? 2 : 0) + ' … ' + num(r[1], r[1] % 1 ? 2 : 0) + (d.unit ? ' ' + esc(d.unit) : '') + '</div>' : '';
-      return '<tr><td>' + esc(d.label) + sym + '</td><td class="pin">' + input + '<div class="perr" data-err="' + k + '"></div>' + rangeTxt + '</td><td class="pstd">' + sv + (d.std || '') + '</td></tr>';
+      // a szöveges tipp (pl. „0,75”) előbb fordul, aztán a tizedesjele a felület nyelvét követi
+      const stdTxt = d.std ? (decSep() === ',' ? tr(d.std) : tr(d.std).replace(/(\d),(\d)/g, '$1.$2')) : '';
+      return '<tr><td>' + esc(d.label) + sym + '</td><td class="pin">' + input + '<div class="perr" data-err="' + k + '"></div>' + rangeTxt + '</td><td class="pstd">' + sv + stdTxt + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 function decSep() { return (1.5).toLocaleString(numLocale ? numLocale() : 'hu-HU').charAt(1); }

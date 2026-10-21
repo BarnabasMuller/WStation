@@ -1,6 +1,15 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.6 (2026-10-21) – installer and minor fixes ==
+- Installer: if the scheduler has just started the Downloader (e.g. right after creating the task), the installer
+  waits up to 90 seconds for it instead of stopping with an error.
+- Command-line install (--csendes): without --utemezes the existing automatic download is kept (until now a
+  reinstall turned it off); use --utemezes 0 to turn it off.
+- Running tab: the ƒx button of the Comfort card also appears with older data.
+- The formulas and default-value hints in the formula windows use the decimal separator of the interface language; the repair
+  messages of the drought settings are translated too.
+
 == 2.2.5 (2026-10-21) – translation and minor fixes ==
 - Translation: the watering advice on the Drought tab, the dew point bands, the "unverified" record mark and the
   "Yes" button of confirmations are whole sentences in English, German and Spanish; default profile names with

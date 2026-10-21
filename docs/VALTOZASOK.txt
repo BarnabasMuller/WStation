@@ -1,6 +1,15 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.6 (2026-10-21) – telepítő és apró javítások ==
+- Telepítő: ha az ütemező épp elindította a Letöltőt (pl. közvetlenül a feladat létrehozása után), a telepítő
+  legfeljebb 90 másodpercig megvárja, ahelyett hogy hibával leállna.
+- Parancssori telepítés (--csendes): --utemezes nélkül a meglévő automatikus letöltés megmarad (eddig egy
+  újratelepítés kikapcsolta); kikapcsolni --utemezes 0-val lehet.
+- Futás fül: a Komfort kártya ƒx-gombja régebbi adatnál is megjelenik.
+- A képlet-ablakok képletei és alapérték-tippjei a felület nyelvének tizedesjelét használják; a szárazság-beállítás
+  javító üzenetei is fordulnak.
+
 == 2.2.5 (2026-10-21) – fordítási és kisebb javítások ==
 - Fordítás: a Szárazság fül locsolási javaslatai, a harmatpont-sávok, a rekordok „ellenőrizetlen” jelzése és
   a megerősítő ablak „Igen” gombja angolul, németül és spanyolul is egész mondatként jelenik meg (nincs több

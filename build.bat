@@ -2,7 +2,7 @@
 rem =====================================================================
 rem  WStation - build egy paranccsal
 rem  A Windows beepitett C# forditojat hasznalja, nem kell semmit telepiteni.
-rem  Eredmeny:  dist\WStation_setup_v2.2.5.exe   (ezt kell odaadni / elinditani)
+rem  Eredmeny:  dist\WStation_setup_v2.2.6.exe   (ezt kell odaadni / elinditani)
 rem             dist\bin\                    (a ket program kulon, teszteleshez)
 rem =====================================================================
 setlocal
@@ -41,14 +41,14 @@ set TRES=/resource:dist\bin\Letolto.exe,bin/Letolto.exe /resource:dist\bin\Megje
 set TRES=%TRES% /resource:docs\OLVASS_EL.txt,docs/OLVASS_EL.txt /resource:docs\Letolto_leiras.txt,docs/Letolto_leiras.txt /resource:docs\Megjelenito_leiras.txt,docs/Megjelenito_leiras.txt /resource:docs\VALTOZASOK.txt,docs/VALTOZASOK.txt
 rem leirasok forditasai: docs\KOD\*.txt (uj nyelvhez eleg egy uj almappa)
 for /d %%d in (docs\*) do for %%f in (%%d\*.txt) do call :adddoc %%~nxd %%~nxf
-"%CSC%" %COMMON% /target:winexe /win32icon:build\app.ico /out:dist\WStation_setup_v2.2.5.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll %TRES% %LRES% src\telepito\*.cs src\kozos\Utemezes.cs src\kozos\Guard.cs src\kozos\Nyelv.cs
+"%CSC%" %COMMON% /target:winexe /win32icon:build\app.ico /out:dist\WStation_setup_v2.2.6.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll %TRES% %LRES% src\telepito\*.cs src\kozos\Utemezes.cs src\kozos\Guard.cs src\kozos\Nyelv.cs
 if errorlevel 1 goto :err
 
 echo [5/5] Takaritas...
 rmdir /s /q build
 
 echo.
-echo Kesz: dist\WStation_setup_v2.2.5.exe
+echo Kesz: dist\WStation_setup_v2.2.6.exe
 exit /b 0
 
 :err

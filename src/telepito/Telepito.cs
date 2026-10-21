@@ -17,8 +17,8 @@ using Kozos;
 
 [assembly: AssemblyTitle("WStation – telepítő")]
 [assembly: AssemblyProduct("WStation")]
-[assembly: AssemblyVersion("2.2.5.0")]
-[assembly: AssemblyFileVersion("2.2.5.0")]
+[assembly: AssemblyVersion("2.2.6.0")]
+[assembly: AssemblyFileVersion("2.2.6.0")]
 
 namespace Telepito
 {
@@ -226,6 +226,21 @@ namespace Telepito
             return null;
         }
 
+        // az ütemező épp elindíthatta a Letöltőt (pl. közvetlenül a feladat létrehozása után): egy háttérben futó
+        // letöltést legfeljebb 90 másodpercig megvárunk, a Megjelenítőt nem (azt a felhasználónak kell bezárnia)
+        static string RunningWaitDownloader(string target, Action<string, int> progress, int pct)
+        {
+            var dl = new HashSet<string>(Langs.AllFileNames("downloader").Concat(new[] { "Letolto.exe", "WU_Letolto.exe" }), StringComparer.OrdinalIgnoreCase);
+            var sw = Stopwatch.StartNew();
+            string running;
+            while ((running = RunningIn(target)) != null && dl.Contains(running) && sw.Elapsed.TotalSeconds < 90)
+            {
+                progress("A háttérben futó letöltés befejezésére várok...", pct);
+                System.Threading.Thread.Sleep(500);
+            }
+            return running;
+        }
+
         static Exception InUse(string name)
         {
             return new Exception("A(z) " + name + " most használatban van, ezért nem cserélhető. Zárd be a Megjelenítőt és a Letöltőt, majd próbáld újra.");
@@ -241,7 +256,7 @@ namespace Telepito
                 r.From = survey.Installed;
                 r.Updated = survey.Kind == Found.Older || survey.Kind == Found.Current || survey.Kind == Found.Newer || survey.Kind == Found.OldLayout;
 
-                string running = RunningIn(target);
+                string running = RunningWaitDownloader(target, progress, 2);
                 if (running != null)
                     throw new Exception("A(z) " + running + " most fut ebből a mappából. Zárd be (a Megjelenítőt és a Letöltőt is), majd próbáld újra.");
 
@@ -296,7 +311,7 @@ namespace Telepito
                 var done = new List<string[]>();
                 try
                 {
-                    running = RunningIn(target);
+                    running = RunningWaitDownloader(target, progress, 62);
                     if (running != null) throw new Exception("A(z) " + running + " közben elindult ebből a mappából. Zárd be, majd próbáld újra.");
                     foreach (var x in plan)
                     {
@@ -922,7 +937,7 @@ namespace Telepito
             if (ci >= 0 && ci + 1 < args.Length && Installer.IsInstallDir(args[ci + 1])) defaultTarget = Path.GetFullPath(args[ci + 1]);
 
             // parancssori (felület nélküli) telepítés:
-            //   --csendes [<célmappa>] [--atvetel <forrás>] [--parancsikon] [--utemezes <perc>] [--felmeres]
+            //   --csendes [<célmappa>] [--atvetel <forrás>] [--parancsikon] [--utemezes <perc>, 0 = ki; nélküle marad] [--felmeres]
             int qi = Array.FindIndex(args, a => a.Equals("--csendes", StringComparison.OrdinalIgnoreCase));
             if (qi >= 0)
             {
@@ -933,8 +948,10 @@ namespace Telepito
                 string import = ai >= 0 && ai + 1 < args.Length ? Path.GetFullPath(args[ai + 1]) : null;
                 bool sc = args.Any(a => a.Equals("--parancsikon", StringComparison.OrdinalIgnoreCase));
                 int si = Array.FindIndex(args, a => a.Equals("--utemezes", StringComparison.OrdinalIgnoreCase));
-                int minutes = 0;
-                if (si >= 0 && si + 1 < args.Length) int.TryParse(args[si + 1], out minutes);
+                // --utemezes nélkül a meglévő ütemezés marad (mint a felületen a „jelenlegi megtartása”);
+                // eddig ilyenkor egy újratelepítés csendben törölte az automatikus letöltést. Kikapcsolás: --utemezes 0
+                int minutes = -1;
+                if (si >= 0 && si + 1 < args.Length && !int.TryParse(args[si + 1], out minutes)) minutes = -1;
                 var sv = Installer.Look(target);
                 Console.WriteLine("Felmérés: " + sv.Kind + " – " + sv.Text);
                 if (args.Any(a => a.Equals("--felmeres", StringComparison.OrdinalIgnoreCase))) return 0;

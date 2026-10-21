@@ -1,6 +1,15 @@
 ﻿WSTATION – ÄNDERUNGEN
 ===========================
 
+== 2.2.6 (2026-10-21) – Installer und kleinere Korrekturen ==
+- Installer: Hat die Aufgabenplanung den Downloader gerade gestartet (z. B. direkt nach dem Anlegen der Aufgabe),
+  wartet der Installer bis zu 90 Sekunden darauf, statt mit einem Fehler abzubrechen.
+- Installation über die Befehlszeile (--csendes): ohne --utemezes bleibt der vorhandene automatische Download
+  erhalten (bisher schaltete eine Neuinstallation ihn ab); ausschalten mit --utemezes 0.
+- Reiter Laufen: die ƒx-Schaltfläche der Komfort-Karte erscheint auch bei älteren Daten.
+- Die Formeln und Standardwert-Hinweise in den Formelfenstern verwenden das Dezimalzeichen der Oberflächensprache; die
+  Korrekturmeldungen der Trockenheits-Einstellungen werden ebenfalls übersetzt.
+
 == 2.2.5 (2026-10-21) – Übersetzungs- und kleinere Korrekturen ==
 - Übersetzung: die Gießempfehlungen im Reiter Trockenheit, die Taupunkt-Bereiche, die Markierung „ungeprüft“ bei
   Rekorden und die Schaltfläche „Ja“ der Bestätigungen erscheinen auf Englisch, Deutsch und Spanisch als ganze

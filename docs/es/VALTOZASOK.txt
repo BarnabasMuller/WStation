@@ -1,6 +1,15 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
+== 2.2.6 (2026-10-21) – instalador y correcciones menores ==
+- Instalador: si el programador acaba de iniciar el Descargador (p. ej. justo después de crear la tarea), el
+  instalador lo espera hasta 90 segundos en lugar de detenerse con un error.
+- Instalación por línea de comandos (--csendes): sin --utemezes se conserva la descarga automática existente
+  (hasta ahora una reinstalación la desactivaba); se desactiva con --utemezes 0.
+- Pestaña Correr: el botón ƒx de la tarjeta Confort también aparece con datos antiguos.
+- Las fórmulas y sugerencias de valor por defecto de las ventanas de fórmulas usan el separador decimal del idioma de la
+  interfaz; los mensajes de reparación de los ajustes de sequía también se traducen.
+
 == 2.2.5 (2026-10-21) – correcciones de traducción y menores ==
 - Traducción: los consejos de riego de la pestaña Sequía, las bandas de punto de rocío, la marca «sin verificar»
   de los récords y el botón «Sí» de las confirmaciones aparecen como frases completas en inglés, alemán y

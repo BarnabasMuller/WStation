@@ -158,7 +158,7 @@ namespace Idojaras
     }
     static class Api
     {
-        public const string Version = "2.2.5";
+        public const string Version = "2.2.6";
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
         delegate double Getter(int i);
 

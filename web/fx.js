@@ -220,7 +220,7 @@ function openSuspect() {
 const FX_PLACES = [
   ['attekintes', 'h3', /^(Most|Utolsó mérés) · /, 'feels'], ['attekintes', 'h3', /^Szél$/, 'beaufort'], ['attekintes', 'h3', /^Légnyomás$/, 'zambretti'],
   ['attekintes', 'h3', /^Napsugárzás$/, 'sun'], ['attekintes', 'h3', /^Páratartalom$/, 'comfort'], ['attekintes', 'h3', /^Figyelő/, 'front'],
-  ['futas', 'h3', /^Komfort most$/, 'comfort'], ['futas', 'h3', /^Mit vegyek fel/, 'runmodel'],
+  ['futas', 'h3', /^Komfort( most)?$/, 'comfort'], ['futas', 'h3', /^Mit vegyek fel/, 'runmodel'],
   ['eso', 'h2', /^Eső$/, 'rainevent'], ['szel', 'h2', /^Szél$/, 'windy'], ['szel', 'h3', /^Átlagszél$/i, 'beaufort'],
   ['stat', 'h2', /^Rekordok$/, 'thresholds'], ['stat', 'h2', /^Ez a hónap/, 'projection'], ['stat', 'h2', /^Adatminőség$/, 'suspect'],
   ['idovonal', 'h2', /^Idővonal$/, 'front'], ['attekintes', 'h3', /^Égbolt/, 'cloud']

@@ -58,7 +58,9 @@ function i18nBuild() {
   // így egy hiányzó mondatból nem lesz félig lefordított keverék
   const isShort = k => k.length < 5 && !/\s/.test(k);
   const mk = list => { try { return list.length ? new RegExp('(?<![\\p{L}_])(?:' + list.sort((a, b) => b.length - a.length).map(escRe).join('|') + ')(?![\\p{L}_])', 'gu') : null; } catch (e) { console.error(e); return null; } };
-  I18N = { L, map, re: mk([...map.keys()].filter(k => !isShort(k))), reShort: mk([...map.keys()].filter(isShort)) };
+  // tizedespontos nyelv (pl. angol): a képletek fix „0,836”-jai is ponttal jelenjenek meg (lásd trNode)
+  const dot = (1.5).toLocaleString(langMeta(L).locale || 'hu-HU').charAt(1) === '.';
+  I18N = { L, map, dot, re: mk([...map.keys()].filter(k => !isShort(k))), reShort: mk([...map.keys()].filter(isShort)) };
 }
 
 // egy szöveg fordítása: előbb a teljes (levágott) szöveg, aztán a benne lévő ismert kifejezések
@@ -129,7 +131,9 @@ function trNode(n) {
     I18N_ORIG.set(n, orig);
     // a felhasználó saját szövege (.ut): csak egészében fordul (pl. az alap „Gyep” profilnév), darabokban soha (6.7)
     const user = p.closest && p.closest('.ut');
-    const out = !I18N ? orig : user ? trWhole(orig) : tr(orig);
+    let out = !I18N ? orig : user ? trWhole(orig) : tr(orig);
+    // a képletekben (.formula) a fordítás után igazítjuk a tizedesjelet, így a magyar kulcsok továbbra is illeszkednek
+    if (I18N && I18N.dot && p.closest && p.closest('.formula')) out = out.replace(/(\d),(\d)/g, '$1.$2');
     I18N_DONE.set(n, { out, L });
     if (out !== cur) n.nodeValue = out;
     return;
