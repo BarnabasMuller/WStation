@@ -1,6 +1,16 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
+== 2.2.7.2 (2026-10-21) – correcciones menores ==
+- Copia manual: espera hasta 10 minutos incluso con muchos datos y luego da un error claro.
+- Evaporación (ET₀): ya no aumenta paradójicamente en días muy nublados.
+- Fórmula propia con resolución de 5 minutos: se dibuja completa tras desplazar y ampliar.
+- Resumen: el título «último día con datos … en este año» es una frase completa en otros idiomas.
+- Diario del jardín: no se desborda en el móvil; para arbustos la unidad es «litros / arbusto».
+- Un archivo de ajustes dañado ya no bloquea la interfaz; la pestaña Sequía soporta datos ausentes.
+- Descargador: los datos METAR y las respuestas demasiado grandes ya no pueden dañar archivos; el
+  registro de errores del Visor empieza un archivo nuevo a los 5 MB.
+
 == 2.2.7.1 (2026-10-21) – correcciones de seguridad ==
 - Instalador: ya no borra ni mueve archivos ajenos. Una carpeta solo cuenta como instalación de WStation si los
   programas son realmente de WStation; en una carpeta ajena no vacía instala en una nueva subcarpeta «WStation».

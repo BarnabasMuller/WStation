@@ -1,6 +1,17 @@
 ﻿WSTATION – ÄNDERUNGEN
 ===========================
 
+== 2.2.7.2 (2026-10-21) – kleinere Korrekturen ==
+- Manuelle Sicherung: wartet auch bei großen Daten bis zu 10 Minuten und meldet dann einen klaren Fehler.
+- Verdunstung (ET₀): steigt an sehr bewölkten Tagen nicht mehr paradox an.
+- Eigene Formel mit 5-Minuten-Auflösung: nach Scrollen und Zoomen vollständig gezeichnet.
+- Übersicht: der Titel „letzter Datentag … in diesem Jahr“ ist auch in anderen Sprachen ein ganzer Satz.
+- Gartentagebuch: kein Überlauf auf dem Handy; bei Sträuchern lautet die Einheit „Liter / Strauch“.
+- Eine beschädigte Einstellungsdatei blockiert die Oberfläche nicht mehr; der Reiter Trockenheit
+  kommt mit fehlenden Daten zurecht.
+- Downloader: METAR-Daten und übergroße Serverantworten können keine Dateien mehr beschädigen; das
+  Fehlerprotokoll der Anzeige beginnt bei 5 MB eine neue Datei.
+
 == 2.2.7.1 (2026-10-21) – Sicherheitskorrekturen ==
 - Installationsprogramm: löscht oder verschiebt keine fremden Dateien mehr. Ein Ordner gilt nur dann als
   WStation-Installation, wenn die Programme wirklich zu WStation gehören; in einen nicht leeren fremden Ordner

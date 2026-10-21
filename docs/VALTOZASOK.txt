@@ -1,6 +1,16 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.7.2 (2026-10-21) – kisebb hibák javítása ==
+- Kézi biztonsági mentés: nagy adatnál is legfeljebb 10 percet vár, utána érthető hibát ad.
+- Párolgás (ET₀): nagyon borult napon sem nő paradox módon.
+- Saját képlet 5 perces felbontással: görgetés és nagyítás után is végig kirajzolódik.
+- Áttekintés: a „Az utolsó adatnap … az idei évben” cím más nyelveken is egész mondat.
+- Kerti napló: telefonon / keskeny ablakban nem lóg ki; bokornál a liter „liter / bokor”.
+- Egy sérült beállításfájl nem akasztja meg a felületet; üres adatnál sem hibázik a Szárazság fül.
+- Letöltő: a METAR-adatok és a túl nagy szerverválaszok nem ronthatják el a fájlokat; a Megjelenítő
+  hibanaplója 5 MB-nál új fájlt kezd.
+
 == 2.2.7.1 (2026-10-21) – biztonsági javítások ==
 - Telepítő: nem töröl és nem helyez át idegen fájlokat. Egy mappát csak akkor tekint WStation-telepítésnek,
   ha a programok valóban a WStationéi; egy nem üres, idegen mappába nem telepít közvetlenül, hanem egy új

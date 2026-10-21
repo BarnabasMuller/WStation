@@ -1,6 +1,16 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.7.2 (2026-10-21) – minor fixes ==
+- Manual backup: waits up to 10 minutes even with large data, then gives a clear error.
+- Evaporation (ET₀): no longer paradoxically rises on very overcast days.
+- Own formula at 5-minute resolution: drawn fully after scrolling and zooming.
+- Overview: the "last data day … in this year" title is a whole sentence in other languages too.
+- Garden diary: no overflow on phones / narrow windows; for shrubs the unit reads "litres / shrub".
+- A damaged settings file no longer blocks the interface; the Drought tab copes with missing data.
+- Downloader: METAR data and oversized server replies can no longer damage files; the Viewer's error
+  log starts a new file at 5 MB.
+
 == 2.2.7.1 (2026-10-21) – security fixes ==
 - Installer: it no longer deletes or moves files that are not its own. A folder counts as a WStation installation
   only if the programs really are WStation's; into a non-empty folder of something else it installs into a new
