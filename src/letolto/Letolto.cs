@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.7.2")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.7.2")]
+[assembly: System.Reflection.AssemblyVersion("2.2.8.0")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.8.0")]
 
 namespace WuLetolto
 {
@@ -778,8 +778,32 @@ MetarKod=LHBP
             };
             string tmp = FilePath + ".tmp";
             Guard.WriteAllText(tmp, PrettyJson(Js.Serialize(root)), new UTF8Encoding(false));
-            if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null);
-            else Guard.Move(tmp, FilePath);
+            // egy vírusirtó / indexelő / felhőszinkron pillanatnyilag zárolhatja a fájlt: rövid szünetekkel újrapróbáljuk,
+            // végül felülírással másolunk (2.2.8 – eddig az első sikertelen csere az egész futást leállította)
+            Exception last = null;
+            for (int attempt = 1; attempt <= 8; attempt++)
+            {
+                try
+                {
+                    if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null);
+                    else Guard.Move(tmp, FilePath);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (!(ex is IOException) && !(ex is UnauthorizedAccessException)) throw;
+                    last = ex;
+                    Thread.Sleep(Math.Min(2000, 250 * attempt));
+                }
+            }
+            try
+            {
+                Guard.Copy(tmp, FilePath, true);
+                try { Guard.Delete(tmp); } catch { }
+                return;
+            }
+            catch (Exception ex) { last = ex; }
+            throw new SaveException("Az állapotfájl (" + Path.GetFileName(FilePath) + ") most nem írható (" + last.Message + "); a következő mentés pótolja.", last);
         }
 
         static string PrettyJson(string json)
@@ -1155,7 +1179,10 @@ MetarKod=LHBP
                     foreach (var kv in pending) stn.Days[kv.Key] = kv.Value;
                     pending.Clear();
                 }
-                state.Save();
+                // az állapotfájl sikertelen mentése nem állítja le a letöltést: a mérések már a CSV-ben vannak,
+                // az állapotot a következő mentés (legkésőbb a futás vége) pótolja (2.2.8)
+                try { state.Save(); }
+                catch (SaveException se) { Log.Warn(se.Message); }
             };
 
             try
@@ -1267,6 +1294,9 @@ MetarKod=LHBP
                     if (s == 200 || s == 204)
                     {
                         var list = s == 200 ? JsonList(body, "observations") : new List<Dictionary<string, object>>();
+                        // a tegnapi nap, ha már most teljes (megvan a szokásos mérésszám), rögtön végleges:
+                        // másnap nem kell még egyszer lekérni (2.2.8 – napi egy fölösleges API-hívás)
+                        if (!final && list.Count >= TypicalCount(stn)) final = true;
                         int a0 = obs.Added;
                         foreach (var o in list) obs.Merge(ObsRecord(o));
                         if (list.Count > 0)

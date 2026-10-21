@@ -217,7 +217,7 @@ const MONTH_ADJ = ['januári', 'februári', 'márciusi', 'áprilisi', 'májusi',
 async function api(path) {
   const r = await fetch(path, { cache: 'no-store' });
   const j = await r.json();
-  if (!r.ok && r.status !== 503) throw new Error(j.error || ('HTTP ' + r.status));
+  if (!r.ok && r.status !== 503) { const e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; throw e; }
   return j;
 }
 // módosító kérés (a szerver csak a saját fejléccel fogadja el)
@@ -311,7 +311,10 @@ async function start() {
     await loadAll(true);
     overlay('hide');
   } catch (e) {
-    overlay('problem', 'Hiba történt', esc(e.message), [{ label: 'Újrapróbálás', primary: true, onClick: () => location.reload() }]);
+    // munkamenet-azonosító nélkül (pl. könyvjelzőből / régi fülből) az újrapróbálás nem segít: útmutatás (2.2.8)
+    if (e.status === 401 || e.status === 403)
+      overlay('problem', 'Nincs hozzáférés', 'A WStation felülete csak a programból nyitható meg: indítsd el a Megjelenítőt (pl. az asztali WStation ikonnal). Egy elmentett cím vagy könyvjelző nem működik, mert a program minden indításkor új azonosítót kap.', []);
+    else overlay('problem', 'Hiba történt', esc(e.message), [{ label: 'Újrapróbálás', primary: true, onClick: () => location.reload() }]);
   }
 }
 
@@ -510,7 +513,9 @@ function renderToday() {
 }
 
 // ------------------------------------------------------------------ idővonal
-const TOP0 = 92, STEP = 182, GH = 132;
+// panelenkénti magasság: a napsugárzás / UV / felhőzet panel magasabb, mert három adatsor osztozik rajta (2.2.8)
+const TOP0 = 92, GAP = 50, GHS = [132, 132, 132, 132, 132, 168];
+const TOPS = GHS.map((h, i) => TOP0 + GHS.slice(0, i).reduce((s, x) => s + x + GAP, 0));
 const PANELS = [
   { title: 'Hőmérséklet és harmatpont', unit: '°C' },
   { title: 'Páratartalom', unit: '%' },
@@ -546,7 +551,7 @@ function xAxes() {
 function panelTitles() {
   const u = [[tlabel()], ['%'], [plabel()], [wlabel()], [rrlabel(), rlabel()], ['W/m²', 'UV', '%']];
   return PANELS.map((p, i) => ({
-    text: '{t|' + p.title + '}  {u|' + u[i].join(' · ') + '}', top: TOP0 + i * STEP - 30, left: 6,
+    text: '{t|' + p.title + '}  {u|' + u[i].join(' · ') + '}', top: TOPS[i] - 30, left: 6,
     textStyle: { rich: { t: { fontSize: fs(13.5), fontWeight: 600, color: cssVar('--ink') }, u: { fontSize: fs(11.5), color: cssVar('--muted') } } }
   }));
 }
@@ -583,8 +588,8 @@ function buildChart() {
     title: panelTitles(),
     // jelmagyarázat panelenként (12.5): a színek mellett vonaltípus is különbözik (harmatpont, lökés, halmozott, felhőzet szaggatott)
     legend: [[0, ['Hőmérséklet', 'Harmatpont', 'Min–max']], [3, ['Átlagszél', 'Széllökés']], [4, ['Csapadékintenzitás', 'Napi csapadék', 'Napi halmozott']], [5, ['Napsugárzás', 'UV-index', 'Felhőzet (becslés)']]]
-      .map(([i, data]) => ({ data, top: TOP0 + i * STEP - 28, right: 58, selectedMode: false, itemWidth: 18, itemHeight: 8, itemGap: 12, textStyle: { color: muted, fontSize: fs(11.5) } })),
-    grid: PANELS.map((p, i) => ({ left: 58, right: 58, top: TOP0 + i * STEP, height: GH })),
+      .map(([i, data]) => ({ data, top: TOPS[i] - 28, right: 58, selectedMode: false, itemWidth: 18, itemHeight: 8, itemGap: 12, textStyle: { color: muted, fontSize: fs(11.5) } })),
+    grid: PANELS.map((p, i) => ({ left: 58, right: 58, top: TOPS[i], height: GHS[i] })),
     xAxis: xAxes(),
     yAxis: [
       yBase(0, ''), yBase(1, '', { min: 0, max: 100, scale: false }), yBase(2, ''),
@@ -594,7 +599,7 @@ function buildChart() {
       // az UV-skála legfeljebb 15 – egy lehetetlen tüske (pl. 130) ne lapítsa el a valódi görbét
       yBase(5, '', { min: 0, max: v => Math.max(1, Math.min(Math.ceil(v.max), 15)), scale: false, position: 'right', splitLine: { show: false } }),
       // a felhőzet-becslés saját, rejtett 0–100 %-os tengelye
-      yBase(5, '', { min: 0, max: 100, scale: false, show: false })
+      yBase(5, '', { min: 0, max: 105, scale: false, show: false })   // 105: a 100 %-os felhőzet ne a panel szélére essen (2.2.8)
     ],
     axisPointer: { link: [{ xAxisIndex: 'all' }], lineStyle: { color: muted, type: 'dashed' } },
     tooltip: {
@@ -611,6 +616,9 @@ function buildChart() {
       }
     ],
     series: [
+      // láthatatlan sor csak a felső csúszka hátterének: mindig a teljes, egységes felbontású idősor (2.2.8 –
+      // eddig a csúszka az összefésült adatot mutatta, ezért a látható szakasz részletesebb volt, mint a többi)
+      ln('ovw', '', 0, 0, 'transparent', tlabel, 1, { lineStyle: { width: 0, opacity: 0 }, silent: true, tooltip: { show: false }, z: 0 }),
       ln('tLo', 'Minimum', 0, 0, 'transparent', tlabel, 1, { stack: 'band', lineStyle: { width: 0 }, tooltip: { show: false } }),
       ln('tBand', 'Min–max', 0, 0, C.temp, tlabel, 1, { stack: 'band', lineStyle: { width: 0 }, areaStyle: { color: C.temp, opacity: .16 } }),
       ln('tAvg', 'Hőmérséklet', 0, 0, C.temp, tlabel, 1, { lineStyle: { width: 2, color: C.temp }, markArea: gapAreas() }),
@@ -629,7 +637,7 @@ function buildChart() {
       flags('fRain', 4, 4),
       ln('sol', 'Napsugárzás', 5, 6, C.sun, 'W/m²', 0, { areaStyle: { color: C.sun, opacity: .18 }, markArea: gapAreas() }),
       ln('uv', 'UV-index', 5, 7, C.uv, '', 0, { lineStyle: { width: 1.3, color: C.uv } }),
-      ln('cloud', 'Felhőzet (becslés)', 5, 8, C.cloud, '%', 0, { lineStyle: { width: 1.2, color: C.cloud, type: 'dashed' }, areaStyle: { color: C.cloud, opacity: .10 }, z: 1 }),
+      ln('cloud', 'Felhőzet (becslés)', 5, 8, C.cloud, '%', 0, { lineStyle: { width: 1.3, color: C.cloud, opacity: .85 }, areaStyle: { color: C.cloud, opacity: .12 }, z: 1 }),
       flags('fSun', 5, 6),
       flags('fUv', 5, 7)
     ]
@@ -654,7 +662,7 @@ function tooltipFmt(params) {
   let html = '<div style="font-weight:600;margin-bottom:4px">' + F.full.format(params[0].axisValue) + '</div>';
   for (const p of params) {
     const d = p.data;
-    if (!d || p.seriesId === 'tLo') continue;
+    if (!d || p.seriesId === 'tLo' || p.seriesId === 'ovw') continue;
     if (p.seriesId === 'tBand') {
       if (d[2] == null || d[3] == null) continue;
       html += p.marker + ' Min–max: <b>' + num(d[2]) + ' – ' + num(d[3]) + ' ' + tlabel() + '</b><br>';
@@ -672,7 +680,7 @@ function tooltipFmt(params) {
       html += p.marker + ' ' + p.seriesName + ': <b>' + wtext(d[3] != null ? d[3] : d[1]) + '</b>' + (windUnit() !== 'kmh' ? ' (' + num(d[3] != null ? d[3] : d[1], 1) + ' km/h)' : '') + (windUnit() !== 'bft' ? ' · ' + num(beaufortF(d[3] != null ? d[3] : d[1]), 1) + ' Bft' : '') + (p.seriesId === 'wind' && d[2] != null ? ' · ' + dirText(d[2]) + ' felől' : '') + '<br>';
       continue;
     }
-    if (p.seriesId === 'cloud') { html += p.marker + ' Felhőzet (becslés): <b>' + num(d[1], 0) + ' %</b>' + (d[3] != null ? ' (' + num(d[3], 0) + ' okta)' : ' (nappali átlag)') + (d[2] ? ' – ' + esc(d[2]) : '') + '<br>'; continue; }
+    if (p.seriesId === 'cloud') { html += p.marker + ' Felhőzet (becslés): <b>' + num(d[4] != null ? d[4] : d[1], 0) + ' %</b>' + (d[3] != null ? ' (' + num(d[3], 0) + ' okta)' : ' (nappali átlag)') + (d[2] ? ' – ' + esc(d[2]) : '') + '<br>'; continue; }
     if (p.seriesId === 'rainDay') html += p.marker + ' ' + p.seriesName + ' (' + F.dayY.format(d[0]) + '): <b>' + num(d[1], rdec(1)) + ' ' + rlabel() + '</b><br>';
     else html += p.marker + ' ' + p.seriesName + ': <b>' + num(d[1], dec) + (u ? ' ' + u : '') + '</b>' + extra + '<br>';
   }
@@ -717,6 +725,7 @@ function applyData() {
   const daily = span > 3 * D;
   chart.setOption({
     series: [
+      { id: 'ovw', data: pts(BASE.groups.temp, 'v', tconv) },
       { id: 'tLo', data: pts(T, 'lo', tconv) },
       { id: 'tBand', data: band },
       { id: 'tAvg', data: pts(T, 'v', tconv) },
@@ -798,7 +807,12 @@ async function refreshDetail() {
 let CLOUD_SER = {};
 function cloudPts() {
   const c = CLOUD_SER.cur;
-  if (c && c.t) return c.t.map((t, i) => [t, c.pct[i], c.type[i], c.okta[i]]);
+  // a 10 perces becslés zajos: a vonal ±2 lépés (kb. 50 perc) átlaga, a buborék a pontos értéket írja (5. mező) – 2.2.8
+  if (c && c.t) return c.t.map((t, i) => {
+    let s = 0, n = 0;
+    if (c.pct[i] != null) for (let j = Math.max(0, i - 2); j <= Math.min(c.t.length - 1, i + 2); j++) if (c.pct[j] != null && Math.abs(c.t[j] - t) <= 30 * 60e3) { s += c.pct[j]; n++; }
+    return [t, n ? Math.round(s / n) : null, c.type[i], c.okta[i], c.pct[i]];
+  });
   if (typeof CLOUD_DAYS !== 'undefined' && CLOUD_DAYS && CLOUD_DAYS.date) return CLOUD_DAYS.date.map((s, i) => [DS.ms(s) + 11 * H, CLOUD_DAYS.pct[i], CLOUD_DAYS.type[i], null]);
   return [];
 }

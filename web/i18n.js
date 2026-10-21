@@ -10,6 +10,8 @@ const I18N_LANGS = { hu: { code: 'hu', name: 'Magyar', locale: 'hu-HU' } };   //
 const I18N_DICTS = {};                                                     // betöltött szótárak: kód → {_meta, ...}
 let I18N = null;
 const I18N_ORIG = new WeakMap(), I18N_DONE = new WeakMap();
+// csak egészében forduló kulcsok (fokozatnevek): mondat belsejében nem cserélődnek (2.2.8)
+const I18N_WHOLE_ONLY = new Set(['magas', 'alacsony', 'nagyon magas', 'nagyon alacsony']);
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // az elérhető nyelvek listája (a program a web/lang mappában lévő fájlokból adja)
@@ -57,10 +59,15 @@ function i18nBuild() {
   // a rövid, egyszavas kifejezések (pl. „és”, „nap”) csak önálló szövegként fordulnak, mondat belsejében nem –
   // így egy hiányzó mondatból nem lesz félig lefordított keverék
   const isShort = k => k.length < 5 && !/\s/.test(k);
+  // általános szavak, amelyek csak egészében fordulhatnak (pl. fokozatnevek): egy fordítatlan mondatban ne keletkezzen
+  // belőlük félig fordított szöveg (2.2.8)
+  const wholeOnly = k => I18N_WHOLE_ONLY.has(k);
   const mk = list => { try { return list.length ? new RegExp('(?<![\\p{L}_])(?:' + list.sort((a, b) => b.length - a.length).map(escRe).join('|') + ')(?![\\p{L}_])', 'gu') : null; } catch (e) { console.error(e); return null; } };
   // tizedespontos nyelv (pl. angol): a képletek fix „0,836”-jai is ponttal jelenjenek meg (lásd trNode)
   const dot = (1.5).toLocaleString(langMeta(L).locale || 'hu-HU').charAt(1) === '.';
-  I18N = { L, map, dot, re: mk([...map.keys()].filter(k => !isShort(k))), reShort: mk([...map.keys()].filter(isShort)) };
+  // a nyelv idézőjelpárja (a _meta „quotes” mezőjéből, különben angol)
+  const qm = langMeta(L).quotes, quotes = Array.isArray(qm) && qm.length === 2 ? qm : ({ de: ['„', '“'], es: ['«', '»'] })[L] || ['“', '”'];
+  I18N = { L, map, dot, quotes, re: mk([...map.keys()].filter(k => !isShort(k) && !wholeOnly(k))), reShort: mk([...map.keys()].filter(k => isShort(k) && !wholeOnly(k))) };
 }
 
 // egy szöveg fordítása: előbb a teljes (levágott) szöveg, aztán a benne lévő ismert kifejezések
@@ -134,6 +141,8 @@ function trNode(n) {
     let out = !I18N ? orig : user ? trWhole(orig) : tr(orig);
     // a képletekben (.formula) a fordítás után igazítjuk a tizedesjelet, így a magyar kulcsok továbbra is illeszkednek
     if (I18N && I18N.dot && p.closest && p.closest('.formula')) out = out.replace(/(\d),(\d)/g, '$1.$2');
+    // a magyar „…” idézőjel (pl. a programból jövő üzenetekben egy név körül) a nyelv saját idézőjelére (2.2.8)
+    if (I18N && out.indexOf('„') >= 0) { const q = I18N.quotes; out = out.replace(/„([^„”]*)”/g, q[0] + '$1' + q[1]); }
     I18N_DONE.set(n, { out, L });
     if (out !== cur) n.nodeValue = out;
     return;

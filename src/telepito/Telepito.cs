@@ -17,8 +17,8 @@ using Kozos;
 
 [assembly: AssemblyTitle("WStation – telepítő")]
 [assembly: AssemblyProduct("WStation")]
-[assembly: AssemblyVersion("2.2.7.2")]
-[assembly: AssemblyFileVersion("2.2.7.2")]
+[assembly: AssemblyVersion("2.2.8.0")]
+[assembly: AssemblyFileVersion("2.2.8.0")]
 
 namespace Telepito
 {
@@ -448,7 +448,7 @@ namespace Telepito
                         string other = c == "hu" ? f[1] : Langs.T(f[1], c);
                         string p = Path.Combine(target, other);
                         if (other.Equals(cur, StringComparison.OrdinalIgnoreCase) || !File.Exists(p) || !OwnedFile(p, manifest, proven)) continue;
-                        try { Guard.Delete(p); } catch { }
+                        try { Guard.Delete(p); r.Log.Add("régi leírás törölve: " + other); } catch { }
                     }
                 }
 
@@ -464,8 +464,21 @@ namespace Telepito
                     try
                     {
                         string desk = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                        CreateShortcut(Path.Combine(desk, Names.Shortcut), Path.Combine(target, Names.Viewer), target);
-                        r.Log.Add("asztali parancsikon");
+                        // egy másik telepítésre mutató „WStation” parancsikont nem írunk felül (2.2.8): ilyenkor
+                        // „WStation (2)”, „(3)”… – egy már ide mutató számozottat újrahasznosítunk
+                        string lnk = Path.Combine(desk, Names.Shortcut);
+                        if (File.Exists(lnk) && !ShortcutTargetsDir(lnk, target))
+                        {
+                            string stem = Path.GetFileNameWithoutExtension(Names.Shortcut), alt = null;
+                            for (int k = 2; k <= 9 && alt == null; k++)
+                            {
+                                string c = Path.Combine(desk, stem + " (" + k + ").lnk");
+                                if (!File.Exists(c) || ShortcutTargetsDir(c, target)) alt = c;
+                            }
+                            lnk = alt ?? lnk;
+                        }
+                        CreateShortcut(lnk, Path.Combine(target, Names.Viewer), target);
+                        r.Log.Add(Path.GetFileName(lnk) == Names.Shortcut ? "asztali parancsikon" : "asztali parancsikon: " + Path.GetFileNameWithoutExtension(lnk) + " (a „" + Path.GetFileNameWithoutExtension(Names.Shortcut) + "” egy másik telepítésre mutat)");
                         // a régi nevű (2.2.1-ig „Budaörsi időjárás”) parancsikon törlése – csak ha ebbe a mappába mutat
                         string oldLnk = Path.Combine(desk, Names.LegacyShortcut);
                         if (File.Exists(oldLnk) && ShortcutTargetsDir(oldLnk, target)) { File.Delete(oldLnk); r.Log.Add("a régi nevű parancsikon törölve"); }
@@ -1068,7 +1081,10 @@ namespace Telepito
                 int minutes = -1;
                 if (si >= 0 && si + 1 < args.Length && !int.TryParse(args[si + 1], out minutes)) minutes = -1;
                 var sv = Installer.Look(target);
-                Console.WriteLine("Felmérés: " + sv.Kind + " – " + sv.Text);
+                // csendes módban egy nem üres, idegen mappába nem telepítünk (a felület ilyenkor almappát javasol, itt nincs kitől kérdezni)
+                Console.WriteLine("Felmérés: " + sv.Kind + " – " + (Installer.IsForeignNonEmpty(target)
+                    ? "A mappa nem üres, és nincs benne WStation: csendes módban ide nem telepítek. Adj meg egy üres mappát, vagy egy „" + Names.Root + "” nevű almappát."
+                    : sv.Text));
                 if (args.Any(a => a.Equals("--felmeres", StringComparison.OrdinalIgnoreCase))) return 0;
                 var r = Installer.Install(target, import, sc, minutes, (m, p) => { });
                 Console.WriteLine(r.Ok ? "OK " + (r.Updated ? "(frissítés) " : "") + r.Target : "HIBA: " + r.Error);

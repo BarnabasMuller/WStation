@@ -474,7 +474,6 @@
   "és legalább 12 mérés az ablakban": "und mindestens 12 Messungen im Fenster",
   "és lehűlés ≥ ΔT": "und Abkühlung ≥ ΔT",
   "és lökés ≥ v": "und Böe ≥ v",
-  "es telepítőt": "-Installationsprogramm starten",
   "esedékes": "fällig",
   "Esedékes biztonsági mentés elindítva (induláskor": "Fällige Sicherung gestartet (beim Start",
   "eső": "Regen",
@@ -2258,5 +2257,11 @@
   "liter / bokor": "Liter / Strauch",
   "l / bokor": "l / Strauch",
   "1 és 52 közötti egész szám": "eine ganze Zahl zwischen 1 und 52",
-  "Nincs jogosultság: a felületet a programból nyisd meg": "Keine Berechtigung: öffne die Oberfläche aus dem Programm"
+  "Nincs jogosultság: a felületet a programból nyisd meg": "Keine Berechtigung: öffne die Oberfläche aus dem Programm",
+  "Nincs hozzáférés": "Kein Zugriff",
+  "A WStation felülete csak a programból nyitható meg: indítsd el a Megjelenítőt (pl. az asztali WStation ikonnal). Egy elmentett cím vagy könyvjelző nem működik, mert a program minden indításkor új azonosítót kap": "Die WStation-Oberfläche lässt sich nur aus dem Programm öffnen: Starte die Anzeige (z. B. über das WStation-Symbol auf dem Desktop). Eine gespeicherte Adresse oder ein Lesezeichen funktioniert nicht, weil das Programm bei jedem Start eine neue Sitzungskennung erhält",
+  "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Rasenfläche: {a} – daraus werden Liter und m³ berechnet; mit der ƒx-Schaltfläche einstellbar",
+  "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "die bewässerte Rasenfläche: daraus berechnet der Unterreiter Wasser die m³, und in Litern erfasste Bewässerung wird damit in mm umgerechnet",
+  "régi leírás törölve": "alte Anleitung entfernt",
+  "egy másik telepítésre mutat": "zeigt auf eine andere Installation"
 }

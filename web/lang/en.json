@@ -474,7 +474,6 @@
   "és legalább 12 mérés az ablakban": "and at least 12 measurements in the window",
   "és lehűlés ≥ ΔT": "and cooling ≥ ΔT",
   "és lökés ≥ v": "and gust ≥ v",
-  "es telepítőt": "installer",
   "esedékes": "due",
   "Esedékes biztonsági mentés elindítva (induláskor": "Due backup started (at startup",
   "eső": "rain",
@@ -2258,5 +2257,11 @@
   "liter / bokor": "litres / shrub",
   "l / bokor": "l / shrub",
   "1 és 52 közötti egész szám": "a whole number between 1 and 52",
-  "Nincs jogosultság: a felületet a programból nyisd meg": "Not authorised: open the interface from the program"
+  "Nincs jogosultság: a felületet a programból nyisd meg": "Not authorised: open the interface from the program",
+  "Nincs hozzáférés": "No access",
+  "A WStation felülete csak a programból nyitható meg: indítsd el a Megjelenítőt (pl. az asztali WStation ikonnal). Egy elmentett cím vagy könyvjelző nem működik, mert a program minden indításkor új azonosítót kap": "The WStation interface can only be opened from the program: start the Viewer (e.g. with the WStation desktop icon). A saved address or bookmark does not work, because the program gets a new session ID every time it starts",
+  "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Lawn area: {a} – used for litres and m³; adjustable with the ƒx button",
+  "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "the watered lawn area: the Water sub-tab computes m³ from it, and litres logged for watering are converted to mm with it",
+  "régi leírás törölve": "old guide removed",
+  "egy másik telepítésre mutat": "points to another installation"
 }

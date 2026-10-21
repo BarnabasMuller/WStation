@@ -31,13 +31,13 @@ const FX = {
   },
   rainevent: {
     title: '🌧️ Esőesemények és felhőszakadás',
-    f: 'egy esemény vége: legalább <i>t</i><sub>szünet</sub> perc eső nélkül<br>összeg = Σ csapadék az eseményben · intenzitás = mm/h · felhőszakadás: max. intenzitás ≥ <i>I</i><sub>fh</sub>',
+    f: 'egy esemény vége: legalább <i>t</i><sub>pause</sub> perc eső nélkül<br>összeg = Σ csapadék az eseményben · intenzitás = mm/h · felhőszakadás: max. intenzitás ≥ <i>I</i><sub>cb</sub>',
     text: 'Az egymást követő esős mérésekből eseményeket fűz össze; ha hosszabb szünet jön, új esemény kezdődik.',
-    params: [['EsoesemenySzunetPerc', 'Szünet egy esemény végéig', 't_szünet', 'perc', 'tipikus: 30 perc'], ['FelhoszakadasMmH', 'Felhőszakadás határa', 'I_fh', 'mm/h', 'OMSZ-szerű: 30 mm/h']]
+    params: [['EsoesemenySzunetPerc', 'Szünet egy esemény végéig', 't_pause', 'perc', 'tipikus: 30 perc'], ['FelhoszakadasMmH', 'Felhőszakadás határa', 'I_cb', 'mm/h', 'OMSZ-szerű: 30 mm/h']]
   },
   front: {
     title: '⚡ Front- és zivatardetektor',
-    f: 'front: ΔT<sub>1 óra</sub> ≤ −ΔT<sub>f</sub> és (lökés ≥ v<sub>f</sub> vagy szélfordulás ≥ φ<sub>f</sub>)<br>zivatar: intenzitás ≥ I<sub>z</sub> és lökés ≥ v<sub>z</sub> és lehűlés ≥ ΔT<sub>z</sub>',
+    f: 'front: ΔT<sub>1 h</sub> ≤ −ΔT<sub>f</sub> és (lökés ≥ v<sub>f</sub> vagy szélfordulás ≥ φ<sub>f</sub>)<br>zivatar: intenzitás ≥ I<sub>z</sub> és lökés ≥ v<sub>z</sub> és lehűlés ≥ ΔT<sub>z</sub>',
     text: 'A mért idősorban keres jellegzetes mintákat: hidegfrontnál gyors lehűlés, szélfordulás és lökések; zivatarnál heves eső, lökés és lehűlés egyszerre. A jelölők az idővonalon látszanak.',
     params: [['FrontHomersekletEses', 'Front: lehűlés 1 órán belül', 'ΔT_f', '°C', '4 °C'], ['FrontLokes', 'Front: lökés', 'v_f', 'km/h', '40 km/h'], ['FrontSzelfordulas', 'Front: szélfordulás', 'φ_f', '°', '45°'],
       ['ZivatarIntenzitas', 'Zivatar: csapadékintenzitás', 'I_z', 'mm/h', '20 mm/h'], ['ZivatarLokes', 'Zivatar: lökés', 'v_z', 'km/h', '45 km/h'], ['ZivatarLehules', 'Zivatar: lehűlés', 'ΔT_z', '°C', '3 °C']]
@@ -46,13 +46,13 @@ const FX = {
     title: '📊 Statisztikai küszöbök',
     f: 'hőségnap: T<sub>max</sub> ≥ T<sub>h</sub> · trópusi éjszaka: T<sub>min</sub> ≥ T<sub>tr</sub> · fagyos nap: T<sub>min</sub> &lt; T<sub>f</sub> · téli nap: T<sub>max</sub> &lt; T<sub>t</sub>',
     text: 'A napok számlálása a megadott határok szerint (az OMSZ szokásos küszöbeivel). Mindenhol csak a legalább 80%-ban lefedett napok számítanak (Statisztika, Áttekintés, Jelentés); a csapadékösszeg minden napból.',
-    params: [['HosegNap', 'Hőségnap határa', 'T_h', '°C', 'OMSZ: 30 °C'], ['TropusiEjszaka', 'Trópusi éjszaka határa', 'T_tr', '°C', 'OMSZ: 20 °C'], ['FagyosNap', 'Fagyos nap határa', 'T_f', '°C', '0 °C'], ['TeliNap', 'Téli nap határa', 'T_t', '°C', '0 °C'], ['HianyPerc', 'Adathiány, ha a szünet hosszabb', 't_hiány', 'perc', '15 perc (az állomás 5 percenként küld)']]
+    params: [['HosegNap', 'Hőségnap határa', 'T_h', '°C', 'OMSZ: 30 °C'], ['TropusiEjszaka', 'Trópusi éjszaka határa', 'T_tr', '°C', 'OMSZ: 20 °C'], ['FagyosNap', 'Fagyos nap határa', 'T_f', '°C', '0 °C'], ['TeliNap', 'Téli nap határa', 'T_t', '°C', '0 °C'], ['HianyPerc', 'Adathiány, ha a szünet hosszabb', 't_miss', 'perc', '15 perc (az állomás 5 percenként küld)']]
   },
   windy: {
     title: '⛵ Szeles délutánok',
-    f: 'szeles délután: átlagszél(t<sub>tól</sub> … t<sub>ig</sub>) ≥ v<sub>sz</sub>, és legalább 12 mérés az ablakban',
+    f: 'szeles délután: átlagszél(t<sub>from</sub> … t<sub>to</sub>) ≥ v<sub>wy</sub>, és legalább 12 mérés az ablakban',
     text: 'Vitorlázáshoz: azok a napok, amikor délután tartósan fújt. 20 km/h ≈ 4 Bft (3 Bft fölött).',
-    params: [['DelutanTol', '„Délután” kezdete', 't_tól', 'óra', '12'], ['DelutanIg', '„Délután” vége', 't_ig', 'óra', '18'], ['SzelesDelutanKmh', 'Átlagszél legalább', 'v_sz', 'km/h', '20 km/h ≈ 4 Bft']]
+    params: [['DelutanTol', '„Délután” kezdete', 't_from', 'óra', '12'], ['DelutanIg', '„Délután” vége', 't_ig', 'óra', '18'], ['SzelesDelutanKmh', 'Átlagszél legalább', 'v_wy', 'km/h', '20 km/h ≈ 4 Bft']]
   },
   projection: {
     title: '📈 Hónap végi becslés',
@@ -61,19 +61,19 @@ const FX = {
   },
   runmodel: {
     title: '🏃 Futóruházat-tanácsadó',
-    f: 'T<sub>hat</sub> = hőérzet + 2 (napsugárzás &gt; 500 W/m²) vagy + 1 (&gt; 200 W/m²) − 2 (esik, &gt; 0,5 mm/h) − 1 (szél &gt; 20 km/h)<br>érzet = β₀ + β₁·T<sub>hat</sub> + β₂·rétegek + β₃·intenzitás (ridge-regresszió, λ = 3, az ökölszabály felé húzva; β₂ ≥ 0,3)',
+    f: 'T<sub>eff</sub> = hőérzet + 2 (napsugárzás &gt; 500 W/m²) vagy + 1 (&gt; 200 W/m²) − 2 (esik, &gt; 0,5 mm/h) − 1 (szél &gt; 20 km/h)<br>érzet = β₀ + β₁·T<sub>eff</sub> + β₂·rétegek + β₃·intenzitás (ridge-regresszió, λ = 3, az ökölszabály felé húzva; β₂ ≥ 0,3)',
     text: 'A futás után megadott érzetből (−5 nagyon fáztam … 0 tökéletes … +5 nagyon melegem volt) tanul: kevés adatnál az ökölszabály a súlyosabb („öltözz úgy, mintha 10 °C-kal melegebb lenne”), több futás után egyre inkább a saját adatod. A javasolt rétegszám az, ahol a becsült érzet a legközelebb van a 0-hoz (1–6 réteg).'
   },
   cloud: {
     title: '☁️ Felhőzet (becslés a saját mérésekből)',
-    f: 'nappal: k = G<sub>mért</sub> · k<sub>Rs</sub> / G<sub>derült</sub>(napmagasság, irány) &nbsp;·&nbsp; N = 8 · ((1 − k / k<sub>derült</sub>) / A)<sup>1/B</sup> okta (Kasten–Czeplak)<br>' +
-       'jelleg: a k ' + '<i>t</i><sub>ablak</sub> perces átlaga és szórása (nagy szórás: gomolyfelhő; sima, kissé gyengített: fátyolfelhő; tartósan gyenge: réteg) · eső → felhős<br>' +
-       'éjjel: lehűlés szélcsendben ≥ ΔT<sub>derült</sub> °C/óra → derült, ≥ ΔT<sub>részben</sub> → részben felhős, alatta felhős; párás, ködös, ha a pára ≥ 97 % és T − T<sub>d</sub> &lt; 1 °C',
+    f: 'nappal: k = G<sub>meas</sub> · k<sub>Rs</sub> / G<sub>clr</sub>(napmagasság, irány) &nbsp;·&nbsp; N = 8 · ((1 − k / k<sub>clr</sub>) / A)<sup>1/B</sup> okta (Kasten–Czeplak)<br>' +
+       'jelleg: a k ' + '<i>t</i><sub>win</sub> perces átlaga és szórása (nagy szórás: gomolyfelhő; sima, kissé gyengített: fátyolfelhő; tartósan gyenge: réteg) · eső → felhős<br>' +
+       'éjjel: lehűlés szélcsendben ≥ ΔT<sub>clr</sub> °C/óra → derült, ≥ ΔT<sub>part</sub> → részben felhős, alatta felhős; párás, ködös, ha a pára ≥ 97 % és T − T<sub>d</sub> &lt; 1 °C',
     text: 'A becslés a napsugárzásból számol: derült időben a mért érték közel van ahhoz, amit az állomás a legtisztább napokon ugyanilyen napállásnál mér (ebben benne van a fák, házak árnyéka is). Minél gyengébb a mért sugárzás ehhez képest, annál több a felhő. A felhő típusa csak valószínűség. Magas napnál kb. ±1–2 okta pontos; alacsony napnál, télen, párában, vékony magas felhőnél gyengébb, éjjel csak durva (3 kategória). Az eredmény %-ban is (8 okta = 100 %). A Beállítások › Felhőzet-ellenőrzés a legközelebbi repülőtér jelentéseivel hasonlítja össze, és javasol küszöböt.',
-    params: [['FelhoKRs', 'A mért sugárzás szorzója', 'k_Rs', '', '1 (érzékelő-eltérésnél módosítható)'], ['FelhoDerultK', 'Derült-küszöb (tisztaégbolt-index)', 'k_derült', '', '0,7 (a METAR-ellenőrzés javasolhat)'],
+    params: [['FelhoKRs', 'A mért sugárzás szorzója', 'k_Rs', '', '1 (érzékelő-eltérésnél módosítható)'], ['FelhoDerultK', 'Derült-küszöb (tisztaégbolt-index)', 'k_clr', '', '0,7 (a METAR-ellenőrzés javasolhat)'],
       ['FelhoA', 'Kasten–Czeplak A', 'A', '', '0,75'], ['FelhoB', 'Kasten–Czeplak B', 'B', '', '3,4'], ['FelhoNapMin', 'Nappal legalább ekkora napmagasság', 'h_min', '°', '20°'],
-      ['FelhoAblakPerc', 'Átlag és szórás ablaka', 't_ablak', 'perc', '30 perc'], ['FelhoGomolySzoras', 'Gomolyfelhő: a k szórása legalább', 'σ_gomoly', '', '0,15'],
-      ['FelhoEjDerult', 'Éjjel derült: lehűlés legalább', 'ΔT_derült', '°C/óra', '0,3'], ['FelhoEjReszben', 'Éjjel részben felhős: lehűlés legalább', 'ΔT_részben', '°C/óra', '0,1'],
+      ['FelhoAblakPerc', 'Átlag és szórás ablaka', 't_win', 'perc', '30 perc'], ['FelhoGomolySzoras', 'Gomolyfelhő: a k szórása legalább', 'σ_cu', '', '0,15'],
+      ['FelhoEjDerult', 'Éjjel derült: lehűlés legalább', 'ΔT_clr', '°C/óra', '0,3'], ['FelhoEjReszben', 'Éjjel részben felhős: lehűlés legalább', 'ΔT_part', '°C/óra', '0,1'],
       ['FelhoEjSzelMax', 'Éjjel legfeljebb ekkora szél', 'v_max', 'km/h', '5 km/h (szélben a lehűlés nem a felhőzettől függ)']]
   },
   suspect: { title: '🔎 Gyanús mérések', custom: true }
@@ -161,7 +161,7 @@ const SUSPECT_RULES = [
     [['CsapadekUgrasMmH', 'Növekedés legalább', 'I_jump', 'mm/h'], ['OlvadasMm', 'Olvadás: egy lépésben legalább', 'P_melt', 'mm'], ['OlvadasHomerseklet', 'Olvadás: hőmérséklet legfeljebb', 'T_melt', '°C']]],
   ['JelolBefagyottSzel', 'program', 'Befagyott szélmérő: órákig pontosan 0 szél és 0 lökés fagyban (a szélstatisztikából kimarad)', ['windfrozen'],
     [['BefagyottOra', 'Legalább ennyi ideig', 't_frz', 'óra'], ['BefagyottHomerseklet', 'Hőmérséklet legfeljebb', 'T_frz', '°C']]],
-  ['JelolKieses', 'program', 'Kiesés utáni első mérés (az állomás újraindulása után az első érték gyakran pontatlan)', ['restart'], [['KiesesPerc', 'Kiesés, ha a szünet hosszabb', 't_k', 'perc']]]
+  ['JelolKieses', 'program', 'Kiesés utáni első mérés (az állomás újraindulása után az első érték gyakran pontatlan)', ['restart'], [['KiesesPerc', 'Kiesés, ha a szünet hosszabb', 't_out', 'perc']]]
 ];
 async function renderSuspect(box) {
   const ini = await getIni(true);

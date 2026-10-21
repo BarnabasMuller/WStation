@@ -295,6 +295,9 @@ namespace Idojaras
                         }
                         // a Letöltő beállításfájljából az API-kulcs és az állomás a mostani marad, az ApiBaseUrl nem jön át
                         if (x.t.Equals(AppState.L.DlIni, StringComparison.OrdinalIgnoreCase)) KeepSecrets(tmp, x.t);
+                        // a kerti napló és a futónapló hibás tételei már visszaállításkor kimaradnak (2.2.8)
+                        string bn = Path.GetFileName(x.t).ToLowerInvariant();
+                        if (bn == "naplo.json" || bn == "futas.json") CleanStore(tmp, bn.Substring(0, bn.Length - 5));
                     }
                     // 2. csere egyenként, a régi példány megtartásával; hiba esetén minden visszaáll
                     try
@@ -346,6 +349,20 @@ namespace Idojaras
         }
 
         // a visszaállított beallitasok.ini-ben a mostani ApiKey / StationId marad (ha van), az ApiBaseUrl a mostani (vagy semmi)
+        // egy visszaállított napló / futónapló tételenkénti ellenőrzése (ugyanaz a szabály, mint betöltéskor);
+        // ha nem lista vagy nem olvasható, üres listát hagy (a betöltés is így tenne)
+        internal static void CleanStore(string tmp, string name)
+        {
+            var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+            object[] arr;
+            try { arr = js.DeserializeObject(File.ReadAllText(tmp, Encoding.UTF8)) as object[]; } catch { arr = null; }
+            int dropped;
+            var clean = JsonStore.Clean(name, arr ?? new object[0], out dropped);
+            if (arr != null && dropped == 0) return;
+            Guard.WriteAllText(tmp, js.Serialize(clean), new UTF8Encoding(false));
+            Program.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
+        }
+
         internal static void KeepSecrets(string tmp, string current)
         {
             var cur = File.Exists(current) ? Settings.ReadIni(current) : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

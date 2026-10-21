@@ -33,7 +33,7 @@ const PROFILE_PARAMS = {
   p: P('Könnyen felvehető víz aránya (p)', '', 'FAO-56, 22. táblázat: gyep 0,40–0,50; gyümölcsfák 0,50; konténeres növények 0,30–0,40. Ha a víz ennél jobban fogy, a növény stresszbe kerül.', { step: 0.05 }),
   sprinklerRate: P('Szórófej kijuttatási intenzitása', 'mm/h', 'spray (porlasztó) fejek: 35–40 mm/h; rotoros fejek: 8–15 mm/h', { step: 1 }),
   maxSession: P('Egy menetben kijuttatható víz', 'mm', 'agyagos talaj beszivárgása 1–5 mm/h: egy menetben 6–12 mm, utána 30–60 perc szünet (cycle & soak)', { step: 1 }),
-  lawnArea: P('Gyepterület', 'm²', 'csak a literben rögzített locsoláshoz kell', { step: 5 }),
+  lawnArea: P('Gyepterület', 'm²', 'a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re', { step: 5 }),
   area: P('Bokronkénti lombkorona-terület', 'm²', 'a csepegtetett, átnedvesített terület bokronként', { step: 0.1 }),
   count: P('Bokrok száma', 'db', '', { step: 1 }),
   dripCount: P('Csepegtetők száma (bokronként / fánként)', 'db', '', { step: 1 }),
@@ -113,7 +113,7 @@ Ks = (TAW − Dr) / ((1 − p) · TAW), ha Dr &gt; RAW; különben 1</div>
 <p><b>Dr</b>: a gyökérzóna vízhiánya (mm) · <b>P</b>: csapadék · <b>RO</b>: lefolyás · <b>I</b>: öntözés · <b>TAW</b>: összes felvehető víz · <b>RAW</b>: könnyen felvehető víz · <b>Ks</b>: vízstressz-tényező (1 = nincs stressz). <b>Kiszáradás</b> = Dr / TAW. Forrás: FAO-56, 85. egyenlet.</p>`;
 const F_SURFACE = `<div class="formula">TEW = 1000 · (θFC − 0,5 · θWP) · Ze<br>Kr = (TEW − De) / (TEW − REW), ha De &gt; REW; különben 1<br>E = Kr · Kc · ET₀</div>
 <p>A felső 10 cm párolgása (FAO-56, 7. fejezet): amíg a könnyen párolgó víz (REW) tart, teljes ütemben párolog, utána lassul. Napos léptékű: egy eső után gyorsan nedves, pár nap alatt kiszárad.</p>`;
-const F_POT = `<div class="formula">TAW<sub>cserép</sub> (mm) = V (l) · f / A (m²)<br>P<sub>hatásos</sub> = P · eső-arány (szabad 1 · félig 0,5 · fedett 0)<br>ETc = Ks · Kc · ET₀ · párolgás-arány (1 · 0,8 · 0,6)</div>
+const F_POT = `<div class="formula">TAW<sub>pot</sub> (mm) = V (l) · f / A (m²)<br>P<sub>eff</sub> = P · eső-arány (szabad 1 · félig 0,5 · fedett 0)<br>ETc = Ks · Kc · ET₀ · párolgás-arány (1 · 0,8 · 0,6)</div>
 <p>A cserépben csak a földje tárol vizet: V a térfogat, f a hasznos víztartalom, A a felszín. 1 mm a cserép felszínén = A liter.</p>`;
 const F_TREE = `<div class="formula">napi vízigény (l) = ETc (mm) · lombkorona-terület (m²)<br>
 belső tartalék (l) = π · (d/2)² · h · alaktényező · szijács-arány · 1000 · kivonható víz   (d = törzskerület / π)<br>
@@ -190,7 +190,9 @@ function renderDrCards() {
     const [st, cls] = stressText(ks, depl, raw / taw);
     let extra = '';
     if (p.type === 'fa' || p.type === 'bokor' || p.type === 'cserep') extra += '<div class="line">Hiányzik: <b>' + rtext(dr, 0) + ' ≈ ' + fmtL(dr * r.area * (p.type === 'bokor' ? 1 : 1)) + '</b>' + (p.type === 'bokor' ? ' bokronként' : '') + '</div>';
-    else extra += '<div class="line">Hiányzik: <b>' + rtext(dr, 0) + '</b> (összesen ' + rtext(taw, 0) + ' fér el)</div>';
+    else extra += '<div class="line">Hiányzik: <b>' + rtext(dr, 0) + '</b> (összesen ' + rtext(taw, 0) + ' fér el)</div>' +
+      // a gyepterület látható helyen (2.2.8): ebből lesz liter és m³ (Víz alfül); a ƒx gombbal állítható
+      (p.type === 'gyep' ? '<div class="line muted small">' + tf('Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható.', { a: num(r.area, 0) + ' m²' }) + '</div>' : '');
     if (p.type === 'fa') {
       const trend = r.drMonthAgo != null ? dr - r.drMonthAgo : null;
       extra += '<div class="line">Napi vízigény most: <b>' + fmtL(r.litersToday) + '</b> (' + num(last(r.kc), 2) + ' Kc)</div>' +
@@ -533,7 +535,8 @@ window.addEventListener('resize', () => { if (drChart && currentTab === 'szarazs
 
 // ===================================================================== 4. lépés: tűzveszély (FWI), VPD, hőösszeg (GDD)
 const FWI_CLASSES = [[5.2, 'nagyon alacsony', '#2e7d32'], [11.2, 'alacsony', '#7cb342'], [21.3, 'közepes', '#fdd835'], [38, 'magas', '#fb8c00'], [50, 'nagyon magas', '#e53935'], [1e9, 'extrém', '#6a1b9a']];
-function fwiClass(v) { if (v == null || isNaN(v)) return ['–', '#999']; const c = FWI_CLASSES.find(c => v < c[0]); return [c[1], c[2]]; }
+// a fokozat neve egészében fordul (a „magas” / „alacsony” mondat belsejében nem – lásd I18N_WHOLE_ONLY, 2.2.8)
+function fwiClass(v) { if (v == null || isNaN(v)) return ['–', '#999']; const c = FWI_CLASSES.find(c => v < c[0]); return [trWhole(c[1]), c[2]]; }
 const FWI_PARAMS = {
   ffmc0: P('FFMC kezdőérték (szezon elején)', '', 'Van Wagner (1987): 85', { step: 1 }),
   dmc0: P('DMC kezdőérték', '', 'Van Wagner (1987): 6', { step: 1 }),
@@ -580,7 +583,8 @@ async function renderDroughtExtras() {
     '<div class="line small">Terjedési index (ISI) ' + num(last(DR.isi), 1) + ' · éghető anyag (BUI) ' + num(last(DR.bui), 0) + '</div></div>');
   // VPD
   const v = c.vpd, nowV = TODAY && TODAY.now && TODAY.now.temp != null && TODAY.now.hum != null ? 0.6108 * Math.exp(17.27 * TODAY.now.temp / (TODAY.now.temp + 237.3)) * (1 - TODAY.now.hum / 100) : null;
-  const vband = x => x == null ? ['–', ''] : x < v.low ? ['nagyon párás levegő', 'mild'] : x < v.idealLo ? ['alacsony', 'ok'] : x <= v.idealHi ? ['ideális', 'ok'] : x <= v.high ? ['emelkedett', 'mild'] : x <= v.severe ? ['stressz', 'strong'] : ['erős stressz', 'severe'];
+  const vband = x => { const b = vbandHu(x); return [trWhole(b[0]), b[1]]; };
+  const vbandHu = x => x == null ? ['–', ''] : x < v.low ? ['nagyon párás levegő', 'mild'] : x < v.idealLo ? ['alacsony', 'ok'] : x <= v.idealHi ? ['ideális', 'ok'] : x <= v.high ? ['emelkedett', 'mild'] : x <= v.severe ? ['stressz', 'strong'] : ['erős stressz', 'severe'];
   const vmax = d.vpd[d.vpd.length - 1], v7 = d.vpd.slice(-7).filter(x => x != null);
   cards.push('<div class="card dr-card"><button class="qbtn" data-q2="vpd" title="Képlet és beállítások" aria-label="Páranyomás-hiány – képlet és beállítások">ƒx</button><h3>🍃 Páranyomás-hiány (VPD)</h3>' +
     '<div class="big">' + num(nowV, 2) + '<small>kPa most</small></div>' +

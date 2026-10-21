@@ -18,6 +18,9 @@ namespace Idojaras
         // böngészős módban megnyitott cím) kapja meg; ebből HttpOnly cookie lesz, és a helyi API csak ezzel válaszol –
         // így egy másik helyi program nem töltheti le pl. a biztonsági mentést
         public readonly string Token = NewToken();
+        // portfüggő név (2.2.8): a localhost cookie-jai minden portnak közösek, így két egyszerre futó példány
+        // (két külön mappából, böngészős módban) nem írja felül egymás azonosítóját
+        string CookieName { get { return "wst_" + Port; } }
         public string AuthUrl { get { return Url + "?t=" + Token; } }
         static string NewToken()
         {
@@ -27,7 +30,7 @@ namespace Idojaras
         }
         bool Authed(HttpListenerRequest req)
         {
-            var c = req.Cookies["wst"];
+            var c = req.Cookies[CookieName];
             if (c == null || c.Value == null || c.Value.Length != Token.Length) return false;
             int diff = 0;
             for (int i = 0; i < Token.Length; i++) diff |= c.Value[i] ^ Token[i];   // állandó idejű összevetés
@@ -97,7 +100,7 @@ namespace Idojaras
                 {
                     if (req.QueryString["t"] == Token)
                     {
-                        resp.Headers.Add("Set-Cookie", "wst=" + Token + "; Path=/; HttpOnly; SameSite=Strict");
+                        resp.Headers.Add("Set-Cookie", CookieName + "=" + Token + "; Path=/; HttpOnly; SameSite=Strict");
                         resp.StatusCode = 302;
                         resp.RedirectLocation = "/";
                     }

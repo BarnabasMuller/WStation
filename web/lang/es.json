@@ -2257,5 +2257,11 @@
   "liter / bokor": "litros / arbusto",
   "l / bokor": "l / arbusto",
   "1 és 52 közötti egész szám": "un número entero entre 1 y 52",
-  "Nincs jogosultság: a felületet a programból nyisd meg": "Sin autorización: abre la interfaz desde el programa"
+  "Nincs jogosultság: a felületet a programból nyisd meg": "Sin autorización: abre la interfaz desde el programa",
+  "Nincs hozzáférés": "Sin acceso",
+  "A WStation felülete csak a programból nyitható meg: indítsd el a Megjelenítőt (pl. az asztali WStation ikonnal). Egy elmentett cím vagy könyvjelző nem működik, mert a program minden indításkor új azonosítót kap": "La interfaz de WStation solo se puede abrir desde el programa: inicia el Visor (p. ej. con el icono de WStation del escritorio). Una dirección guardada o un marcador no funciona, porque el programa obtiene un identificador nuevo en cada inicio",
+  "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Superficie de césped: {a} – se usa para litros y m³; ajustable con el botón ƒx",
+  "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "la superficie de césped regada: con ella la subpestaña Agua calcula los m³, y el riego registrado en litros se convierte a mm",
+  "régi leírás törölve": "guía antigua eliminada",
+  "egy másik telepítésre mutat": "apunta a otra instalación"
 }

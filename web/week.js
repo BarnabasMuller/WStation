@@ -13,13 +13,15 @@ const WEEK_ROWS = [
   { k: 'pres', name: 'Légnyomás és változása' },
   { k: 'uv', name: 'Max. UV-index' }
 ];
-const WEEK_MODES = { prev: 'Előző hét (H–V)', last7: 'Utolsó 7 nap', cur: 'Aktuális hét' };
+const WEEK_MODES = { last7: 'Utolsó 7 nap', prev: 'Előző hét (H–V)', cur: 'Aktuális hét' };   // az utolsó 7 nap az alap (2.2.8)
 let weekOffset = 0;   // hány héttel lapoztunk vissza (nem mentődik)
 
 function weekState() {
   UI.week = UI.week || {};
   const w = UI.week;
-  if (!WEEK_MODES[w.mode]) w.mode = 'prev';
+  if (!WEEK_MODES[w.mode]) w.mode = 'last7';
+  // 2.2.8: az új alapérték egyszer a meglévő beállításra is (a korábbi automatikus „előző hét” helyett; utána szabadon váltható)
+  if (!w.last7Default) { w.last7Default = true; if (w.mode === 'prev') w.mode = 'last7'; }
   if (!Array.isArray(w.rows)) w.rows = ['temp', 'rain', 'sun', 'cloud', 'wind', 'dir'];
   // 2.2: a felhőzet sora egyszer bekerül a meglévő beállításba is (utána ki-be kapcsolható)
   if (!w.cloudAdded) { w.cloudAdded = true; if (!w.rows.includes('cloud')) w.rows.splice(Math.max(0, w.rows.indexOf('sun') + 1), 0, 'cloud'); }
