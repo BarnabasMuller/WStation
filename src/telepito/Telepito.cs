@@ -1029,9 +1029,19 @@ namespace Telepito
         [DllImport("kernel32.dll")]
         static extern bool AttachConsole(int pid);
 
+        // a DLL-ek csak a Windows rendszermappájából töltődjenek be, a telepítő mappájából (pl. Letöltések) ne:
+        // egy oda került, rendszer-DLL nevű fájlt így nem tölt be (2.2.7.2). A telepítőnek nincs saját DLL-je.
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool SetDefaultDllDirectories(uint flags);
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern bool SetDllDirectory(string path);
+        const uint LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
+
         [STAThread]
         static int Main(string[] args)
         {
+            try { SetDllDirectory(""); } catch { }
+            try { SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32); } catch { }   // Windows 7-en frissítés nélkül nincs: ilyenkor marad a régi
             string startDir = Path.GetDirectoryName(Application.ExecutablePath);
             // egy meglévő telepítésen belül indítva helyben frissít
             // (ha mellette egy régi, „Időjárás” nevű telepítés van, azt frissíti, nem telepít újat „WStation” néven)

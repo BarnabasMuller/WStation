@@ -2,6 +2,8 @@
 ===========================
 
 == 2.2.7.2 (2026-10-21) – kleinere Korrekturen ==
+- Die Daten der lokalen Oberfläche (z. B. die Sicherung) sind nur für das eigene Programmfenster erreichbar, nicht für andere Programme auf dem Rechner.
+- Das Installationsprogramm lädt Windows-System-DLLs nur aus dem Systemordner, nicht aus seinem eigenen Ordner (z. B. Downloads).
 - Sicherungen: höchstens 52 werden behalten (ein Jahr wöchentlicher Sicherungen); ein größerer Wert wird auf 52 gesenkt.
 - Manuelle Sicherung: wartet auch bei großen Daten bis zu 10 Minuten und meldet dann einen klaren Fehler.
 - Verdunstung (ET₀): steigt an sehr bewölkten Tagen nicht mehr paradox an.

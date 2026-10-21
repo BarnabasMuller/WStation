@@ -2,6 +2,8 @@
 ==============================
 
 == 2.2.7.2 (2026-10-21) – kisebb hibák javítása ==
+- A helyi felület adatait (pl. a biztonsági mentést) csak a program saját ablaka érheti el, más program a gépen nem.
+- A telepítő a Windows rendszer-DLL-jeit csak a rendszermappából tölti be, a saját mappájából (pl. Letöltések) nem.
 - Biztonsági mentések: legfeljebb 52 tartható meg (heti mentésnél egy év); egy nagyobb beállítás 52-re csökken.
 - Kézi biztonsági mentés: nagy adatnál is legfeljebb 10 percet vár, utána érthető hibát ad.
 - Párolgás (ET₀): nagyon borult napon sem nő paradox módon.

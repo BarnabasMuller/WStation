@@ -371,6 +371,19 @@ namespace Idojaras
                 var kept = Settings.ReadIni(bak); string v1, v2, v3, v4;
                 kept.TryGetValue("ApiKey", out v1); kept.TryGetValue("StationId", out v2); kept.TryGetValue("ApiBaseUrl", out v3); kept.TryGetValue("MentesNaponta", out v4);
                 Ok(v1 == "JELENLEGI" && v2 == "ALLOMAS1" && v3 == null && v4 == "3", "Visszaállítás: a mostani API-kulcs és állomás marad, idegen ApiBaseUrl nem jön át (2.2.7.1)", v1 + " / " + v2 + " / " + (v3 ?? "–") + " / " + v4);
+
+                // a helyi API csak a munkamenet-azonosítóval (cookie) válaszol (2.2.7.2)
+                var srv = new Server();
+                srv.Start(0);
+                try
+                {
+                    var jar = new System.Net.CookieContainer();
+                    int c1 = HttpStatus(srv.Url + "api/status", null), c0 = HttpStatus(srv.Url + "?t=rossz", null);
+                    HttpStatus(srv.AuthUrl, jar);
+                    int c2 = HttpStatus(srv.Url + "api/status", jar), c3 = HttpStatus(srv.Url + "api/backup/latest.zip", null);
+                    Ok(c1 == 401 && c0 == 403 && c2 == 200 && c3 == 401, "Helyi API: azonosító nélkül elutasítva, a program címével elérhető (2.2.7.2)", c1 + " / " + c0 + " / " + c2 + " / " + c3);
+                }
+                finally { srv.Stop(); }
             }
             catch (Exception ex)
             {
@@ -426,6 +439,17 @@ namespace Idojaras
                 if (!good) { bad++; notes.Add(f[iD] + ": WU max/min/csap/lökés " + tx + "/" + tn + "/" + r + "/" + g + " vs " + N(d.Tmax, 1) + "/" + N(d.Tmin, 1) + "/" + N(d.Rain) + "/" + N(d.GustMax, 1)); }
             }
             Ok(cmp > 0 && bad == 0, "Napi min/max/csapadék/lökés egyezik a WU napi összesítőjével", cmp + " nap összevetve" + (notes.Count > 0 ? "; " + string.Join("; ", notes) : ""));
+        }
+
+        static int HttpStatus(string url, System.Net.CookieContainer jar)
+        {
+            try
+            {
+                var req = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(url);
+                req.CookieContainer = jar ?? new System.Net.CookieContainer(); req.Timeout = 10000;
+                using (var r = (System.Net.HttpWebResponse)req.GetResponse()) return (int)r.StatusCode;
+            }
+            catch (System.Net.WebException ex) { var r = ex.Response as System.Net.HttpWebResponse; return r != null ? (int)r.StatusCode : -1; }
         }
 
         static int Finish(Layout src)

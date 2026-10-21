@@ -2,6 +2,8 @@
 ===========================
 
 == 2.2.7.2 (2026-10-21) – correcciones menores ==
+- Los datos de la interfaz local (p. ej. la copia de seguridad) solo son accesibles desde la ventana del propio programa, no para otros programas del equipo.
+- El instalador carga las DLL del sistema de Windows solo desde la carpeta del sistema, no desde su propia carpeta (p. ej. Descargas).
 - Copias de seguridad: se conservan como máximo 52 (un año de copias semanales); un ajuste mayor se reduce a 52.
 - Copia manual: espera hasta 10 minutos incluso con muchos datos y luego da un error claro.
 - Evaporación (ET₀): ya no aumenta paradójicamente en días muy nublados.

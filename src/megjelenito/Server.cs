@@ -14,6 +14,25 @@ namespace Idojaras
         HttpListener listener;
         public int Port;
         public string Url { get { return "http://localhost:" + Port + "/"; } }
+        // munkamenet-azonosító (2.2.7.2): minden indításkor új, véletlen érték. Csak a program saját ablaka (ill. a
+        // böngészős módban megnyitott cím) kapja meg; ebből HttpOnly cookie lesz, és a helyi API csak ezzel válaszol –
+        // így egy másik helyi program nem töltheti le pl. a biztonsági mentést
+        public readonly string Token = NewToken();
+        public string AuthUrl { get { return Url + "?t=" + Token; } }
+        static string NewToken()
+        {
+            var b = new byte[24];
+            using (var r = System.Security.Cryptography.RandomNumberGenerator.Create()) r.GetBytes(b);
+            return BitConverter.ToString(b).Replace("-", "").ToLowerInvariant();
+        }
+        bool Authed(HttpListenerRequest req)
+        {
+            var c = req.Cookies["wst"];
+            if (c == null || c.Value == null || c.Value.Length != Token.Length) return false;
+            int diff = 0;
+            for (int i = 0; i < Token.Length; i++) diff |= c.Value[i] ^ Token[i];   // állandó idejű összevetés
+            return diff == 0;
+        }
         public string WebDir; // fejlesztéshez: ha meg van adva, a felület fájljait innen olvassa
 
         public void Start(int port)
@@ -73,6 +92,28 @@ namespace Idojaras
                     return;
                 }
                 string path = req.Url.AbsolutePath;
+                // belépés a munkamenet-azonosítóval: cookie, majd átirányítás a címre (az azonosító így nem marad a címsorban)
+                if ((path == "/" || path == "/index.html") && req.QueryString["t"] != null)
+                {
+                    if (req.QueryString["t"] == Token)
+                    {
+                        resp.Headers.Add("Set-Cookie", "wst=" + Token + "; Path=/; HttpOnly; SameSite=Strict");
+                        resp.StatusCode = 302;
+                        resp.RedirectLocation = "/";
+                    }
+                    else resp.StatusCode = 403;
+                    resp.Close();
+                    return;
+                }
+                if (path.StartsWith("/api/") && !Authed(req))
+                {
+                    var nb = Encoding.UTF8.GetBytes("{\"error\":\"Nincs jogosultság: a felületet a programból nyisd meg.\"}");
+                    resp.StatusCode = 401;
+                    resp.ContentType = "application/json; charset=utf-8";
+                    resp.OutputStream.Write(nb, 0, nb.Length);
+                    resp.Close();
+                    return;
+                }
                 byte[] body;
                 string type;
                 int status = 200;

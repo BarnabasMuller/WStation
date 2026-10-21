@@ -102,14 +102,14 @@ namespace Idojaras
                 string reason = null;
                 try
                 {
-                    if (RunWebView(server.Url, out reason)) { server.Stop(); GC.KeepAlive(mutex); return 0; }
+                    if (RunWebView(server.AuthUrl, out reason)) { server.Stop(); GC.KeepAlive(mutex); return 0; }
                 }
                 catch (Exception ex) { reason = ex.Message; }
                 Log("A WebView2 ablak nem indult (" + reason + "), böngészős módra váltok.");
             }
 
-            ServerUrl = server.Url;
-            Application.Run(new FallbackForm(server.Url, !noOpen));
+            ServerUrl = server.AuthUrl;   // böngészős mód: a cím a munkamenet-azonosítót is viszi (2.2.7.2)
+            Application.Run(new FallbackForm(server.AuthUrl, !noOpen));
             server.Stop();
             GC.KeepAlive(mutex);
             return 0;
