@@ -1,6 +1,19 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.7.1 (2026-10-21) – security fixes ==
+- Installer: it no longer deletes or moves files that are not its own. A folder counts as a WStation installation
+  only if the programs really are WStation's; into a non-empty folder of something else it installs into a new
+  "WStation" subfolder. Of the old guides it removes only its own (based on the install list or their title line).
+- The interface cannot run code from a damaged or foreign data file: diary, running log and settings values are
+  checked before display, and the interface runs with a strict Content Security Policy.
+- Only http/https links open from the program window (in the browser); other protocols or files cannot be started.
+- Alert settings accept only valid values and cannot damage the Downloader's settings file. The Downloader sends
+  the API key only to the Weather Underground HTTPS address.
+- Restore from backup: done as one step (on error everything stays as it was), scheduled downloading pauses
+  meanwhile; the current API key and station are kept; oversized or out-of-place files are not restored.
+- The local interface rejects oversized requests.
+
 == 2.2.6 (2026-10-21) – installer and minor fixes ==
 - Installer: if the scheduler has just started the Downloader (e.g. right after creating the task), the installer
   waits up to 90 seconds for it instead of stopping with an error.

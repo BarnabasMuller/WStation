@@ -1,6 +1,19 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.7.1 (2026-10-21) – biztonsági javítások ==
+- Telepítő: nem töröl és nem helyez át idegen fájlokat. Egy mappát csak akkor tekint WStation-telepítésnek,
+  ha a programok valóban a WStationéi; egy nem üres, idegen mappába nem telepít közvetlenül, hanem egy új
+  „WStation” almappába. A régi leírások közül csak a sajátjait törli (a telepítés jegyzéke, ill. a címsoruk alapján).
+- A felület egy sérült vagy idegen adatfájlból sem futtathat kódot: a napló, a futásnapló és a beállítások értékei
+  ellenőrizve kerülnek a képernyőre, és a felület szigorú tartalombiztonsági szabállyal (CSP) fut.
+- A programablakból csak http/https link nyílik meg (a böngészőben); más protokoll vagy fájl nem indítható.
+- A riasztás-beállítások csak érvényes értéket fogadnak el, és nem ronthatják el a Letöltő beállításfájlját.
+  A Letöltő az API-kulcsot csak a Weather Underground HTTPS-címére küldi.
+- Visszaállítás mentésből: egyben történik (hiba esetén minden marad a régiben), közben szünetel az ütemezett
+  letöltés; a mostani API-kulcs és állomás megmarad; túl nagy vagy oda nem illő fájlt nem állít vissza.
+- A helyi felület túl nagy kérést nem fogad el.
+
 == 2.2.6 (2026-10-21) – telepítő és apró javítások ==
 - Telepítő: ha az ütemező épp elindította a Letöltőt (pl. közvetlenül a feladat létrehozása után), a telepítő
   legfeljebb 90 másodpercig megvárja, ahelyett hogy hibával leállna.

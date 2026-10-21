@@ -14,8 +14,8 @@ using System.Web.Script.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.6.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.6.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.7.1")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.7.1")]
 
 namespace WuLetolto
 {
@@ -236,6 +236,12 @@ MetarKod=LHBP
             SaveDailySummary = Bool(d, "SaveDailySummary", true);
             WaitAtEnd = Bool(d, "WaitAtEnd", true);
             ApiBaseUrl = Str(d, "ApiBaseUrl", "https://api.weather.com").TrimEnd('/');
+            // az API-kulcs csak a Weather Company HTTPS-címére mehet (2.2.7.1): más (pl. http:// vagy idegen gép) nem
+            if (!System.Text.RegularExpressions.Regex.IsMatch(ApiBaseUrl, @"^https://([a-z0-9-]+\.)*weather\.com(/[^\s?#]*)?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            {
+                Log.Warn("Az ApiBaseUrl csak https://…weather.com cím lehet (" + ApiBaseUrl + "), az alapértéket használom.");
+                ApiBaseUrl = "https://api.weather.com";
+            }
             BackupDays = Int(d, "MentesNaponta", 7, 0, 365);
             AlFrost = Bool(d, "RiasztasFagy", true); AlPres = Bool(d, "RiasztasNyomas", true); AlWind = Bool(d, "RiasztasSzel", true);
             AlRain = Bool(d, "RiasztasEso", true); AlHeat = Bool(d, "RiasztasHoseg", true);
@@ -309,12 +315,12 @@ MetarKod=LHBP
             {
                 if (lines[i].TrimStart().StartsWith(key + "=", StringComparison.OrdinalIgnoreCase))
                 {
-                    lines[i] = key + "=" + value;
+                    lines[i] = Guard.IniLine(key, value);
                     found = true;
                     break;
                 }
             }
-            if (!found) lines.Add(key + "=" + value);
+            if (!found) lines.Add(Guard.IniLine(key, value));
             Guard.WriteAllLinesAtomic(path, lines, new UTF8Encoding(true));
         }
 

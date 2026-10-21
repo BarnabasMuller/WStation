@@ -2243,5 +2243,13 @@
   "A háttérben futó letöltés befejezésére várok": "Esperando a que termine la descarga en segundo plano",
   "v m/s-ban (WMO: v = 0,836 · B": "v en m/s (OMM: v = 0,836 · B",
   "Van Wagner (1987): 15 (csapadékos tél után; száraz tél után nagyobb": "Van Wagner (1987): 15 (tras un invierno húmedo; mayor tras un invierno seco",
-  "kb. 400–500 fokcelsiusnap 5 °C felett": "aprox. 400–500 grados-día por encima de 5 °C"
+  "kb. 400–500 fokcelsiusnap 5 °C felett": "aprox. 400–500 grados-día por encima de 5 °C",
+  "A mappa nem üres, és nincs benne WStation. A meglévő fájlokhoz nem nyúlok: a programok egy új „WStation” almappába kerülnek": "La carpeta no está vacía y no contiene WStation. No toco los archivos existentes: los programas van a una nueva subcarpeta «WStation»",
+  "A célmappa nem üres, és nincs benne WStation": "La carpeta de destino no está vacía y no contiene WStation",
+  "Válassz egy üres mappát, vagy egy WStation nevű almappát": "Elige una carpeta vacía o una subcarpeta llamada WStation",
+  "Válassz egy üres mappát": "Elige una carpeta vacía",
+  "egy nem WStation-fájl megmaradt": "se conservó un archivo que no es de WStation",
+  "Épp fut egy letöltés. Várd meg a végét, majd próbáld újra": "Hay una descarga en curso. Espera a que termine e inténtalo de nuevo",
+  "A mentésben túl nagy fájl van – ez nem egy WStation-mentés": "La copia contiene un archivo demasiado grande: no es una copia de WStation",
+  "A visszaállítás nem sikerült, a mostani állapot megmaradt": "La restauración falló; se mantiene el estado actual"
 }

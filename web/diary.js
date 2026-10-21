@@ -30,7 +30,7 @@ async function renderDiary() {
   $('dWater').classList.toggle('hidden', $('dTag').value !== 'öntözés');
   const filterMonth = UI.cal && UI.cal.view === 'month' ? calMonth : null;
   const rows = list.map((x, i) => Object.assign({ i }, x)).filter(x => !filterMonth || (x.date || '').startsWith(filterMonth)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  $('dList').innerHTML = rows.length ? rows.map(x => '<div class="drow"><span class="ddate" data-d="' + x.date + '">' + DS.fmt(x.date, { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + '</span>' +
+  $('dList').innerHTML = rows.length ? rows.map(x => '<div class="drow"><span class="ddate" data-d="' + esc(x.date) + '">' + DS.fmt(x.date, { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + '</span>' +
     '<span class="dtag">' + (DIARY_TAGS[x.tag] || '📝') + ' ' + esc(x.tag || '') + '</span><span class="dtext ut">' + esc(x.text || '') + (x.amount ? ' <span class="muted">(' + num(x.amount, 1) + ' ' + esc(x.unit || '') + ')</span>' : '') + '</span>' +
     '<a href="#" data-del="' + x.i + '" title="Törlés">✕</a></div>').join('') : '<div class="muted">' + (filterMonth ? 'Ebben a hónapban nincs bejegyzés.' : 'Még nincs bejegyzés. Írd be pl. a metszést, a trágyázást vagy a virágzás napját.') + '</div>';
   $('dList').querySelectorAll('[data-d]').forEach(s => s.addEventListener('click', () => gotoDay(s.dataset.d)));

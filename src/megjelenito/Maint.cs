@@ -96,19 +96,21 @@ namespace Idojaras
 
         static Version Ver(string path)
         {
-            try { var v = FileVersionInfo.GetVersionInfo(path); return new Version(v.FileMajorPart, v.FileMinorPart, Math.Max(0, v.FileBuildPart)); }
+            try { var v = FileVersionInfo.GetVersionInfo(path); return new Version(v.FileMajorPart, v.FileMinorPart, Math.Max(0, v.FileBuildPart), Math.Max(0, v.FilePrivatePart)); }
             catch { return null; }
         }
+
+        static string VText(Version v) { return v.Revision > 0 ? v.ToString(4) : v.Build > 0 ? v.ToString(3) : v.ToString(2); }
 
         public static string Json(bool install, out int status)
         {
             status = 200;
-            var me = new Version(Me.Major, Me.Minor, Math.Max(0, Me.Build));
+            var me = new Version(Me.Major, Me.Minor, Math.Max(0, Me.Build), Math.Max(0, Me.Revision));   // négy tagú (2.2.7.1 → 2.2.7.2)
             var best = Candidates().Select(p => new { p, v = Ver(p) }).Where(x => x.v != null && x.v > me).OrderByDescending(x => x.v).FirstOrDefault();
-            var w = new JW().Obj().P("current", me.Build > 0 ? me.ToString(3) : me.ToString(2));
+            var w = new JW().Obj().P("current", VText(me));
             if (best != null)
             {
-                w.P("available", true).P("version", best.v.Build > 0 ? best.v.ToString(3) : best.v.ToString(2)).P("path", best.p);
+                w.P("available", true).P("version", VText(best.v)).P("path", best.p);
                 if (install)
                 {
                     try
@@ -178,13 +180,14 @@ namespace Idojaras
                     string old; cur.TryGetValue(kv.Key, out old);
                     if (old != null && old.Replace(',', '.') == kv.Value) continue;
                     int idx = lines.FindIndex(l => l.TrimStart().StartsWith(kv.Key + "=", StringComparison.OrdinalIgnoreCase));
-                    if (idx >= 0) lines[idx] = kv.Key + "=" + kv.Value; else lines.Add(kv.Key + "=" + kv.Value);
+                    string line = Guard.IniLine(kv.Key, kv.Value);
+                    if (idx >= 0) lines[idx] = line; else lines.Add(line);
                     ChangeLog.Add("Küszöbök (megjelenito.ini)", kv.Key, old, kv.Value, new Dictionary<string, object> { { "type", "ini" }, { "key", kv.Key }, { "value", old } });
                     changed = true;
                 }
                 if (changed)
                 {
-                    Guard.WriteAllLines(ini, lines, new UTF8Encoding(true));
+                    Guard.WriteAllLinesAtomic(ini, lines, new UTF8Encoding(true));
                     AppState.ReloadAsync();   // a jelölések és a statisztikák újraszámolása
                 }
                 cur = Settings.ReadIni(ini);
@@ -240,7 +243,8 @@ namespace Idojaras
                     string old; cur.TryGetValue(kv.Key, out old);
                     if (old == val) continue;
                     int idx = lines.FindIndex(l => l.TrimStart().StartsWith(kv.Key + "=", StringComparison.OrdinalIgnoreCase));
-                    if (idx >= 0) lines[idx] = kv.Key + "=" + val; else lines.Add(kv.Key + "=" + val);
+                    string line = Guard.IniLine(kv.Key, val);
+                    if (idx >= 0) lines[idx] = line; else lines.Add(line);
                     ChangeLog.Add("Letöltő beállítás", kv.Key, old, val, new Dictionary<string, object> { { "type", "dl" }, { "key", kv.Key }, { "value", old } });
                 }
                 Guard.WriteAllLinesAtomic(ini, lines, new UTF8Encoding(true));

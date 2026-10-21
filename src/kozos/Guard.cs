@@ -62,6 +62,16 @@ static class Guard
     }
     public static void Locked(string path, Action a) { Locked<object>(path, () => { a(); return null; }); }
 
+    // egy ini-sor biztonságos összeállítása (2.2.7.1): a kulcsban nem lehet „=”, sehol nem lehet sortörés vagy NUL –
+    // különben egy érték új sort (egy másik beállítást) csempészhetne a fájlba
+    public static string IniLine(string key, string value)
+    {
+        value = value ?? "";
+        if (string.IsNullOrEmpty(key) || key.IndexOfAny(new[] { '=', '\r', '\n', '\0' }) >= 0 || value.IndexOfAny(new[] { '\r', '\n', '\0' }) >= 0)
+            throw new ArgumentException("Érvénytelen karakter a beállításban: " + (key ?? "").Replace("\r", "").Replace("\n", ""));
+        return key + "=" + value;
+    }
+
     // atomi csere: előbb .tmp, aztán a régi helyére – egy félbeszakadt írás nem hagy csonka fájlt
     public static void WriteAllLinesAtomic(string path, IEnumerable<string> lines, Encoding enc)
     {

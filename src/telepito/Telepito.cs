@@ -17,8 +17,8 @@ using Kozos;
 
 [assembly: AssemblyTitle("WStation – telepítő")]
 [assembly: AssemblyProduct("WStation")]
-[assembly: AssemblyVersion("2.2.6.0")]
-[assembly: AssemblyFileVersion("2.2.6.0")]
+[assembly: AssemblyVersion("2.2.7.1")]
+[assembly: AssemblyFileVersion("2.2.7.1")]
 
 namespace Telepito
 {
@@ -53,11 +53,51 @@ namespace Telepito
             }
         }
 
-        // az első meglévő program a mappában, bármelyik nyelvi néven (null, ha nincs)
+        // az első meglévő WStation-program a mappában, bármelyik nyelvi néven (null, ha nincs). Egy azonos nevű
+        // idegen program (pl. egy másik „Downloader.exe” a Letöltések mappában) nem számít (2.2.7.1)
         public static string FindExe(string dir, string kind)
         {
-            foreach (var n in Langs.AllFileNames(kind)) { string p = Path.Combine(dir, n); if (File.Exists(p)) return p; }
+            foreach (var n in Langs.AllFileNames(kind)) { string p = Path.Combine(dir, n); if (IsOurs(p)) return p; }
             return null;
+        }
+
+        // a fájl a WStation (ill. a régi „Budaörsi időjárás”) programja-e – a termékneve alapján. Ez a véletlen
+        // névegyezés ellen véd (a terméknév nem bizalmi alap, de egy idegen programé nem ez)
+        public static bool IsOurs(string path)
+        {
+            try
+            {
+                if (!File.Exists(path)) return false;
+                string pn = (FileVersionInfo.GetVersionInfo(path).ProductName ?? "").Trim();
+                return pn.StartsWith("WStation", StringComparison.Ordinal) || pn.StartsWith("Budaörsi időjárás", StringComparison.Ordinal);
+            }
+            catch { return false; }
+        }
+
+        // a WStation-leírások első (címsor)sora minden nyelven, a régi „Budaörsi időjárás” címekkel együtt:
+        // egy ilyen nevű fájlt (pl. README.txt) csak akkor tekintünk a mienknek, ha ezzel kezdődik
+        static readonly HashSet<string> DocTitles = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "WSTATION", "WSTATION – VÁLTOZÁSOK", "WSTATION – CHANGES", "WSTATION – ÄNDERUNGEN", "WSTATION – CAMBIOS",
+            "LETÖLTŐ – LEÍRÁS", "MEGJELENÍTŐ – LEÍRÁS", "DOWNLOADER – GUIDE", "VIEWER – GUIDE", "DOWNLOADER – ANLEITUNG",
+            "ANZEIGE – ANLEITUNG", "DESCARGADOR – GUÍA", "VISOR – GUÍA",
+            "BUDAÖRSI IDŐJÁRÁS", "BUDAÖRSI IDŐJÁRÁS – VÁLTOZÁSOK", "BUDAÖRS WEATHER", "BUDAÖRS WEATHER – CHANGES",
+            "WETTER BUDAÖRS", "WETTER BUDAÖRS – ÄNDERUNGEN", "TIEMPO EN BUDAÖRS", "TIEMPO EN BUDAÖRS – CAMBIOS"
+        };
+        public static bool IsOurDoc(string path)
+        {
+            try
+            {
+                if (!File.Exists(path) || new FileInfo(path).Length > 2 * 1024 * 1024) return false;
+                using (var sr = new StreamReader(path, Encoding.UTF8, true))
+                {
+                    string l;
+                    for (int i = 0; i < 20 && (l = sr.ReadLine()) != null; i++)
+                        if (l.Trim().Length > 0) return DocTitles.Contains(l.Trim());
+                }
+            }
+            catch { }
+            return false;
         }
 
         // korábbi verziók gyökérben hagyott fájljai -> hova kerülnek
@@ -100,7 +140,7 @@ namespace Telepito
             {
                 return Names.FindExe(d, "viewer") != null || Names.FindExe(d, "downloader") != null
                     || (Directory.Exists(Path.Combine(d, Names.Data)) && Directory.Exists(Path.Combine(d, Names.DlApp)))
-                    || (File.Exists(Path.Combine(d, "Idojaras.exe")) && File.Exists(Path.Combine(d, "WebView2Loader.dll")));
+                    || (Names.IsOurs(Path.Combine(d, "Idojaras.exe")) && File.Exists(Path.Combine(d, "WebView2Loader.dll")));
             }
             catch { return false; }
         }
@@ -109,7 +149,7 @@ namespace Telepito
         {
             try
             {
-                if (!File.Exists(path)) return null;
+                if (!Names.IsOurs(path)) return null;   // egy idegen exe verziója nem számít (pl. „Newer 10.0”)
                 var v = FileVersionInfo.GetVersionInfo(path);
                 return new Version(v.FileMajorPart, v.FileMinorPart, v.FileBuildPart, v.FilePrivatePart);
             }
@@ -140,7 +180,7 @@ namespace Telepito
                 var v1 = ExeVersion(Path.Combine(target, "Idojaras.exe"));
                 s.Installed = new[] { vv, vd, v1 }.Where(v => v != null).OrderByDescending(v => v).FirstOrDefault();
                 bool rootCsv = Directory.GetFiles(target, "*.csv").Any(IsObsCsv);
-                bool oldExe = Names.OldDownloaderFiles.Concat(Names.OldViewerFiles).Any(n => File.Exists(Path.Combine(target, n)));
+                bool oldExe = ProvenOld(target);
                 s.HasData = rootCsv || (Directory.Exists(Path.Combine(target, Names.Data)) && Directory.GetFiles(Path.Combine(target, Names.Data), "*.csv").Length > 0);
 
                 if (vv == null && vd == null && (rootCsv || oldExe))
@@ -152,14 +192,12 @@ namespace Telepito
                 {
                     s.Kind = Found.Empty;
                     s.Text = Directory.EnumerateFileSystemEntries(target).Any()
-                        ? "A mappa nem üres, de nincs benne telepítés. Mellé telepítem a programokat; a meglévő fájlokhoz nem nyúlok."
+                        ? "A mappa nem üres, és nincs benne WStation. A meglévő fájlokhoz nem nyúlok: a programok egy új „" + Names.Root + "” almappába kerülnek."
                         : "Új telepítés az üres mappába.";
                 }
                 else
                 {
-                    var inst = new Version(s.Installed.Major, s.Installed.Minor, Math.Max(0, s.Installed.Build));
-                    var me = new Version(Me.Major, Me.Minor, Math.Max(0, Me.Build));
-                    int cmp = inst.CompareTo(me);
+                    int cmp = V4(s.Installed).CompareTo(V4(Me));   // négy tagú (2.2.7.1 → 2.2.7.2 is frissítés)
                     s.Kind = cmp < 0 ? Found.Older : cmp == 0 ? Found.Current : Found.Newer;
                     string vi = VersionText(s.Installed), vm = VersionText(Me);
                     s.Text = s.Kind == Found.Older ? "Régebbi verzió van itt (" + vi + "). Frissítem " + vm + "-re; az adatok és a beállítások megmaradnak."
@@ -177,7 +215,44 @@ namespace Telepito
         public static string VersionText(Version v)
         {
             if (v == null) return "?";
+            if (v.Revision > 0) return v.Major + "." + v.Minor + "." + Math.Max(0, v.Build) + "." + v.Revision;
             return v.Build > 0 ? v.Major + "." + v.Minor + "." + v.Build : v.Major + "." + v.Minor;
+        }
+        public static Version V4(Version v) { return new Version(v.Major, v.Minor, Math.Max(0, v.Build), Math.Max(0, v.Revision)); }
+
+        // nem üres, de nem WStation-mappa: ide közvetlenül nem telepítünk (a fájljai megmaradnak)
+        public static bool IsForeignNonEmpty(string target)
+        {
+            try { return Directory.Exists(target) && Directory.EnumerateFileSystemEntries(target).Any() && !IsInstallDir(target) && Look(target).Kind == Found.Empty; }
+            catch { return false; }
+        }
+
+        // a régi (egy mappás) elrendezés bizonyítéka: egy régi nevű, de WStation-termékű exe
+        static bool ProvenOld(string target)
+        {
+            return Names.OldDownloaderFiles.Concat(Names.OldViewerFiles).Where(n => n.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                .Any(n => Names.IsOurs(Path.Combine(target, n)));
+        }
+
+        // a telepített fájlok jegyzéke (2.2.7.1-től): frissítéskor csak a jegyzékben szereplő leírást töröljük
+        const string ManifestName = "telepitett_fajlok.txt";
+        static HashSet<string> ReadManifest(string target)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                string f = Path.Combine(target, Names.ViewApp, ManifestName);
+                if (File.Exists(f)) foreach (var l in File.ReadAllLines(f, Encoding.UTF8)) if (l.Trim().Length > 0 && l.IndexOfAny(new[] { '\\', '/', ':' }) < 0) set.Add(l.Trim());
+            }
+            catch { }
+            return set;
+        }
+
+        // egy célmappabeli fájl a WStationé-e: exe a terméknév alapján; leírás a jegyzék, ill. (régi telepítésnél) a címsora alapján
+        static bool OwnedFile(string path, HashSet<string> manifest, bool proven)
+        {
+            if (path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) return Names.IsOurs(path);
+            return manifest.Contains(Path.GetFileName(path)) || (proven && Names.IsOurDoc(path));
         }
 
         // Régi adatok keresése: a telepítő mappája és közvetlen almappái (régi egy mappás vagy új elrendezés)
@@ -251,8 +326,15 @@ namespace Telepito
             var r = new Result { Target = target };
             try
             {
+                // egy nem üres, idegen mappába (pl. Letöltések, Dokumentumok) közvetlenül nem telepítünk: a felület ilyenkor
+                // a WStation almappát adja meg, a csendes mód hibával áll meg – így a „gyökér” sem lehet egy idegen mappa
+                if (IsForeignNonEmpty(target))
+                    throw new Exception("A célmappa nem üres, és nincs benne WStation:\n" + target + "\n\nVálassz egy üres mappát, vagy egy " + Names.Root + " nevű almappát.");
                 Guard.SetRoot(target);   // a telepítő csak a célmappába ír (kivétel: asztali parancsikon, ütemezett feladat)
                 var survey = Look(target);
+                // ami bizonyosan WStation-telepítés (saját exe, ill. régi elrendezés saját exe-vel)
+                bool proven = survey.Kind == Found.Older || survey.Kind == Found.Current || survey.Kind == Found.Newer || survey.Kind == Found.OldLayout;
+                var manifest = ReadManifest(target);
                 r.From = survey.Installed;
                 r.Updated = survey.Kind == Found.Older || survey.Kind == Found.Current || survey.Kind == Found.Newer || survey.Kind == Found.OldLayout;
 
@@ -275,7 +357,7 @@ namespace Telepito
                 }
 
                 progress("Régi fájlok elrendezése...", 15);
-                MigrateInPlace(target, r);
+                if (proven) MigrateInPlace(target, r);   // csak bizonyított régi telepítésen
 
                 // a programfájlok mindig frissülnek, az adatok és a beállítások soha nem íródnak felül.
                 // Egyben cserél (16.7): előbb minden új fájl .uj-ként, és csak ha mind megvan, jönnek a cserék; ha egy csere
@@ -319,8 +401,11 @@ namespace Telepito
                         try
                         {
                             if (File.Exists(bak)) Guard.Delete(bak);
+                            // egy azonos nevű, de nem a WStationtől származó fájl (pl. a felhasználó saját README.txt-je)
+                            // nem vész el: a régi példány .regi néven megmarad (a végén sem töröljük)
+                            bool own = !File.Exists(x[0]) || OwnedFile(x[0], manifest, proven);
                             if (File.Exists(x[0])) Guard.Replace(x[1], x[0], bak); else Guard.Move(x[1], x[0]);
-                            done.Add(new[] { x[0], File.Exists(bak) ? bak : null });
+                            done.Add(new[] { x[0], File.Exists(bak) ? bak : null, own ? "" : "megtart" });
                         }
                         catch (IOException) { throw InUse(x[2]); }
                         catch (UnauthorizedAccessException) { throw InUse(x[2]); }   // zárolt exe-nél ez is jöhet
@@ -335,17 +420,23 @@ namespace Telepito
                     throw;
                 }
                 finally { if (paused) Kozos.Utemezes.Pause(false); }
-                foreach (var x in done) if (x[1] != null) try { Guard.Delete(x[1]); } catch { }
+                foreach (var x in done)
+                {
+                    if (x[1] == null) continue;
+                    if (x[2] == "megtart") { r.Log.Add("egy nem WStation-fájl megmaradt: " + Path.GetFileName(x[1])); continue; }
+                    try { Guard.Delete(x[1]); } catch { }
+                }
                 r.Log.Add("programok és leírások: " + (r.Updated ? "frissítve" : "telepítve"));
 
-                // más nyelvű nevek eltávolítása (nyelvváltás, ill. a 2.2.1-es magyar nevekről), hogy ne legyen két Megjelenítő
+                // más nyelvű nevek eltávolítása (nyelvváltás, ill. a 2.2.1-es magyar nevekről), hogy ne legyen két Megjelenítő.
+                // Csak a bizonyosan WStation-fájlokat (2.2.7.1): exe a terméknév, leírás a jegyzék / címsor alapján
                 foreach (var kind in new[] { "viewer", "downloader" })
                 {
                     string keep = kind == "viewer" ? Names.Viewer : Names.Downloader;
                     foreach (var n in Langs.AllFileNames(kind))
                     {
                         string p = Path.Combine(target, n);
-                        if (n.Equals(keep, StringComparison.OrdinalIgnoreCase) || !File.Exists(p)) continue;
+                        if (n.Equals(keep, StringComparison.OrdinalIgnoreCase) || !File.Exists(p) || !Names.IsOurs(p)) continue;
                         try { Guard.Delete(p); r.Log.Add("más nyelvű program törölve: " + n); } catch { }
                     }
                 }
@@ -356,7 +447,7 @@ namespace Telepito
                     {
                         string other = c == "hu" ? f[1] : Langs.T(f[1], c);
                         string p = Path.Combine(target, other);
-                        if (other.Equals(cur, StringComparison.OrdinalIgnoreCase) || !File.Exists(p)) continue;
+                        if (other.Equals(cur, StringComparison.OrdinalIgnoreCase) || !File.Exists(p) || !OwnedFile(p, manifest, proven)) continue;
                         try { Guard.Delete(p); } catch { }
                     }
                 }
@@ -403,6 +494,8 @@ namespace Telepito
                 r.ScheduleMessage = msg;
 
                 Guard.WriteAllText(Path.Combine(viewApp, "verzio.txt"), VersionText(Me) + "\r\n" + DateTime.Now.ToString("yyyy-MM-dd HH:mm") + "\r\n", Encoding.UTF8);
+                // a telepített fájlok jegyzéke: a következő frissítés csak ezeket (és a régi, címsorral felismert leírásokat) törli
+                Guard.WriteAllLines(Path.Combine(viewApp, ManifestName), plan.Select(x => Path.GetFileName(x[0])), new UTF8Encoding(false));
                 r.HasApiKey = HasApiKey(Path.Combine(dlApp, "beallitasok.ini"));
                 progress("Kész.", 100);
                 r.Ok = true;
@@ -431,7 +524,7 @@ namespace Telepito
             }
             // a legutóbbi 5 mentés marad meg
             var old = new DirectoryInfo(root).GetDirectories().OrderByDescending(d => d.Name).Skip(5).ToList();
-            foreach (var d in old) try { d.Delete(true); } catch { }
+            foreach (var d in old) try { Guard.DeleteDirectory(d.FullName, true); } catch { }
             r.Log.Add("beállítások mentve: " + Path.GetFileName(appDir) + "\\mentes_beallitasok");
         }
 
@@ -446,12 +539,17 @@ namespace Telepito
                 moved += MoveSafe(Path.Combine(target, n), Path.Combine(dlApp, n), r);
             foreach (var n in new[] { "megjelenito.ini", "megjelenito_hiba.log", "teszt_eredmeny.txt" })
                 moved += MoveSafe(Path.Combine(target, n), Path.Combine(viewApp, n), r);
-            foreach (var n in Names.OldDownloaderFiles)
-                moved += MoveSafe(Path.Combine(target, n), Path.Combine(dlApp, "regi_fajlok", n), r);
-            foreach (var n in Names.OldViewerFiles)
-                moved += MoveSafe(Path.Combine(target, n), Path.Combine(viewApp, "regi_fajlok", n), r);
+            // a régi programfájlokat (és a WebView2 DLL-eket) csak akkor tesszük félre, ha egy régi exe bizonyosan a mienk
+            bool old = ProvenOld(target);
+            if (old)
+            {
+                foreach (var n in Names.OldDownloaderFiles)
+                    moved += MoveSafe(Path.Combine(target, n), Path.Combine(dlApp, "regi_fajlok", n), r);
+                foreach (var n in Names.OldViewerFiles)
+                    moved += MoveSafe(Path.Combine(target, n), Path.Combine(viewApp, "regi_fajlok", n), r);
+            }
             string oldCache = Path.Combine(target, "cache");
-            if (Directory.Exists(oldCache) && File.Exists(Path.Combine(oldCache, "meresek.bin")))
+            if (old && Directory.Exists(oldCache) && File.Exists(Path.Combine(oldCache, "meresek.bin")))
             {
                 try { Guard.DeleteDirectory(oldCache, true); moved++; } catch { }
             }
@@ -557,7 +655,8 @@ namespace Telepito
                 {
                     var lines = File.ReadAllLines(ini, Encoding.UTF8).ToList();
                     int i = lines.FindIndex(l => l.TrimStart().StartsWith("Nyelv=", StringComparison.OrdinalIgnoreCase));
-                    if (i >= 0) lines[i] = "Nyelv=" + code; else lines.Add("Nyelv=" + code);
+                    string line = Guard.IniLine("Nyelv", code);
+                    if (i >= 0) lines[i] = line; else lines.Add(line);
                     Guard.WriteAllText(ini, string.Join("\r\n", lines) + "\r\n", new UTF8Encoding(true));
                 }
             }
@@ -583,12 +682,11 @@ namespace Telepito
             bool take = false;
             foreach (var line in text.Split('\n').Select(l => l.TrimEnd('\r')))
             {
-                var m = Regex.Match(line, @"^== (\d+\.\d+(?:\.\d+)?)");
+                var m = Regex.Match(line, @"^== (\d+\.\d+(?:\.\d+){0,2})");
                 if (m.Success)
                 {
                     var v = new Version(m.Groups[1].Value);
-                    var v3 = new Version(v.Major, v.Minor, Math.Max(0, v.Build));
-                    take = from == null || v3.CompareTo(new Version(from.Major, from.Minor, Math.Max(0, from.Build))) > 0;
+                    take = from == null || V4(v).CompareTo(V4(from)) > 0;
                     if (take) sb.Append(sb.Length > 0 ? "\n" : "").Append(line.Trim('=', ' ')).Append(":\n");
                     continue;
                 }
@@ -837,6 +935,13 @@ namespace Telepito
             if (target.Length == 0) return;
             try { target = Path.GetFullPath(target); }
             catch { MessageBox.Show(this, T("Érvénytelen mappa."), Text); return; }
+            // nem üres, idegen mappa (pl. a kézzel beírt Dokumentumok): a WStation almappába telepítünk, a meglévő fájlokhoz nem nyúlunk
+            if (Installer.IsForeignNonEmpty(target))
+            {
+                target = Path.Combine(target, Names.Root);
+                if (Installer.IsForeignNonEmpty(target)) { MessageBox.Show(this, T("A célmappa nem üres, és nincs benne WStation. Válassz egy üres mappát."), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                txtTarget.Text = target;
+            }
             survey = Installer.Look(target);
             if (survey.Kind == Found.Newer &&
                 MessageBox.Show(this, T("A célmappában újabb verzió van, mint ez a telepítő") + " (" + Installer.VersionText(survey.Installed) + " > " + Installer.VersionText(Installer.Me) + ").\n\n" + T("Biztosan visszaállsz a régebbire?"),

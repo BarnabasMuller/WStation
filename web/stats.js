@@ -193,11 +193,13 @@ async function renderCompare() {
   const S = UI.stat;
   const d = await getDays(true);
   const lastD = d.date[d.date.length - 1];
-  if (!Array.isArray(S.cmpStarts)) S.cmpStarts = [S.cmpA || DS.add(lastD, -1), S.cmpB || (DS.add(lastD, -366) >= d.date[0] ? DS.add(lastD, -365) : d.date[Math.max(0, d.date.length - 31)])];
+  // a mentett kezdőnapok csak ÉÉÉÉ-HH-NN alakúak lehetnek (a felulet.json-ból jönnek, HTML-attribútumba kerülnek)
+  if (Array.isArray(S.cmpStarts)) S.cmpStarts = S.cmpStarts.filter(s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)).slice(0, 8);
+  if (!Array.isArray(S.cmpStarts) || !S.cmpStarts.length) S.cmpStarts = [S.cmpA || DS.add(lastD, -1), S.cmpB || (DS.add(lastD, -366) >= d.date[0] ? DS.add(lastD, -365) : d.date[Math.max(0, d.date.length - 31)])];
   if (!Array.isArray(S.cmpVars) || !S.cmpVars.length) S.cmpVars = [S.cmpVar || 'temp'];
   if (!['day', 'week', 'month', 'n'].includes(S.cmpMode)) S.cmpMode = 'day';
   $('cmpMode').value = S.cmpMode; $('cmpNWrap').classList.toggle('hidden', S.cmpMode !== 'n'); $('cmpN').value = S.cmpN || 3;
-  $('cmpStarts').innerHTML = S.cmpStarts.map((s, i) => '<span style="border-left:4px solid ' + CMP_PAL[i % 8] + ';padding-left:6px"><input type="date" class="inp" data-ci="' + i + '" value="' + s + '" min="' + d.date[0] + '" max="' + lastD + '">' +
+  $('cmpStarts').innerHTML = S.cmpStarts.map((s, i) => '<span style="border-left:4px solid ' + CMP_PAL[i % 8] + ';padding-left:6px"><input type="date" class="inp" data-ci="' + i + '" value="' + esc(s) + '" min="' + d.date[0] + '" max="' + lastD + '">' +
     (S.cmpStarts.length > 1 ? '<button class="btn small" data-cdel="' + i + '">×</button>' : '') + '</span>').join('') + (S.cmpStarts.length < 8 ? ' <button class="btn small" id="cmpAdd">+</button>' : '');
   $('cmpVars').innerHTML = CMP_VARS.map(v => '<label><input type="checkbox" value="' + v[0] + '"' + (S.cmpVars.includes(v[0]) ? ' checked' : '') + '>' + v[1] + '</label>').join('');
   $('cmpStarts').querySelectorAll('[data-ci]').forEach(el => el.addEventListener('change', () => { if (/^\d{4}-\d{2}-\d{2}$/.test(el.value)) { S.cmpStarts[+el.dataset.ci] = el.value; saveUi(); renderCompare(); } }));

@@ -90,7 +90,18 @@ namespace Idojaras
                             resp.Close();
                             return;
                         }
-                        using (var sr = new StreamReader(req.InputStream, Encoding.UTF8)) reqBody = sr.ReadToEnd();
+                        // a kéréstörzs legfeljebb 10 MB (a legnagyobb valós JSON is ennek töredéke): egy óriási kérés ne fogyassza el a memóriát
+                        if (req.ContentLength64 > MaxBody) { resp.StatusCode = 413; resp.Close(); return; }
+                        using (var sr = new StreamReader(req.InputStream, Encoding.UTF8))
+                        {
+                            var buf = new char[8192]; var sb = new StringBuilder(); int n;
+                            while ((n = sr.Read(buf, 0, buf.Length)) > 0)
+                            {
+                                sb.Append(buf, 0, n);
+                                if (sb.Length > MaxBody) { resp.StatusCode = 413; resp.Close(); return; }
+                            }
+                            reqBody = sb.ToString();
+                        }
                     }
                     var latestZip = path == "/api/backup/latest.zip" ? BackupTools.Latest() : null;
                     if (latestZip != null)
@@ -122,6 +133,10 @@ namespace Idojaras
                     if (body == null) { status = 404; body = Encoding.UTF8.GetBytes("Nem található"); type = "text/plain; charset=utf-8"; }
                     else type = Mime(path);
                     resp.Headers["Cache-Control"] = "no-cache";
+                    // tartalombiztonsági szabály (2.2.7.1): csak a program saját szkriptjei futhatnak; ha egy adatfájlból mégis
+                    // HTML kerülne az oldalra, a benne lévő kód (pl. onerror=…) nem fut le, és az oldal semmit nem küldhet ki
+                    resp.Headers["Content-Security-Policy"] = Csp;
+                    resp.Headers["X-Content-Type-Options"] = "nosniff";
                 }
                 resp.StatusCode = status;
                 resp.ContentType = type;
@@ -143,12 +158,19 @@ namespace Idojaras
             }
         }
 
+        const int MaxBody = 10 * 1024 * 1024;
+        const string Csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; " +
+                           "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
         byte[] Static(string name)
         {
-            if (name.Contains("..")) return null;
+            if (name.Contains("..") || name.Contains("\\") || name.Contains(":")) return null;
             if (WebDir != null)
             {
-                string f = Path.Combine(WebDir, name.Replace('/', Path.DirectorySeparatorChar));
+                // fejlesztői mód: csak a WebDir alatti fájl (abszolút vagy meghajtós útvonal nem)
+                string root = Path.GetFullPath(WebDir).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                string f = Path.GetFullPath(Path.Combine(root, name.Replace('/', Path.DirectorySeparatorChar)));
+                if (!f.StartsWith(root, StringComparison.OrdinalIgnoreCase)) return null;
                 return File.Exists(f) ? File.ReadAllBytes(f) : null;
             }
             using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("web/" + name))

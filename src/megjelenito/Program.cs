@@ -14,8 +14,8 @@ using Microsoft.Web.WebView2.WinForms;
 
 [assembly: System.Reflection.AssemblyTitle("WStation")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Megjelenítő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.6.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.6.0")]
+[assembly: System.Reflection.AssemblyVersion("2.2.7.1")]
+[assembly: System.Reflection.AssemblyFileVersion("2.2.7.1")]
 
 namespace Idojaras
 {
@@ -158,9 +158,17 @@ namespace Idojaras
             catch { }
         }
 
+        // külső cím megnyitása az alapértelmezett böngészőben – csak http/https (2.2.7.1). Minden más séma (file:, ms-…:,
+        // search-ms:, hálózati megosztás stb.) programot vagy fájlt indíthatna, ezért azt elutasítjuk és naplózzuk
         public static void OpenExternal(string url)
         {
-            try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+            Uri u;
+            if (!Uri.TryCreate(url ?? "", UriKind.Absolute, out u) || (u.Scheme != Uri.UriSchemeHttp && u.Scheme != Uri.UriSchemeHttps) || u.IsUnc)
+            {
+                Log("Külső cím megnyitása elutasítva (csak http/https): " + (url ?? "").Substring(0, Math.Min(200, (url ?? "").Length)));
+                return;
+            }
+            try { Process.Start(new ProcessStartInfo(u.AbsoluteUri) { UseShellExecute = true }); } catch { }
         }
 
         static string Hash(string s)
@@ -207,6 +215,18 @@ namespace Idojaras
                 cw.Settings.IsStatusBarEnabled = false;
                 cw.Settings.IsZoomControlEnabled = true;
                 cw.NewWindowRequested += (o, a) => { a.Handled = true; Program.OpenExternal(a.Uri); };
+                // a nézet csak a saját helyi címén navigálhat; minden más (külső oldal, file:, egyéb séma) tiltva,
+                // http/https a böngészőben nyílik meg (2.2.7.1)
+                string own = new Uri(url).GetLeftPart(UriPartial.Authority) + "/";
+                cw.NavigationStarting += (o, a) =>
+                {
+                    if (a.Uri != null && a.Uri.StartsWith(own, StringComparison.OrdinalIgnoreCase)) return;
+                    a.Cancel = true;
+                    Program.OpenExternal(a.Uri);
+                };
+                cw.FrameNavigationStarting += (o, a) => { if (a.Uri == null || !(a.Uri.StartsWith(own, StringComparison.OrdinalIgnoreCase) || a.Uri == "about:blank")) a.Cancel = true; };
+                // külső protokoll (pl. ms-…:) indítása a nézetből: mindig tiltva (régebbi WebView2-futtatókörnyezetben ez az esemény nincs)
+                try { cw.LaunchingExternalUriScheme += (o, a) => { a.Cancel = true; Program.Log("Külső protokoll elutasítva: " + a.Uri); }; } catch { }
                 cw.DocumentTitleChanged += (o, a) => { if (!string.IsNullOrEmpty(cw.DocumentTitle)) Text = cw.DocumentTitle; };
                 web.Source = new Uri(url);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -224,7 +225,7 @@ namespace Idojaras
         }
 
         // a zip melyik bejegyzése hova kerülhet vissza (más nem: se mappán kívülre, se programfájl)
-        static string Target(string entry)
+        internal static string Target(string entry)
         {
             string e = entry.Replace('\\', '/');
             if (e.Contains("..") || e.StartsWith("/") || e.Contains(":")) return null;
@@ -233,7 +234,8 @@ namespace Idojaras
             bool cfg = e.EndsWith(".ini", StringComparison.OrdinalIgnoreCase) || e.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
             if (parts.Length == 2 && parts[0] == Layout.DlAppName && cfg) return Path.Combine(AppState.L.DlApp, parts[1]);
             if (parts.Length == 2 && parts[0] == Layout.AppName && cfg) return Path.Combine(AppState.L.App, parts[1]);
-            if (parts.Length == 3 && parts[0] == Layout.AppName && parts[1] == "presetek" && parts[2].Length > 0) return Path.Combine(AppState.L.App, "presetek", parts[2]);
+            // a presetek közé csak .json kerülhet (más, pl. .exe nem – 2.2.7.1)
+            if (parts.Length == 3 && parts[0] == Layout.AppName && parts[1] == "presetek" && parts[2].Length > 5 && parts[2].EndsWith(".json", StringComparison.OrdinalIgnoreCase)) return Path.Combine(AppState.L.App, "presetek", parts[2]);
             return null;
         }
 
@@ -251,9 +253,12 @@ namespace Idojaras
             // munkapéldányból dolgozunk: a visszaállítás előtti mentés a mentesek mappa legrégebbi zipjét törölheti,
             // ami épp a kiválasztott fájl is lehet
             string work = Path.Combine(AppState.L.App, "visszaallitas_munka.zip");
+            // közben ne induljon el az ütemezett Letöltő (ugyanazokat a fájlokat írná); a végén visszakapcsoljuk
+            bool paused = false;
+            var plan = new List<string[]>();   // [cél, ideiglenes, régi példány]
             try
             {
-                int n = 0;
+                if (DownloaderRunning()) return "{\"error\":\"Épp fut egy letöltés. Várd meg a végét, majd próbáld újra.\"}";
                 Guard.CreateDirectory(AppState.L.App);
                 Guard.Copy(src, work, true);
                 using (var zfs = File.OpenRead(work))
@@ -262,27 +267,99 @@ namespace Idojaras
                     var items = zip.Entries.Where(en => en.Length > 0).Select(en => new { en, t = Target(en.FullName) }).Where(x => x.t != null).ToList();
                     if (!items.Any(x => x.t.StartsWith(AppState.L.Data, StringComparison.OrdinalIgnoreCase)))
                         return "{\"error\":\"Ez nem a WStation biztonsági mentése (nincs benne mérési adat).\"}";
+                    // méretkorlát: egy hibás vagy szándékosan felfújt zip ne töltse meg a lemezt
+                    if (items.Any(x => x.en.Length > MaxEntry) || items.Sum(x => x.en.Length) > MaxTotal)
+                        return "{\"error\":\"A mentésben túl nagy fájl van – ez nem egy WStation-mentés.\"}";
                     // előbb a mostani állapotról is mentés készül, hogy a visszaállítás visszavonható legyen
                     string exe = AppState.L.FindDownloader();
                     if (exe != null)
                         using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
-                            p.WaitForExit(120000);
+                            if (p != null && !p.WaitForExit(120000)) { try { p.Kill(); } catch { } }
+                    paused = Kozos.Utemezes.Pause(true);
+                    // 1. kibontás ideiglenes fájlokba (a mostani fájlokhoz még nem nyúlunk)
+                    long total = 0;
                     foreach (var x in items)
                     {
                         Guard.CreateDirectory(Path.GetDirectoryName(x.t));
                         string tmp = x.t + ".visszaallit";
-                        using (var es = x.en.Open()) using (var fs = Guard.Create(tmp)) es.CopyTo(fs);
-                        if (File.Exists(x.t)) Guard.Delete(x.t);
-                        Guard.Move(tmp, x.t);
-                        n++;
+                        plan.Add(new[] { x.t, tmp, null });
+                        using (var es = x.en.Open()) using (var fs = Guard.Create(tmp))
+                        {
+                            var buf = new byte[81920]; int k;
+                            while ((k = es.Read(buf, 0, buf.Length)) > 0)
+                            {
+                                total += k;
+                                if (total > MaxTotal) throw new IOException("a mentés kibontva túl nagy");
+                                fs.Write(buf, 0, k);
+                            }
+                        }
+                        // a Letöltő beállításfájljából az API-kulcs és az állomás a mostani marad, az ApiBaseUrl nem jön át
+                        if (x.t.Equals(AppState.L.DlIni, StringComparison.OrdinalIgnoreCase)) KeepSecrets(tmp, x.t);
                     }
+                    // 2. csere egyenként, a régi példány megtartásával; hiba esetén minden visszaáll
+                    try
+                    {
+                        foreach (var pl in plan)
+                        {
+                            if (File.Exists(pl[0])) { pl[2] = pl[0] + ".visszaallit_regi"; if (File.Exists(pl[2])) Guard.Delete(pl[2]); Guard.Replace(pl[1], pl[0], pl[2]); }
+                            else Guard.Move(pl[1], pl[0]);
+                            pl[1] = null;   // kész
+                        }
+                    }
+                    catch
+                    {
+                        for (int i = plan.Count - 1; i >= 0; i--)
+                        {
+                            var pl = plan[i];
+                            if (pl[1] != null) continue;   // ez még nem cserélődött
+                            try { if (pl[2] != null) Guard.Replace(pl[2], pl[0], null); else Guard.Delete(pl[0]); } catch { }
+                        }
+                        throw;
+                    }
+                    foreach (var pl in plan) if (pl[2] != null) try { Guard.Delete(pl[2]); } catch { }
                 }
-                ChangeLog.Add("Biztonsági mentés", "visszaállítás", null, Path.GetFileName(src) + " (" + n + " fájl)", null);
+                ChangeLog.Add("Biztonsági mentés", "visszaállítás", null, Path.GetFileName(src) + " (" + plan.Count + " fájl)", null);
                 AppState.RefreshAsync(false);
-                return new JW().Obj().P("restored", n).P("file", Path.GetFileName(src)).End().ToString();
+                return new JW().Obj().P("restored", plan.Count).P("file", Path.GetFileName(src)).End().ToString();
             }
-            catch (Exception ex) { return new JW().Obj().P("error", "A visszaállítás nem sikerült: " + ex.Message).End().ToString(); }
-            finally { try { if (File.Exists(work)) Guard.Delete(work); } catch { } }
+            catch (Exception ex) { return new JW().Obj().P("error", "A visszaállítás nem sikerült, a mostani állapot megmaradt: " + ex.Message).End().ToString(); }
+            finally
+            {
+                foreach (var pl in plan) if (pl[1] != null) try { if (File.Exists(pl[1])) Guard.Delete(pl[1]); } catch { }
+                if (paused) Kozos.Utemezes.Pause(false);
+                try { if (File.Exists(work)) Guard.Delete(work); } catch { }
+            }
         }
+
+        const long MaxEntry = 500L * 1024 * 1024, MaxTotal = 2048L * 1024 * 1024;
+
+        // fut-e most a Letöltő ebből a mappából (pl. az ütemezett feladat)
+        static bool DownloaderRunning()
+        {
+            foreach (var n in Layout.DownloaderNames)
+                foreach (var p in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(n)))
+                {
+                    try { if (string.Equals(Path.GetDirectoryName(p.MainModule.FileName), AppState.L.Base, StringComparison.OrdinalIgnoreCase)) return true; }
+                    catch { }
+                }
+            return false;
+        }
+
+        // a visszaállított beallitasok.ini-ben a mostani ApiKey / StationId marad (ha van), az ApiBaseUrl a mostani (vagy semmi)
+        internal static void KeepSecrets(string tmp, string current)
+        {
+            var cur = File.Exists(current) ? Settings.ReadIni(current) : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var keep = new[] { "ApiKey", "StationId", "ApiBaseUrl" };
+            var lines = File.ReadAllLines(tmp, Encoding.UTF8).Where(l =>
+            {
+                string t = l.TrimStart(); int eq = t.IndexOf('=');
+                if (eq <= 0) return true;
+                string k = t.Substring(0, eq).Trim();
+                return !(k.Equals("ApiBaseUrl", StringComparison.OrdinalIgnoreCase) || ((k.Equals("ApiKey", StringComparison.OrdinalIgnoreCase) || k.Equals("StationId", StringComparison.OrdinalIgnoreCase)) && HasValue(cur, k)));
+            }).ToList();
+            foreach (var k in keep) if (HasValue(cur, k)) lines.Add(Guard.IniLine(k, cur[k]));
+            Guard.WriteAllLines(tmp, lines, new UTF8Encoding(true));
+        }
+        static bool HasValue(Dictionary<string, string> d, string k) { string v; return d.TryGetValue(k, out v) && !string.IsNullOrWhiteSpace(v); }
     }
 }

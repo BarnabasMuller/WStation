@@ -1,6 +1,21 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
+== 2.2.7.1 (2026-10-21) – correcciones de seguridad ==
+- Instalador: ya no borra ni mueve archivos ajenos. Una carpeta solo cuenta como instalación de WStation si los
+  programas son realmente de WStation; en una carpeta ajena no vacía instala en una nueva subcarpeta «WStation».
+  De las guías antiguas solo elimina las suyas (según la lista de instalación o su línea de título).
+- La interfaz no puede ejecutar código desde un archivo de datos dañado o ajeno: el diario, el registro de carreras
+  y los ajustes se comprueban antes de mostrarse, y la interfaz funciona con una política de seguridad estricta (CSP).
+- Desde la ventana del programa solo se abren enlaces http/https (en el navegador); no se pueden iniciar otros
+  protocolos ni archivos.
+- Los ajustes de alertas solo aceptan valores válidos y no pueden dañar el archivo de ajustes del Descargador.
+  El Descargador envía la clave API solo a la dirección HTTPS de Weather Underground.
+- Restaurar desde una copia: se hace en un solo paso (si hay error, todo queda como estaba), la descarga
+  programada se pausa mientras tanto; se conservan la clave API y la estación actuales; no se restauran archivos
+  demasiado grandes o fuera de lugar.
+- La interfaz local rechaza las peticiones demasiado grandes.
+
 == 2.2.6 (2026-10-21) – instalador y correcciones menores ==
 - Instalador: si el programador acaba de iniciar el Descargador (p. ej. justo después de crear la tarea), el
   instalador lo espera hasta 90 segundos en lugar de detenerse con un error.

@@ -172,11 +172,13 @@ function lookbackMs(node) {
 
 // ------------------------------------------------------------------ felület
 let fChart = null, fEdit = -1;
-function formulas() { UI.formulas = UI.formulas || []; return UI.formulas; }
+function formulas() { UI.formulas = Array.isArray(UI.formulas) ? UI.formulas : []; return UI.formulas; }
+// a mentett szín csak #rrggbb lehet (a felulet.json-ból jön, egy stílus-attribútumba kerül)
+function fColor(f) { return /^#[0-9a-f]{3,8}$/i.test(f && f.color || '') ? f.color : '#e11d48'; }
 
 function renderFormulaPanel() {
   const L = formulas();
-  $('fList').innerHTML = L.length ? L.map((f, i) => '<label class="chip' + (f.on ? ' on' : '') + '" style="' + (f.on ? 'background:' + f.color + ';border-color:' + f.color : '') + '"><input type="checkbox" data-i="' + i + '"' + (f.on ? ' checked' : '') + '>' + ut(f.name) + '</label><a href="#" class="fedit" data-i="' + i + '" title="Szerkesztés">✎</a>').join('') : '<span class="muted">Még nincs saját képlet.</span>';
+  $('fList').innerHTML = L.length ? L.map((f, i) => '<label class="chip' + (f.on ? ' on' : '') + '" style="' + (f.on ? 'background:' + fColor(f) + ';border-color:' + fColor(f) : '') + '"><input type="checkbox" data-i="' + i + '"' + (f.on ? ' checked' : '') + '>' + ut(f.name) + '</label><a href="#" class="fedit" data-i="' + i + '" title="Szerkesztés">✎</a>').join('') : '<span class="muted">Még nincs saját képlet.</span>';
   $('fList').querySelectorAll('input').forEach(c => c.addEventListener('change', () => { L[+c.dataset.i].on = c.checked; saveUi(); renderFormulaPanel(); drawFormulas(); }));
   $('fList').querySelectorAll('.fedit').forEach(a => a.addEventListener('click', e => { e.preventDefault(); openFormulaEditor(+a.dataset.i); }));
   $('fVars').innerHTML = VAR_DOC.map(([a, b]) => '<code>' + esc(a) + '</code>' + (b ? ' ' + esc(b) : '')).join(' · ');

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 
 namespace Idojaras
@@ -549,13 +550,16 @@ namespace Idojaras
                 if (method == "POST")
                 {
                     // a felület mindkét tárolót listaként kezeli: más (pl. "x" vagy {}) ne kerülhessen a fájlba
-                    bool list;
-                    try { list = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") is object[]; }
-                    catch { list = false; }
-                    if (!list) { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
+                    object[] arr;
+                    try { arr = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") as object[]; }
+                    catch { arr = null; }
+                    if (arr == null) { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
+                    int dropped;
+                    var clean = Clean(name, arr, out dropped);
+                    if (dropped > 0) Program.Log("A " + name + ".json mentésekor " + dropped + " hibás tétel kimaradt.");
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = path + ".tmp";
-                    Guard.WriteAllText(tmp, body, new UTF8Encoding(false));
+                    Guard.WriteAllText(tmp, new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Serialize(clean), new UTF8Encoding(false));
                     if (File.Exists(path)) Guard.Replace(tmp, path, null); else Guard.Move(tmp, path);
                     return "{\"ok\":true}";
                 }
@@ -564,8 +568,15 @@ namespace Idojaras
                     if (File.Exists(path))
                     {
                         string t = File.ReadAllText(path, Encoding.UTF8);
-                        if (new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(t) is object[]) return t;
-                        throw new Exception("nem lista");
+                        var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
+                        var arr = js.DeserializeObject(t) as object[];
+                        if (arr == null) throw new Exception("nem lista");
+                        // betöltéskor is tételenként ellenőrzünk (pl. egy kézzel szerkesztett vagy visszaállított fájl)
+                        int dropped;
+                        var clean = Clean(name, arr, out dropped);
+                        if (dropped == 0) return t;
+                        Program.Log("A " + name + ".json " + dropped + " hibás tételét kihagytam.");
+                        return js.Serialize(clean);
                     }
                 }
                 catch (Exception ex)
@@ -576,6 +587,56 @@ namespace Idojaras
                 }
                 return "[]";
             }
+        }
+
+        // tételenkénti ellenőrzés (2.2.7.1): a dátum ÉÉÉÉ-HH-NN, a számmezők számok, a szövegek rövidek; ami nem ilyen,
+        // az kimarad – így egy hamis fájlból sem kerülhet a felületre kód vagy értelmetlen érték
+        static readonly Dictionary<string, string[]> NumKeys = new Dictionary<string, string[]>
+        {
+            { "naplo", new[] { "amount" } },
+            { "futas", new[] { "id", "t", "intensity", "layers", "feel", "teff", "temp", "feels", "wind", "hum", "solar" } }
+        };
+        static readonly Dictionary<string, string[]> StrKeys = new Dictionary<string, string[]>
+        {
+            { "naplo", new[] { "id", "date", "tag", "text", "unit", "zone" } },
+            { "futas", new[] { "who" } }
+        };
+        static readonly Regex DateRe = new Regex(@"^\d{4}-\d{2}-\d{2}$"), IdRe = new Regex(@"^[A-Za-z0-9_-]{1,40}$");
+
+        public static List<object> Clean(string name, object[] arr, out int dropped)
+        {
+            var res = new List<object>();
+            dropped = 0;
+            foreach (var o in arr)
+            {
+                var d = o as Dictionary<string, object>;
+                if (d != null && ItemOk(name, d)) res.Add(d); else dropped++;
+            }
+            return res;
+        }
+
+        static bool ItemOk(string name, Dictionary<string, object> d)
+        {
+            var nums = NumKeys[name]; var strs = StrKeys[name];
+            foreach (var kv in d)
+            {
+                object v = kv.Value;
+                if (nums.Contains(kv.Key))
+                {
+                    if (v != null && !(v is int || v is long || v is double || v is decimal)) return false;
+                }
+                else if (strs.Contains(kv.Key))
+                {
+                    var str = v as string;
+                    if (str == null || str.Length > (kv.Key == "text" ? 2000 : 80)) return false;
+                    if (kv.Key == "date" && !DateRe.IsMatch(str)) return false;
+                    if (kv.Key == "id" && !IdRe.IsMatch(str)) return false;
+                }
+                // ismeretlen mező: csak egyszerű, rövid érték maradhat
+                else if (!(v == null || v is bool || v is int || v is long || v is double || v is decimal || (v is string && ((string)v).Length <= 200))) return false;
+            }
+            if (name == "naplo") return d.ContainsKey("date");
+            return d.ContainsKey("t") && d["t"] != null;
         }
     }
 
@@ -602,20 +663,62 @@ namespace Idojaras
                 try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
                 catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 if (!File.Exists(ini)) { status = 400; return "{\"error\":\"Még nincs beallitasok.ini – előbb indítsd el egyszer a Letöltőt.\"}"; }
-                var lines = File.ReadAllLines(ini, Encoding.UTF8).ToList();
+                // előbb minden érték ellenőrzése (típus és tartomány, 2.2.7.1), csak utána írás
+                var set = new List<KeyValuePair<string, string>>();
                 foreach (var kv in d)
                 {
                     if (!Keys.Any(k => k[0] == kv.Key)) continue;
-                    string val = Convert.ToString(kv.Value, CultureInfo.InvariantCulture).ToLowerInvariant() == "true" ? "true" : Convert.ToString(kv.Value, CultureInfo.InvariantCulture).ToLowerInvariant() == "false" ? "false" : Convert.ToString(kv.Value, CultureInfo.InvariantCulture);
-                    int idx = lines.FindIndex(l => l.TrimStart().StartsWith(kv.Key + "=", StringComparison.OrdinalIgnoreCase));
-                    if (idx >= 0) lines[idx] = kv.Key + "=" + val; else lines.Add(kv.Key + "=" + val);
+                    string val, err = Check(kv.Key, kv.Value, out val);
+                    if (err != null) { status = 400; return new JW().Obj().P("error", err).End().ToString(); }
+                    set.Add(new KeyValuePair<string, string>(kv.Key, val));
                 }
-                Guard.WriteAllLines(ini, lines, new UTF8Encoding(true));
+                // olvasás és írás egy zár alatt, atomi cserével: közben az ütemezett Letöltő nem írhat bele (15.3)
+                Guard.Locked(ini, () =>
+                {
+                    var lines = File.ReadAllLines(ini, Encoding.UTF8).ToList();
+                    foreach (var kv in set)
+                    {
+                        int idx = lines.FindIndex(l => l.TrimStart().StartsWith(kv.Key + "=", StringComparison.OrdinalIgnoreCase));
+                        string line = Guard.IniLine(kv.Key, kv.Value);
+                        if (idx >= 0) lines[idx] = line; else lines.Add(line);
+                    }
+                    Guard.WriteAllLinesAtomic(ini, lines, new UTF8Encoding(true));
+                });
             }
             var cur = Settings.ReadIni(ini);
             var w = new JW().Obj().P("hasIni", File.Exists(ini));
             foreach (var k in Keys) { string v; w.P(k[0], cur.TryGetValue(k[0], out v) ? v : k[1]); }
             return w.End().ToString();
+        }
+
+        // egy riasztás-beállítás ellenőrzése: kapcsoló true/false, küszöb szám a felülettel azonos határok közt, óra egész
+        static string Check(string key, object raw, out string val)
+        {
+            val = null;
+            string s = Convert.ToString(raw, CultureInfo.InvariantCulture) ?? "";
+            if (key.StartsWith("Riasztas") && key != "RiasztasIsmetlesOra")
+            {
+                s = s.Trim().ToLowerInvariant();
+                if (s != "true" && s != "false") return key + ": true vagy false lehet.";
+                val = s; return null;
+            }
+            double lo, hi; bool whole = false;
+            switch (key)
+            {
+                case "FagyHatar": lo = -30; hi = 10; break;
+                case "NyomasEses3h": lo = 0.5; hi = 20; break;
+                case "LokesHatar": lo = 10; hi = 200; break;
+                case "EsoIntenzitas": lo = 1; hi = 300; break;
+                case "HosegHatar": lo = 20; hi = 45; break;
+                case "RiasztasIsmetlesOra": lo = 1; hi = 168; whole = true; break;
+                case "CsendesTol": case "CsendesIg": lo = 0; hi = 24; whole = true; break;
+                default: return "Ismeretlen beállítás: " + key;
+            }
+            double x;
+            if (!double.TryParse(s.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out x) || double.IsNaN(x) || x < lo || x > hi || (whole && x % 1 != 0))
+                return key + ": " + lo.ToString(CultureInfo.InvariantCulture) + " és " + hi.ToString(CultureInfo.InvariantCulture) + " közötti " + (whole ? "egész " : "") + "szám lehet.";
+            val = x.ToString(CultureInfo.InvariantCulture);
+            return null;
         }
 
         public static string Test(out int status)

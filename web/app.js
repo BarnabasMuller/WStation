@@ -43,7 +43,7 @@ function num(v, d = 1) {
 const COV_FULL = 0.8;
 // felhasználói szöveg (programnév, napló, kedvenc…): a fordítás csak akkor cseréli, ha egészében egy ismert kifejezés (6.7)
 function ut(s) { return '<span class="ut">' + esc(s) + '</span>'; }
-function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 // időtartam egységesen (6.22): „55 perc”, „1 óra 49 perc”, 48 óra fölött „3 nap 4 óra”
 function fmtDuration(min) {
   if (min == null || isNaN(min)) return '–';

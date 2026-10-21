@@ -338,6 +338,39 @@ namespace Idojaras
                 string m = Api.Handle("/api/meta", new NameValueCollection(), "GET", out s1);
                 string td = Api.Handle("/api/today", new NameValueCollection(), "GET", out s2);
                 Ok(s1 == 200 && s2 == 200 && td.Contains("\"now\""), "A meta és a Ma végpont működik", m.Length + " + " + td.Length + " bájt");
+
+                // --- biztonsági javítások (2.2.7.1)
+                bool injOk = false, keyOk = false;
+                try { Guard.IniLine("CsendesIg", "7\r\nApiBaseUrl=http://pelda.invalid"); } catch (ArgumentException) { injOk = true; }
+                try { Guard.IniLine("A=B", "1"); } catch (ArgumentException) { keyOk = true; }
+                Ok(injOk && keyOk && Guard.IniLine("CsendesIg", "7") == "CsendesIg=7", "Ini-írás: sortörés és „=” a kulcsban elutasítva (2.2.7.1)");
+
+                if (!File.Exists(a.DlIni)) File.WriteAllLines(a.DlIni, new[] { "CsendesIg=7" });
+                int sa1, sa2; string ar = Api.Handle("/api/alerts", new NameValueCollection(), "POST", "{\"CsendesIg\":\"7\\nApiBaseUrl=x\"}", out sa1);
+                Api.Handle("/api/alerts", new NameValueCollection(), "POST", "{\"CsendesIg\":\"6\",\"FagyHatar\":\"-2.5\"}", out sa2);
+                var al = Settings.ReadIni(a.DlIni); string q1, q2;
+                al.TryGetValue("CsendesIg", out q1); al.TryGetValue("FagyHatar", out q2);
+                Ok(sa1 == 400 && sa2 == 200 && q1 == "6" && q2 == "-2.5" && !File.ReadAllText(a.DlIni).Contains("ApiBaseUrl=x"),
+                   "Riasztás-beállítás: hibás érték elutasítva, helyes elmentve (2.2.7.1)", sa1 + " / " + sa2 + " / " + q1 + " / " + q2);
+
+                var js = new System.Web.Script.Serialization.JavaScriptSerializer();
+                int drop1, drop2;
+                var n1 = JsonStore.Clean("naplo", (object[])js.DeserializeObject("[{\"id\":\"d1\",\"date\":\"2026-10-10\",\"text\":\"metszés\",\"amount\":2}," +
+                    "{\"id\":\"d2\",\"date\":\"\\\"><img src=x>\",\"text\":\"x\"},{\"date\":\"2026-10-11\",\"amount\":\"5\"},{\"id\":\"a b\",\"date\":\"2026-10-12\"}]"), out drop1);
+                var n2 = JsonStore.Clean("futas", (object[])js.DeserializeObject("[{\"id\":1,\"t\":1792000000000,\"who\":\"A\",\"intensity\":5},{\"id\":2,\"t\":1792000000000,\"intensity\":\"<b>\"},{\"who\":\"C\"}]"), out drop2);
+                Ok(n1.Count == 1 && drop1 == 3 && n2.Count == 1 && drop2 == 2, "Napló / futásnapló: hibás tételek kiszűrve (2.2.7.1)", "napló " + n1.Count + "/" + (n1.Count + drop1) + ", futás " + n2.Count + "/" + (n2.Count + drop2));
+
+                Ok(BackupTools.Target(Layout.AppName + "/presetek/x.exe") == null && BackupTools.Target(Layout.AppName + "/presetek/talaj__a.json") != null
+                   && BackupTools.Target("data/../x.csv") == null && BackupTools.Target("data/idojaras_adatok.csv") != null && BackupTools.Target("x.exe") == null,
+                   "Visszaállítás: csak engedélyezett fájlok (presetek közé csak .json) (2.2.7.1)");
+
+                string cur = Path.Combine(tmp, "jelenlegi.ini"), bak = Path.Combine(tmp, "mentesbol.ini");
+                File.WriteAllLines(cur, new[] { "ApiKey=JELENLEGI", "StationId=ALLOMAS1", "MentesNaponta=7" });
+                File.WriteAllLines(bak, new[] { "ApiKey=REGI", "StationId=ALLOMAS2", "ApiBaseUrl=http://pelda.invalid", "MentesNaponta=3" });
+                BackupTools.KeepSecrets(bak, cur);
+                var kept = Settings.ReadIni(bak); string v1, v2, v3, v4;
+                kept.TryGetValue("ApiKey", out v1); kept.TryGetValue("StationId", out v2); kept.TryGetValue("ApiBaseUrl", out v3); kept.TryGetValue("MentesNaponta", out v4);
+                Ok(v1 == "JELENLEGI" && v2 == "ALLOMAS1" && v3 == null && v4 == "3", "Visszaállítás: a mostani API-kulcs és állomás marad, idegen ApiBaseUrl nem jön át (2.2.7.1)", v1 + " / " + v2 + " / " + (v3 ?? "–") + " / " + v4);
             }
             catch (Exception ex)
             {
