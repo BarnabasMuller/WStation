@@ -1,6 +1,23 @@
 ﻿WSTATION – CAMBIOS
 ===========================
 
+== 2.2.8 (2026-10-22) – correcciones ==
+- Descargador: si un antivirus o una sincronización en la nube bloquea el archivo de estado, el Descargador lo
+  reintenta y, si aun así falla, solo avisa – la descarga ya no se detiene. Un día de ayer ya completo no se
+  vuelve a pedir.
+- Instalador: no sobrescribe un acceso directo del escritorio que apunte a otra instalación (el nuevo se llama
+  «WStation (2)»); el registro también lista las guías antiguas eliminadas; mensaje claro en modo silencioso
+  si la carpeta de destino no está vacía.
+- Resumen semanal: por defecto los últimos 7 días (con datos antiguos, hasta el último día con datos); la
+  tarjeta resaltada tiene su borde completo.
+- Línea de tiempo: el control deslizante superior tiene la misma resolución en todas partes; la nubosidad está
+  suavizada, el 100 % ya no se corta y el panel solar es más alto.
+- La superficie de césped se muestra en la tarjeta del perfil de césped y en la subpestaña Agua.
+- Si la interfaz no se abre desde el programa (p. ej. desde un marcador), aparece una indicación clara.
+- Al restaurar una copia se omiten las entradas no válidas del diario y del registro de carreras.
+- Traducción: comillas propias de cada idioma, los nombres propios no se traducen, los niveles solo enteros,
+  símbolos de fórmula neutros y separador decimal correcto en las fórmulas.
+
 == 2.2.7.2 (2026-10-21) – correcciones menores ==
 - Los datos de la interfaz local (p. ej. la copia de seguridad) solo son accesibles desde la ventana del propio programa, no para otros programas del equipo.
 - El instalador carga las DLL del sistema de Windows solo desde la carpeta del sistema, no desde su propia carpeta (p. ej. Descargas).

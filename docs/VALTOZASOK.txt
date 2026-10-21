@@ -1,6 +1,21 @@
 ﻿WSTATION – VÁLTOZÁSOK
 ==============================
 
+== 2.2.8 (2026-10-22) – hibajavítások ==
+- Letöltő: ha a vírusirtó vagy egy felhőszinkron épp zárolja az állapotfájlt, a Letöltő újrapróbálja, és ha
+  így sem sikerül, csak figyelmeztet – a letöltés nem áll le. A már teljes tegnapi napot nem kéri le még egyszer.
+- Telepítő: egy másik telepítésre mutató asztali parancsikont nem ír felül (az új neve „WStation (2)”); a napló
+  a törölt régi leírásokat is felsorolja; csendes módban pontos üzenet, ha a célmappa nem üres.
+- Heti összesítő: alapból az utolsó 7 nap (régebbi adatnál az utolsó adatos napig); a kiemelt kártya kerete
+  teljes.
+- Idővonal: a felső csúszka mindenhol egyforma felbontású; a felhőzet simított, a 100% nem vágódik le, a
+  napsugárzás-panel magasabb.
+- A gyepterület látszik a gyep profilkártyáján és a Víz alfülön.
+- Ha a felületet nem a programból nyitják meg (pl. könyvjelzőből), érthető útmutatás jelenik meg.
+- Visszaállításkor a napló és a futónapló hibás bejegyzései kimaradnak.
+- Fordítás: nyelvfüggő idézőjelek, a saját nevek nem fordulnak, a fokozatnevek csak egészében, nyelvsemleges
+  képletjelek, helyes tizedesjel a képletekben.
+
 == 2.2.7.2 (2026-10-21) – kisebb hibák javítása ==
 - A helyi felület adatait (pl. a biztonsági mentést) csak a program saját ablaka érheti el, más program a gépen nem.
 - A telepítő a Windows rendszer-DLL-jeit csak a rendszermappából tölti be, a saját mappájából (pl. Letöltések) nem.

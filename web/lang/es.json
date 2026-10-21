@@ -2263,5 +2263,17 @@
   "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Superficie de césped: {a} – se usa para litros y m³; ajustable con el botón ƒx",
   "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "la superficie de césped regada: con ella la subpestaña Agua calcula los m³, y el riego registrado en litros se convierte a mm",
   "régi leírás törölve": "guía antigua eliminada",
-  "egy másik telepítésre mutat": "apunta a otra instalación"
+  "egy másik telepítésre mutat": "apunta a otra instalación",
+  "felhős – kattints: megnyitás az idővonalon": "nublado – clic: abrir en la línea de tiempo",
+  "nincs adat – kattints: megnyitás az idővonalon": "sin datos – clic: abrir en la línea de tiempo",
+  "részben felhős – kattints: megnyitás az idővonalon": "parcialmente nublado – clic: abrir en la línea de tiempo",
+  "esős – kattints: megnyitás az idővonalon": "lluvioso – clic: abrir en la línea de tiempo",
+  "napos, záporral – kattints: megnyitás az idővonalon": "soleado, con chubascos – clic: abrir en la línea de tiempo",
+  "csapadék fagypont körül – kattints: megnyitás az idővonalon": "precipitación en torno a 0 °C – clic: abrir en la línea de tiempo",
+  "zivataros, heves eső – kattints: megnyitás az idővonalon": "tormentoso, lluvia intensa – clic: abrir en la línea de tiempo",
+  "napos – kattints: megnyitás az idővonalon": "soleado – clic: abrir en la línea de tiempo",
+  "a mentés kibontva túl nagy": "la copia descomprimida es demasiado grande",
+  "Ismeretlen beállítás": "Ajuste desconocido",
+  "true vagy false lehet": "puede ser true o false",
+  "időtúllépés": "tiempo agotado"
 }

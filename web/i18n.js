@@ -85,9 +85,13 @@ function tr(s) {
   // a gyűjtő formájában (szélső írásjelek nélkül) tárolt kulcs is egészben egyezzen, pl. „… (0,8 ill. 0,6)”
   const edge = trEdge(t);
   if (edge) return s.replace(t, edge);
-  let out = I18N.re ? s.replace(I18N.re, trDot) : s;
+  // a „…” közti rész a felhasználó saját neve (pl. egy program a programból jövő üzenetben): darabokban nem fordul (2.2.8)
+  const kept = [];
+  let out = s.indexOf('„') >= 0 ? s.replace(/„[^„”]*”/g, m => { kept.push(m); return '\u0001' + (kept.length - 1) + '\u0002'; }) : s;
+  if (I18N.re) out = out.replace(I18N.re, trDot);
   // a rövid szavak (pl. „perc”, „most”) csak rövid feliratokban (legfeljebb 4 szó), hogy ne keletkezzen félig fordított mondat
   if (I18N.reShort && (out.match(/\p{L}{2,}/gu) || []).length <= 4) out = out.replace(I18N.reShort, trDot);
+  if (kept.length) out = out.replace(/\u0001(\d+)\u0002/g, (m, i) => kept[+i]);
   return out;
 }
 // ponttal végződő fordítás (pl. „kb” → „approx.”) után az eredeti pontja ne duplázódjon („approx..”); a „...” megmarad
@@ -140,7 +144,7 @@ function trNode(n) {
     const user = p.closest && p.closest('.ut');
     let out = !I18N ? orig : user ? trWhole(orig) : tr(orig);
     // a képletekben (.formula) a fordítás után igazítjuk a tizedesjelet, így a magyar kulcsok továbbra is illeszkednek
-    if (I18N && I18N.dot && p.closest && p.closest('.formula')) out = out.replace(/(\d),(\d)/g, '$1.$2');
+    if (I18N && I18N.dot && p.closest && p.closest('.formula, .fm')) out = out.replace(/(\d),(\d)/g, '$1.$2');
     // a magyar „…” idézőjel (pl. a programból jövő üzenetekben egy név körül) a nyelv saját idézőjelére (2.2.8)
     if (I18N && out.indexOf('„') >= 0) { const q = I18N.quotes; out = out.replace(/„([^„”]*)”/g, q[0] + '$1' + q[1]); }
     I18N_DONE.set(n, { out, L });

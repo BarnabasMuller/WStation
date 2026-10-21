@@ -33,7 +33,9 @@ function weekDates() {
   const w = weekState();
   const today = DS.today();
   let first;
-  if (w.mode === 'last7') first = DS.add(today, -6);
+  // az utolsó 7 nap az utolsó adatos napig tart, ha az régebbi a mainál (pl. pár napig nem futott a Letöltő) –
+  // különben a hét nagy része üres kártya lenne (2.2.8)
+  if (w.mode === 'last7') { const ld = META && META.last ? F.ymd.format(META.last) : today; first = DS.add(ld < today ? ld : today, -6); }
   else {
     const monday = DS.add(today, -DS.dow(today));
     first = w.mode === 'prev' ? DS.add(monday, -7) : monday;

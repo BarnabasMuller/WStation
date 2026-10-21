@@ -1,6 +1,21 @@
 ﻿WSTATION – CHANGES
 =========================
 
+== 2.2.8 (2026-10-22) – bug fixes ==
+- Downloader: if an antivirus or a cloud sync is locking the state file, the Downloader retries and, if that
+  still fails, only warns – the download no longer stops. An already complete yesterday is not fetched again.
+- Installer: a desktop shortcut pointing to another installation is not overwritten (the new one is
+  “WStation (2)”); the log also lists removed old guides; a clear message in silent mode for a non-empty target.
+- Weekly summary: the last 7 days by default (with older data, up to the last day with data); the highlighted
+  card has its full border.
+- Timeline: the top slider has the same resolution everywhere; cloud cover is smoothed, 100% is no longer cut
+  off, and the solar panel is taller.
+- The lawn area is shown on the lawn profile card and on the Water sub-tab.
+- If the interface is not opened from the program (e.g. from a bookmark), clear guidance is shown.
+- Restoring a backup skips invalid diary and running-log entries.
+- Translation: language-specific quotation marks, own names are not translated, level names only as a whole,
+  language-neutral formula symbols, correct decimal separator in formulas.
+
 == 2.2.7.2 (2026-10-21) – minor fixes ==
 - The local interface's data (e.g. the backup) can only be reached by the program's own window, not by other programs on the computer.
 - The installer loads Windows system DLLs only from the system folder, not from its own folder (e.g. Downloads).

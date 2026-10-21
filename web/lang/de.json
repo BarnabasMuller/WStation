@@ -2263,5 +2263,17 @@
   "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Rasenfläche: {a} – daraus werden Liter und m³ berechnet; mit der ƒx-Schaltfläche einstellbar",
   "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "die bewässerte Rasenfläche: daraus berechnet der Unterreiter Wasser die m³, und in Litern erfasste Bewässerung wird damit in mm umgerechnet",
   "régi leírás törölve": "alte Anleitung entfernt",
-  "egy másik telepítésre mutat": "zeigt auf eine andere Installation"
+  "egy másik telepítésre mutat": "zeigt auf eine andere Installation",
+  "felhős – kattints: megnyitás az idővonalon": "bewölkt – klicken: auf der Zeitachse öffnen",
+  "nincs adat – kattints: megnyitás az idővonalon": "keine Daten – klicken: auf der Zeitachse öffnen",
+  "részben felhős – kattints: megnyitás az idővonalon": "teilweise bewölkt – klicken: auf der Zeitachse öffnen",
+  "esős – kattints: megnyitás az idővonalon": "regnerisch – klicken: auf der Zeitachse öffnen",
+  "napos, záporral – kattints: megnyitás az idővonalon": "sonnig, mit Schauern – klicken: auf der Zeitachse öffnen",
+  "csapadék fagypont körül – kattints: megnyitás az idővonalon": "Niederschlag um den Gefrierpunkt – klicken: auf der Zeitachse öffnen",
+  "zivataros, heves eső – kattints: megnyitás az idővonalon": "gewittrig, Starkregen – klicken: auf der Zeitachse öffnen",
+  "napos – kattints: megnyitás az idővonalon": "sonnig – klicken: auf der Zeitachse öffnen",
+  "a mentés kibontva túl nagy": "die Sicherung ist entpackt zu groß",
+  "Ismeretlen beállítás": "Unbekannte Einstellung",
+  "true vagy false lehet": "kann true oder false sein",
+  "időtúllépés": "Zeitüberschreitung"
 }

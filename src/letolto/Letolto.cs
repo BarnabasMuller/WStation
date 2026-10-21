@@ -803,6 +803,7 @@ MetarKod=LHBP
                 return;
             }
             catch (Exception ex) { last = ex; }
+            try { Guard.Delete(tmp); } catch { }   // a következő mentés úgyis újraírja
             throw new SaveException("Az állapotfájl (" + Path.GetFileName(FilePath) + ") most nem írható (" + last.Message + "); a következő mentés pótolja.", last);
         }
 

@@ -2263,5 +2263,17 @@
   "Gyepterület: {a} – ebből számol litert és m³-t; a ƒx gombbal állítható": "Lawn area: {a} – used for litres and m³; adjustable with the ƒx button",
   "a locsolt gyep területe: ebből számol a Víz alfül m³-t, és a literben rögzített locsolást is ezzel váltja mm-re": "the watered lawn area: the Water sub-tab computes m³ from it, and litres logged for watering are converted to mm with it",
   "régi leírás törölve": "old guide removed",
-  "egy másik telepítésre mutat": "points to another installation"
+  "egy másik telepítésre mutat": "points to another installation",
+  "felhős – kattints: megnyitás az idővonalon": "cloudy – click: open on the timeline",
+  "nincs adat – kattints: megnyitás az idővonalon": "no data – click: open on the timeline",
+  "részben felhős – kattints: megnyitás az idővonalon": "partly cloudy – click: open on the timeline",
+  "esős – kattints: megnyitás az idővonalon": "rainy – click: open on the timeline",
+  "napos, záporral – kattints: megnyitás az idővonalon": "sunny, with showers – click: open on the timeline",
+  "csapadék fagypont körül – kattints: megnyitás az idővonalon": "precipitation around freezing – click: open on the timeline",
+  "zivataros, heves eső – kattints: megnyitás az idővonalon": "thundery, heavy rain – click: open on the timeline",
+  "napos – kattints: megnyitás az idővonalon": "sunny – click: open on the timeline",
+  "a mentés kibontva túl nagy": "the backup is too large when unpacked",
+  "Ismeretlen beállítás": "Unknown setting",
+  "true vagy false lehet": "can be true or false",
+  "időtúllépés": "timeout"
 }

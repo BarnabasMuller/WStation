@@ -1,6 +1,23 @@
 ﻿WSTATION – ÄNDERUNGEN
 ===========================
 
+== 2.2.8 (2026-10-22) – Fehlerkorrekturen ==
+- Downloader: Sperrt ein Virenscanner oder eine Cloud-Synchronisation gerade die Statusdatei, versucht es der
+  Downloader erneut und warnt nur, wenn es weiterhin nicht klappt – der Download bricht nicht mehr ab. Ein
+  bereits vollständiger gestriger Tag wird nicht noch einmal abgerufen.
+- Installer: Eine Desktop-Verknüpfung zu einer anderen Installation wird nicht überschrieben (die neue heißt
+  „WStation (2)“); das Protokoll nennt auch entfernte alte Anleitungen; klare Meldung im stillen Modus bei
+  einem nicht leeren Zielordner.
+- Wochenübersicht: standardmäßig die letzten 7 Tage (bei älteren Daten bis zum letzten Tag mit Daten); die
+  hervorgehobene Karte hat ihren vollständigen Rahmen.
+- Zeitachse: Der obere Schieberegler hat überall dieselbe Auflösung; die Bewölkung ist geglättet, 100 % wird
+  nicht mehr abgeschnitten, und das Sonnen-Panel ist höher.
+- Die Rasenfläche wird auf der Rasen-Profilkarte und im Unterreiter Wasser angezeigt.
+- Wird die Oberfläche nicht aus dem Programm geöffnet (z. B. über ein Lesezeichen), erscheint eine klare Anleitung.
+- Beim Wiederherstellen einer Sicherung werden ungültige Tagebuch- und Lauftagebuch-Einträge ausgelassen.
+- Übersetzung: sprachgerechte Anführungszeichen, eigene Namen werden nicht übersetzt, Stufennamen nur als
+  Ganzes, sprachneutrale Formelzeichen, richtiges Dezimalzeichen in Formeln.
+
 == 2.2.7.2 (2026-10-21) – kleinere Korrekturen ==
 - Die Daten der lokalen Oberfläche (z. B. die Sicherung) sind nur für das eigene Programmfenster erreichbar, nicht für andere Programme auf dem Rechner.
 - Das Installationsprogramm lädt Windows-System-DLLs nur aus dem Systemordner, nicht aus seinem eigenen Ordner (z. B. Downloads).
