@@ -274,7 +274,7 @@ namespace Idojaras
                     string exe = AppState.L.FindDownloader();
                     if (exe != null)
                         using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
-                            if (p != null && !p.WaitForExit(120000)) { try { p.Kill(); } catch { } }
+                            if (p != null && !p.WaitForExit(600000)) { try { p.Kill(); } catch { } }   // nagy adatnál percekig tarthat
                     paused = Kozos.Utemezes.Pause(true);
                     // 1. kibontás ideiglenes fájlokba (a mostani fájlokhoz még nem nyúlunk)
                     long total = 0;

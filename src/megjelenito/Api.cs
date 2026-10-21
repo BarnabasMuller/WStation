@@ -320,9 +320,18 @@ namespace Idojaras
             {
                 string exe = AppState.L.FindDownloader();
                 if (exe == null) return "{\"error\":\"Nem találom a Letöltő.exe-t.\"}";
-                var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base });
-                p.WaitForExit(120000);
-                ChangeLog.Add("Biztonsági mentés", "kézi mentés", null, p.ExitCode == 0 ? "elkészült" : "hiba (" + p.ExitCode + ")", null);
+                // nagy adatállománynál a tömörítés percekig tarthat: legfeljebb 10 percet várunk (2.2.7.2)
+                using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
+                {
+                    if (p == null) return "{\"error\":\"A Letöltő nem indítható.\"}";
+                    if (!p.WaitForExit(600000))
+                    {
+                        try { p.Kill(); } catch { }
+                        ChangeLog.Add("Biztonsági mentés", "kézi mentés", null, "időtúllépés", null);
+                        return "{\"error\":\"A mentés 10 perc alatt sem készült el.\"}";
+                    }
+                    ChangeLog.Add("Biztonsági mentés", "kézi mentés", null, p.ExitCode == 0 ? "elkészült" : "hiba (" + p.ExitCode + ")", null);
+                }
             }
             var zips = Directory.Exists(dir) ? new DirectoryInfo(dir).GetFiles("mentes_*.zip").OrderByDescending(f => f.LastWriteTimeUtc).ToList() : new List<FileInfo>();
             var ini = Settings.ReadIni(AppState.L.DlIni);

@@ -154,6 +154,9 @@ namespace Idojaras
 
         public static void Log(string msg)
         {
+            // 5 MB felett a régi naplót félreteszi, hogy ne nőjön a végtelenségig (2.2.7.2)
+            try { var fi = new FileInfo(AppState.L.ErrorLog); if (fi.Exists && fi.Length > 5 * 1024 * 1024) { string old = fi.FullName + ".regi"; if (File.Exists(old)) Guard.Delete(old); Guard.Move(fi.FullName, old); } }
+            catch { }
             try { Guard.AppendAllText(AppState.L.ErrorLog, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg + Environment.NewLine); }
             catch { }
         }
