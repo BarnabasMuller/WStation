@@ -2252,5 +2252,9 @@
   "egy nem WStation-fájl megmaradt": "a file not belonging to WStation was kept",
   "Épp fut egy letöltés. Várd meg a végét, majd próbáld újra": "A download is running. Wait for it to finish, then try again",
   "A mentésben túl nagy fájl van – ez nem egy WStation-mentés": "The backup contains a file that is too large – this is not a WStation backup",
-  "A visszaállítás nem sikerült, a mostani állapot megmaradt": "The restore failed; the current state was kept"
+  "A visszaállítás nem sikerült, a mostani állapot megmaradt": "The restore failed; the current state was kept",
+  "Az utolsó adatnap ({day}) az idei évben": "The last data day ({day}) in this year",
+  "a nap még tart": "the day is not over yet",
+  "liter / bokor": "litres / shrub",
+  "l / bokor": "l / shrub"
 }

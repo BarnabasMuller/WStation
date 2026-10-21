@@ -15,12 +15,12 @@ async function getDays(clean) {
 
 // dátum-szöveg (ÉÉÉÉ-HH-NN) segédek, időzóna-függetlenül
 const DS = {
-  ms: s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)),
+  ms: s => typeof s === 'string' ? Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) : NaN,   // hiányzó nap: NaN (2.2.7.2)
   str: ms => new Date(ms).toISOString().slice(0, 10),
   add: (s, n) => DS.str(DS.ms(s) + n * D),
   dow: s => (new Date(DS.ms(s)).getUTCDay() + 6) % 7,          // 0 = hétfő
   today: () => F.ymd.format(Date.now()),
-  fmt: (s, o) => new Date(DS.ms(s) + 12 * H).toLocaleDateString(numLocale(), Object.assign({ timeZone: 'UTC' }, o))
+  fmt: (s, o) => { const t = DS.ms(s); return isFinite(t) ? new Date(t + 12 * H).toLocaleDateString(numLocale(), Object.assign({ timeZone: 'UTC' }, o)) : '–'; }
 };
 
 // egy nap megnyitása az idővonalon, ±1 nap környezettel

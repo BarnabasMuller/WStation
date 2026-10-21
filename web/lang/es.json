@@ -2251,5 +2251,9 @@
   "egy nem WStation-fájl megmaradt": "se conservó un archivo que no es de WStation",
   "Épp fut egy letöltés. Várd meg a végét, majd próbáld újra": "Hay una descarga en curso. Espera a que termine e inténtalo de nuevo",
   "A mentésben túl nagy fájl van – ez nem egy WStation-mentés": "La copia contiene un archivo demasiado grande: no es una copia de WStation",
-  "A visszaállítás nem sikerült, a mostani állapot megmaradt": "La restauración falló; se mantiene el estado actual"
+  "A visszaállítás nem sikerült, a mostani állapot megmaradt": "La restauración falló; se mantiene el estado actual",
+  "Az utolsó adatnap ({day}) az idei évben": "El último día con datos ({day}) en este año",
+  "a nap még tart": "el día aún no ha terminado",
+  "liter / bokor": "litros / arbusto",
+  "l / bokor": "l / arbusto"
 }

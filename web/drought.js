@@ -346,9 +346,10 @@ function renderWater() {
       '<div class="w-form">' + (zoneOpts.length > 1 ? '<select class="sel w-zone">' + zoneOpts.map(o => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select>' : '<input type="hidden" class="w-zone" value="' + zoneOpts[0][0] + '">') +
       '<input type="date" class="w-date" value="' + DS.today() + '">' +
       '<input type="number" class="w-amount" min="0" step="0.5" placeholder="mennyiség">' +
-      '<select class="sel w-unit">' + zoneOpts[0][2].map(u => '<option value="' + u + '">' + ({ mm: 'mm', perc: 'perc', l: 'liter' })[u] + '</option>').join('') + '</select>' +
+      // bokornál a liter egy bokorra értendő (a talajvíz-mérleg egy bokor gyökérzónáját számolja) – ezt a felirat is mondja (2.2.7.2)
+      '<select class="sel w-unit">' + zoneOpts[0][2].map(u => '<option value="' + u + '">' + (u === 'l' && (profById(zoneOpts[0][0]) || {}).type === 'bokor' ? 'liter / bokor' : ({ mm: 'mm', perc: 'perc', l: 'liter' })[u]) + '</option>').join('') + '</select>' +
       '<button class="btn primary w-add" aria-label="' + esc(tf('Rögzítés – {name}', { name: trWhole(plainText(title)) })) + '">Rögzítés</button></div>' +
-      (logs.length ? '<div class="w-hist">' + logs.map(l => '<span>' + esc(l.date) + ': ' + num(l.amount, 1) + ' ' + ({ mm: 'mm', perc: 'perc', l: 'l' })[l.unit] + (ids.length > 1 ? ' (' + esc((profById(l.zone) || {}).name || '') + ')' : '') + ' <a href="#" data-del="' + l.i + '" title="Törlés">✕</a></span>').join('') + '</div>' : '') +
+      (logs.length ? '<div class="w-hist">' + logs.map(l => '<span>' + esc(l.date) + ': ' + num(l.amount, 1) + ' ' + (l.unit === 'l' && (profById(l.zone) || {}).type === 'bokor' ? 'l / bokor' : ({ mm: 'mm', perc: 'perc', l: 'l' })[l.unit]) + (ids.length > 1 ? ' (' + esc((profById(l.zone) || {}).name || '') + ')' : '') + ' <a href="#" data-del="' + l.i + '" title="Törlés">✕</a></span>').join('') + '</div>' : '') +
       (logs.some(l => l.date > last(DR.date)) ? '<div class="w-note">⚠ Az adatok ' + esc(last(DR.date)) + '-ig tartanak: a későbbi locsolás a következő adatfrissítés után számít bele.</div>' : '') +
       '<div class="w-note">A rögzített locsolást a talajvíz-mérleg beszámítja.</div></details></div>';
   };

@@ -230,6 +230,17 @@ async function post(path, body) {
 
 // felület-beállítások (appdata_megjelenítő\felulet.json)
 let UI = {};
+// a felulet.json sérült / idegen értékei ne akasszák meg a felületet (2.2.7.2): a rossz típusú mező törlődik, alapérték lép a helyére
+function sanitizeUi() {
+  const obj = ['stat', 'units', 'cal', 'week', 'rain', 'water', 'rep', 'map', 'find'], arr = ['formulas'];
+  const str = ['lang', 'tab', 'theme', 'windPeriod', 'windUnit', 'drSub', 'runWho'], numk = ['minFont', 'lastOpen', 'calTempCenter'];
+  obj.forEach(k => { if (k in UI && (typeof UI[k] !== 'object' || UI[k] === null || Array.isArray(UI[k]))) delete UI[k]; });
+  arr.forEach(k => { if (k in UI && !Array.isArray(UI[k])) delete UI[k]; });
+  str.forEach(k => { if (k in UI && (typeof UI[k] !== 'string' || UI[k].length > 80)) delete UI[k]; });
+  numk.forEach(k => { if (k in UI && (typeof UI[k] !== 'number' || !isFinite(UI[k]))) delete UI[k]; });
+  if (UI.lang && !/^[a-z]{2,3}(-[A-Za-z]{2})?$/.test(UI.lang)) delete UI.lang;
+  if (UI.formulas) UI.formulas = UI.formulas.filter(f => f && typeof f === 'object' && typeof f.expr === 'string' && typeof f.name === 'string');
+}
 let uiTimer = 0;
 function saveUi() { clearTimeout(uiTimer); uiTimer = setTimeout(() => post('/api/ui', UI).catch(e => toast('A beállítás nem menthető: ' + e.message)), 300); }
 
@@ -492,7 +503,7 @@ function renderToday() {
     </div>
 
     <div class="card wide">
-      <h3>${isToday ? 'A mai nap az idei évben' : 'Az utolsó adatnap (' + dayName + ') az idei évben'} <span style="text-transform:none;letter-spacing:0;font-weight:500">${isToday ? '(a nap még tart)' : ''}</span></h3>
+      <h3>${isToday ? tf('A mai nap az idei évben') : tf('Az utolsó adatnap ({day}) az idei évben', { day: esc(dayName) })} <span style="text-transform:none;letter-spacing:0;font-weight:500">${isToday ? tf('(a nap még tart)') : ''}</span></h3>
       <ul class="year-list">${year.map(x => '<li>' + x + '</li>').join('')}</ul>
     </div>`;
   if (typeof renderInsights === 'function') renderInsights();
@@ -754,6 +765,8 @@ function updateSpan() {
 async function onZoom() {
   updateSpan();
   const [a, b] = visibleRange();
+  // az 5 perces saját képletek a látható ablak adatát kérik le: görgetés / nagyítás után újra kell rajzolni (2.2.7.2)
+  if (typeof formulas === 'function' && formulas().some(f => f.on && f.res === '5perc') && typeof drawFormulas === 'function') drawFormulas();
   // a gombok jelölése, ha a felhasználó maga zoomolt
   const match = Object.entries(rangeOf).find(([k, f]) => { const r = f(); return Math.abs(r[0] - a) < 60e3 && Math.abs(r[1] - b) < 60e3; });
   currentRange = match ? match[0] : '';
@@ -933,7 +946,8 @@ document.addEventListener('click', e => {
 
 async function init() {
   try { UI = await api('/api/ui'); } catch (e) { UI = {}; }
-  if (typeof UI !== 'object' || UI === null) UI = {};
+  if (typeof UI !== 'object' || UI === null || Array.isArray(UI)) UI = {};
+  sanitizeUi();
   if (UI.windUnit && !(UI.units && UI.units.wind)) { UI.units = Object.assign({}, UI.units || {}, { wind: UI.windUnit }); delete UI.windUnit; }
   if (typeof markOpen === 'function') markOpen();
   applyTheme(); applyFont(); applyLang().then(() => { if (lang() !== 'hu' && META) refreshView(); });

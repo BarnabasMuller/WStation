@@ -28,6 +28,7 @@ async function renderDiary() {
     }
   }
   $('dWater').classList.toggle('hidden', $('dTag').value !== 'öntözés');
+  dUnitLabel();
   const filterMonth = UI.cal && UI.cal.view === 'month' ? calMonth : null;
   const rows = list.map((x, i) => Object.assign({ i }, x)).filter(x => !filterMonth || (x.date || '').startsWith(filterMonth)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   $('dList').innerHTML = rows.length ? rows.map(x => '<div class="drow"><span class="ddate" data-d="' + esc(x.date) + '">' + DS.fmt(x.date, { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' }) + '</span>' +
@@ -48,6 +49,13 @@ async function renderDiary() {
 }
 
 $('dTag').addEventListener('change', () => $('dWater').classList.toggle('hidden', $('dTag').value !== 'öntözés'));
+// bokor-zónánál a liter egy bokorra értendő (2.2.7.2)
+function dUnitLabel() {
+  const p = typeof DR !== 'undefined' && DR && typeof profById === 'function' ? profById($('dZone').value) : null;
+  const o = $('dUnit').querySelector('option[value="l"]');
+  if (o) o.textContent = p && p.type === 'bokor' ? 'liter / bokor' : 'liter';
+}
+$('dZone').addEventListener('change', dUnitLabel);
 $('dAdd').addEventListener('click', async () => {
   const date = $('dDate').value, tag = $('dTag').value, text = $('dText').value.trim();
   if (!date) { toast('Add meg a dátumot.'); return; }

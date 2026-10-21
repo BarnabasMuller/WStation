@@ -632,3 +632,9 @@ small, .small, .muted.small, .wk-sum, .wk-row small { font-size: max(.86em, var(
 /* Jelentés: a 9 oszlopos havi táblázat keskeny ablakban önmagában görgethető, nem az egész oldal */
 .rep-scroll { overflow-x: auto; max-width: 100%; }
 @media print { .rep-scroll { overflow: visible; } }
+/* Kerti napló: keskeny ablakban a sor tördel, nem lóg ki (2.2.7.2) */
+@media (max-width: 700px) {
+  .drow { flex-wrap: wrap; gap: 6px; }
+  .ddate, .dtag { min-width: 0; }
+  .dtext { flex: 1 1 100%; overflow-wrap: anywhere; }
+}

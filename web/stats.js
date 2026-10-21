@@ -123,6 +123,7 @@ function renderMonthCompare(d) {
 // ------------------------------------------------------------------ óra × nap hőtérkép és havi napi menet
 const HM_INFO = { temp: ['Hőmérséklet', '°C', TEMP_COLORS], hum: ['Páratartalom', '%', SEQ.hum], wind: ['Szél', 'km/h', SEQ.wind], sun: ['Napsugárzás', 'W/m²', SEQ.sun], pres: ['Légnyomás', 'hPa', ['#762a83', '#c2a5cf', '#f7f7f7', '#a6dba0', '#1b7837']], dew: ['Harmatpont', '°C', TEMP_COLORS], vpd: ['VPD', 'kPa', SEQ.orange] };
 async function renderHourHeat() {
+  if (!HM_INFO[UI.stat.hm]) UI.stat.hm = 'temp';   // ismeretlen (pl. sérült beállításból) – alapérték (2.2.7.2)
   const k = UI.stat.hm, info = HM_INFO[k];
   const token = ++hmToken;
   const h = await api('/api/hourly?metric=' + k + stParam());

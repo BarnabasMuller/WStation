@@ -514,7 +514,8 @@ namespace Idojaras
             if (double.IsNaN(ea)) ea = (Es(tmin) * rhmax / 100 + Es(tmax) * rhmin / 100) / 2;
             double rso = (0.75 + 2e-5 * g.elevation) * ra;
             double rns = (1 - g.albedo) * rs;
-            double rel = rso > 0 ? Math.Min(1.0, rs / rso) : 0.5;
+            // FAO-56 (39. egyenlet): Rs/Rso 0,3 … 1,0 közé – nagyon borult napon se legyen negatív a felhőzet-szorzó (2.2.7.2)
+            double rel = rso > 0 ? Math.Max(0.3, Math.Min(1.0, rs / rso)) : 0.5;
             double rnl = Sigma * (Math.Pow(tmax + 273.16, 4) + Math.Pow(tmin + 273.16, 4)) / 2 * (0.34 - 0.14 * Math.Sqrt(Math.Max(0, ea))) * (1.35 * rel - 0.35);
             double rn = rns - rnl;
             double et0 = (0.408 * delta * rn + gamma * 900 / (t + 273) * u2 * (es - ea)) / (delta + gamma * (1 + 0.34 * u2));
