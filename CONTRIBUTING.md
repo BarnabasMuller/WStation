@@ -19,6 +19,15 @@ Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) first.
    dist\bin\Megjelenito.exe --teszt --mappa <folder with data\>
    ```
 
+## Branches
+
+- `main` – development of **3.0** (plan: [docs/dev/PLAN-3.0.md](docs/dev/PLAN-3.0.md)); may be unstable between gates.
+  The 2.x build notes above (C# 5, `build.bat`) describe the code as it is until 3.0 replaces it.
+- `release/2.x` – maintenance of the 2.x line: bug fixes only, 2.x releases are tagged from here.
+- `feat/<name>` – one work package of the 3.0 plan, merged into `main` through a pull request.
+
+A fix needed in both lines goes to `release/2.x` first and is then ported to `main`.
+
 ## Language of the code
 
 Identifiers, comments, log messages and the UI source text are **Hungarian**. Please keep new code consistent
