@@ -1,4 +1,4 @@
-# Fordítás és egységtesztek Windowson és Linuxon (docs/dev/PLAN-3.0.md 4.4).
+# Fordítás és egységtesztek Windowson és Linuxon, Windowson a telepítő összeállítása is (docs/dev/PLAN-3.0.md 4.4, 9.4).
 # A külső lépések commit-azonosítóra rögzítettek; a jogosultság csak olvasás; titok nincs.
 name: CI
 
@@ -35,3 +35,9 @@ jobs:
         run: dotnet build WStation.sln -c Release --no-restore
       - name: Egységtesztek
         run: dotnet test WStation.sln -c Release --no-build
+      # A sima fordítás a telepítőt és az indítókat (.NET Framework 4.8) is fordítja – Linuxon is, a referencia-szerelvények
+      # csomagjával (PLAN-3.0 9.4). A teljes telepítő (önálló .NET 10-es tartalommal) csak Windowson áll össze; itt csak az
+      # összeállíthatóságát ellenőrizzük, a kész telepítőt nem töltjük fel sehová.
+      - name: Telepítő összeállítása (packaging/windows)
+        if: runner.os == 'Windows'
+        run: dotnet msbuild packaging/windows/Telepito.proj -p:Configuration=Release -nologo
