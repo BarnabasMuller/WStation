@@ -148,11 +148,11 @@ namespace WStation.Core
                 if (rate >= s.StormRate && drop >= s.StormTempDrop && (gust >= s.StormGust || rain >= 5)) type = "zivatar";
                 else if (drop >= s.FrontTempDrop && (gust >= s.FrontGust || realTurn) && support) type = "front";
                 if (type == null) continue;
-                var parts = new List<string> { "−" + drop.ToString("0.0", CultureInfo.GetCultureInfo("hu-HU")) + " °C 1 óra alatt" };
+                var parts = new List<string> { "−" + NumFmt.Hu.Format(drop, "0.0") +" °C 1 óra alatt" };
                 if (gust > 0) parts.Add("lökés " + gust.ToString("0") + " km/h");
                 if (turn >= 30) parts.Add("szélfordulás " + turn.ToString("0") + "°");
-                if (rain >= 0.2) parts.Add(rain.ToString("0.0", CultureInfo.GetCultureInfo("hu-HU")) + " mm eső");
-                if (!double.IsNaN(pMin) && !double.IsNaN(pAfter) && pAfter - pMin >= 1) parts.Add("utána nyomásemelkedés +" + (pAfter - pMin).ToString("0.0", CultureInfo.GetCultureInfo("hu-HU")) + " hPa");
+                if (rain >= 0.2) parts.Add(NumFmt.Hu.Format(rain, "0.0") +" mm eső");
+                if (!double.IsNaN(pMin) && !double.IsNaN(pAfter) && pAfter - pMin >= 1) parts.Add("utána nyomásemelkedés +" + NumFmt.Hu.Format(pAfter - pMin, "0.0") +" hPa");
                 list.Add(new Dictionary<string, object>
                 {
                     { "t", Ms(ds.T[i]) }, { "type", type },

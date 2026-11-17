@@ -83,19 +83,19 @@ namespace WStation.Core
     // Egyszerű Excel-export: napi összesítő CSV a felület nyelvén és számformátumával (9.9)
     static class Export
     {
-        static readonly CultureInfo Hu = CultureInfo.GetCultureInfo("hu-HU");
+        static readonly NumFmt Hu = NumFmt.Hu;
 
         public static string FileName()
         {
             return "idojaras_napi_osszesito_" + DateTime.Now.ToString("yyyy-MM-dd") + ".csv";
         }
 
-        static CultureInfo Ci = Hu;
+        static NumFmt Ci = Hu;
         static string[] Dirs = { "É", "ÉÉK", "ÉK", "KÉK", "K", "KDK", "DK", "DDK", "D", "DDNy", "DNy", "NyDNy", "Ny", "NyÉNy", "ÉNy", "ÉÉNy" };
 
         static string N(double v, int dec)
         {
-            return double.IsNaN(v) ? "" : Math.Round(v, dec).ToString(dec > 0 ? "0." + new string('0', dec) : "0", Ci);
+            return double.IsNaN(v) ? "" : Ci.Format(Math.Round(v, dec), dec > 0 ? "0." + new string('0', dec) : "0");
         }
 
         static string Dir(double deg)
@@ -113,10 +113,10 @@ namespace WStation.Core
             if (m != null)
             {
                 object l, dirs;
-                if (m.TryGetValue("locale", out l)) { try { Ci = CultureInfo.GetCultureInfo(Convert.ToString(l)); } catch { Ci = Hu; } }
+                if (m.TryGetValue("locale", out l)) { try { Ci = NumFmt.For(lang); } catch { Ci = Hu; } }
                 if (m.TryGetValue("dirs", out dirs) && dirs is object[] && ((object[])dirs).Length == 16) Dirs = ((object[])dirs).Select(x => Convert.ToString(x)).ToArray();
             }
-            return Ci.NumberFormat.NumberDecimalSeparator == "," ? ";" : ",";
+            return Ci.Dec == "," ? ";" : ",";
         }
 
         public static string DailyCsv(Dataset ds, bool raw = false)
@@ -151,7 +151,7 @@ namespace WStation.Core
             {
                 var row = new[]
                 {
-                    d.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Ci.DateTimeFormat.GetDayName(d.Date.DayOfWeek), N(d.Coverage * 100, 0), d.Count.ToString(),
+                    d.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Ci.DayName(d.Date.DayOfWeek), N(d.Coverage * 100, 0), d.Count.ToString(),
                     N(T(d.Tmin), 1), time(d.TminT), N(T(d.Tmax), 1), time(d.TmaxT), N(T(d.Tavg), 1), N(TD(d.Tmax - d.Tmin), 1), N(T(d.DewAvg), 1),
                     N(d.HumMin, 0), N(d.HumMax, 0), N(d.HumAvg, 0), N(P(d.PresMin), pd), N(P(d.PresMax), pd), N(P(d.PresAvg), pd),
                     N(W(d.WindAvg), wd), N(W(d.WindMax), 1), N(W(d.GustMax), 1), time(d.GustMaxT), Dir(d.WindDir), N(d.WindDir, 0),

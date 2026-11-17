@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <!-- IDEIGLENES (1.5): a 2.x-ből áthelyezett fájlok a munkacsomag utolsó lépéséig nem fordulnak. -->
-    <Compile Remove="Analysis/**;Api/**;Data/**;Drought/**;Workspaces/**;SelfTest.cs;Common/Guard.cs;Common/IniMerge.cs;Common/Lang.cs;Common/JsonWriter.cs" />
+    <!-- IDEIGLENES (1.5): a 2.x-ből áthelyezett fájlok (és a rájuk épülő NumFmt) a munkacsomag utolsó lépéséig nem fordulnak. -->
+    <Compile Remove="Analysis/**;Api/**;Data/**;Drought/**;Workspaces/**;SelfTest.cs;Common/Guard.cs;Common/IniMerge.cs;Common/Lang.cs;Common/JsonWriter.cs;Common/NumFmt.cs" />
   </ItemGroup>
 </Project>
