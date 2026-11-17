@@ -5,6 +5,10 @@
     <TargetFramework>net10.0-windows</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <!-- IDEIGLENES (1.7, 1. commit): az áthelyezett 2.x-forrás még a régi keretrendszerre épül; a következő commit fordítja. -->
+    <Compile Remove="Letolto.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\WStation.Core\WStation.Core.csproj" />
   </ItemGroup>
 </Project>
