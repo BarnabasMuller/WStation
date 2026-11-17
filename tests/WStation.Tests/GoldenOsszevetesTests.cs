@@ -19,7 +19,7 @@ namespace WStation.Tests
     /// Golden összevetés (PLAN-3.0 14.2/3): a <c>tests/golden/hivasok.json</c> minden hívása a 3.0 magon (<c>Api.Handle</c>), a generált
     /// mintaadaton (<c>tools/adatgen</c>), és a válasz szerkezeti összevetése a 2.2.8 rögzített válaszával: a kulcsok neve és sorrendje,
     /// a számok számként, a szövegek és logikai értékek pontosan, az állapotkód is. Az időfüggő mezők (<c>hivasok.json</c> › <c>idofuggo</c>)
-    /// név szerint kimaradnak (a <c>Clock</c> az 1.9 csomagban jön); az ismert, indokolt eltérések az <see cref="IsmertElteresek"/> listában.
+    /// név szerint kimaradnak, kivéve a <c>now.ageMin</c>-t, amely rögzített órával (<c>Clock.Freeze</c>) egyezik; az ismert, indokolt eltérések az <see cref="IsmertElteresek"/> listában.
     /// </summary>
     public class GoldenOsszevetesTests
     {
@@ -44,14 +44,18 @@ namespace WStation.Tests
             var h = GoldenMinta.Hivasok().Single(x => x.Id == id);
             GoldenMinta.Betolt();
             int status;
-            string body = Api.Handle(h.Utvonal, ParseQuery(h.Lekerdezes), "GET", out status);
+            string body;
+            // rögzített óra: a mintaadat utolsó mérésének ideje (today.now.t), így az ageMin a rögzített 0
+            using (Clock.Freeze(GoldenMinta.UtolsoMeresUtc))
+                body = Api.Handle(h.Utvonal, ParseQuery(h.Lekerdezes), "GET", out status);
             body = Normalizal(body ?? "", GoldenMinta.Mappa);
 
             Assert.Equal(h.Allapot, status);
             string vart = File.ReadAllText(Path.Combine(GoldenMinta.GoldenDir, h.Fajl), Encoding.UTF8);
             using var a = JsonDocument.Parse(vart);
             using var b = JsonDocument.Parse(body);
-            var kihagy = new HashSet<string>(GoldenMinta.Idofuggo().Where(x => x.Id == id).Select(x => x.Mezo));
+            // az ageMin rögzített órával egyezik a golden fájllal, ezért nem hagyjuk ki; a loadMs (Stopwatch) és a loadedAt marad
+            var kihagy = new HashSet<string>(GoldenMinta.Idofuggo().Where(x => x.Id == id && x.Mezo != "now.ageMin").Select(x => x.Mezo));
             foreach (var k in IsmertElteresek.Keys.Where(k => k.Id == id)) kihagy.Add(k.Mezo);
             var elteres = new List<string>();
             Osszevet(a.RootElement, b.RootElement, "", kihagy, elteres);
@@ -163,6 +167,17 @@ namespace WStation.Tests
             return doc.RootElement.GetProperty("hivasok").EnumerateArray().Select(h => new Hivas(
                 h.GetProperty("id").GetString()!, h.GetProperty("utvonal").GetString()!, h.GetProperty("lekerdezes").GetString()!,
                 h.GetProperty("allapot").GetInt32(), h.GetProperty("fajl").GetString()!)).ToList();
+        }
+
+        /// <summary>A mintaadat utolsó mérésének ideje (a golden <c>today.json</c> › <c>now.t</c>, ms): erre rögzítjük az órát.</summary>
+        public static DateTime UtolsoMeresUtc
+        {
+            get
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(GoldenDir, "today.json"), Encoding.UTF8));
+                long ms = doc.RootElement.GetProperty("now").GetProperty("t").GetInt64();
+                return DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime;
+            }
         }
 
         public static List<(string Id, string Mezo)> Idofuggo()

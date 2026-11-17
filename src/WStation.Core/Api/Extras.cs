@@ -86,7 +86,7 @@ namespace WStation.Core
 
         public static string FileName()
         {
-            return "idojaras_napi_osszesito_" + DateTime.Now.ToString("yyyy-MM-dd") + ".csv";
+            return "idojaras_napi_osszesito_" + Clock.Now.ToString("yyyy-MM-dd") + ".csv";
         }
 
         static NumFmt Ci = Hu;

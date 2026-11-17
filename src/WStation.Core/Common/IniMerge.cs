@@ -56,7 +56,7 @@ namespace WStation.Core.Common
             if (added.Count > 0)
             {
                 string prefix = text.EndsWith("\n") ? "" : "\r\n";
-                Guard.AppendAllText(path, prefix + "\r\n# --- Új beállítások (" + DateTime.Now.ToString("yyyy-MM-dd") + ") ---" + sb, new UTF8Encoding(false));
+                Guard.AppendAllText(path, prefix + "\r\n# --- Új beállítások (" + Clock.Now.ToString("yyyy-MM-dd") + ") ---" + sb, new UTF8Encoding(false));
             }
             return added;
         }

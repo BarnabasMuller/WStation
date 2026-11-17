@@ -57,7 +57,7 @@ namespace WStation.Core
             // 5 MB felett a régi naplót félreteszi, hogy ne nőjön a végtelenségig (2.2.7.2)
             try { var fi = new FileInfo(AppState.L.ErrorLog); if (fi.Exists && fi.Length > 5 * 1024 * 1024) { string old = fi.FullName + ".regi"; if (File.Exists(old)) Guard.Delete(old); Guard.Move(fi.FullName, old); } }
             catch { }
-            try { Guard.AppendAllText(AppState.L.ErrorLog, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg + Environment.NewLine); }
+            try { Guard.AppendAllText(AppState.L.ErrorLog, Clock.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg + Environment.NewLine); }
             catch { }
         }
 
@@ -354,7 +354,7 @@ namespace WStation.Core
             int keep = ini.TryGetValue("MentesekSzama", out v) && int.TryParse(v, out keep) ? keep : 8;
             var w = new JW().Obj().P("days", days).P("keep", keep).P("count", zips.Count);
             if (zips.Count > 0) w.P("last", zips[0].LastWriteTime.ToString("yyyy-MM-dd HH:mm", Inv)).P("lastSize", zips[0].Length / 1024);
-            bool due = days > 0 && (zips.Count == 0 || (DateTime.UtcNow - zips[0].LastWriteTimeUtc).TotalDays >= days);
+            bool due = days > 0 && (zips.Count == 0 || (Clock.UtcNow - zips[0].LastWriteTimeUtc).TotalDays >= days);
             w.P("due", due);
             return w.End().ToString();
         }
@@ -530,7 +530,7 @@ namespace WStation.Core
             var w = new JW().Obj();
             var now = ds.Now;
             int last = ds.N - 1;
-            long nowEpoch = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+            long nowEpoch = (long)(Clock.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 
             w.Key("now").Obj();
             if (now != null)

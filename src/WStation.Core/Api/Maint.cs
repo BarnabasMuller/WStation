@@ -41,7 +41,7 @@ namespace WStation.Core
                     var list = Read();
                     var e = new Dictionary<string, object>
                     {
-                        { "t", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) },
+                        { "t", Clock.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) },
                         { "area", area }, { "key", key }, { "from", from }, { "to", to }
                     };
                     if (revert != null) e["revert"] = revert;

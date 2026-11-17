@@ -151,7 +151,7 @@ namespace WStation.Core
         public bool FromCache;
         public int ParsedRows, NewRows, DuplicateRows;
         public long LoadMs;
-        public DateTime LoadedAt = DateTime.Now;
+        public DateTime LoadedAt = Clock.Now;
         public int[] FlagCounts = new int[Flag.Bits.Length];
         public int FlaggedRows;
         public float[] RawPtot, RawPrate;   // nyers (kalibrálatlan) csapadék
@@ -409,7 +409,7 @@ namespace WStation.Core
             Process(ds, s);
             ds.Now = BuildCurrent(ds, curFiles);
             ds.LoadMs = sw.ElapsedMilliseconds;
-            ds.LoadedAt = DateTime.Now;
+            ds.LoadedAt = Clock.Now;
             return ds;
         }
 
