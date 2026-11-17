@@ -1097,7 +1097,7 @@ Jelölés: ★ = biztonsági vagy adatvesztési kockázat – erős modellel ír
 | 1.6 ✅ (2026-11-17, PR #6) | Asztali gazda | `WStation.Desktop`: a mai `Program.cs`, `MainForm`, `FallbackForm`, WebView2-kezelés; a felület fájljai erőforrásként a magból (a `web/` mappa mintával beágyazva). | A program indul, minden fül működik; az önteszt ugyanannyi sikeres pontot ad, mint a 2.2.8-on. | 9.1, 12. |
 | 1.7 ✅ (2026-11-17, PR #7) | Letöltő gazda (átmeneti) | A `Letolto.cs` változatlan logikával új projektben fordul (.NET 10); a Megjelenítő még külön folyamatként indítja. | Letöltés működik valódi kulccsal (◆); kilépési kódok változatlanok. | 9.2 |
 | 1.8 | Telepítő tartalma | A telepítő zipből telepít (9.4); `packaging/windows` összeállítja a tartalmat; `release.yml` első változata. | Friss telepítés és frissítés 2.2.8-ról virtuális mappában: az adatok megmaradnak, a régi fájlok félretéve. | 9.4, 4.4 |
-| 1.9 | Óra | `Clock` bevezetése, a `DateTime.Now/UtcNow` cseréje a magban (14.3). | Forráskeresés: nincs közvetlen órahívás a magban; golden zöld rögzített órával. | 14.3 |
+| 1.9 ✅ (2026-11-17, PR #8) | Óra | `Clock` bevezetése, a `DateTime.Now/UtcNow` cseréje a magban (14.3). | Forráskeresés: nincs közvetlen órahívás a magban; golden zöld rögzített órával. | 14.3 |
 
 **Megjegyzések az S1-hez**
 - **Sorrend** (a függőségek miatt): 1.1 → 1.2 és 1.4 (párhuzamosan mehet) → 1.3 → 1.5 → 1.6 és 1.7 → 1.9 → 1.8. Az 1.1 egyedül megy
