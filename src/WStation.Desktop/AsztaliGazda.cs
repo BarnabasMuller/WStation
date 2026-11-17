@@ -9,7 +9,7 @@ namespace WStation.Desktop
 {
     // IDEIGLENES (1.5): a 2.x mag Windows-függő részei (a Megjelenítő ablakához kötött párbeszédablakok, az Intéző, a frissítő
     // indítása és a program bezárása, a Feladatütemező) – a mag a WStation.Core.Common.Host felületen át éri el őket.
-    // A kód a 2.x Extras.cs, Maint.cs és Api.cs fájljából való, változatlan logikával. Az 1.6 (asztali gazda) köti be:
+    // A kód a 2.x Extras.cs, Maint.cs és Api.cs fájljából való, változatlan logikával. Bekötve (1.6):
     // AsztaliGazda.Install(() => Program.Window) a Program.Main elején.
     sealed class AsztaliGazda : IDesktopHost
     {
