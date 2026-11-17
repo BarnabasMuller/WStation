@@ -179,7 +179,7 @@ namespace WStation.Core
                         {
                             AppState.Log("A szarazsag.json hibás értékeket tartalmazott, ezek az alapértékre álltak: " + string.Join("; ", rep));
                             RepairNote = "Hibás értékek az alapértékre álltak: " + string.Join("; ", rep);
-                            try { Guard.Copy(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
+                            try { Guard.Copy(FilePath, FilePath + ".hibas_" + Clock.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                         }
                         return cached;
                     }
@@ -187,7 +187,7 @@ namespace WStation.Core
                 catch (Exception ex)
                 {
                     AppState.Log("A szarazsag.json sérült, félreteszem és alapértékekkel indulok: " + ex.Message);
-                    try { Guard.Move(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
+                    try { Guard.Move(FilePath, FilePath + ".hibas_" + Clock.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                 }
                 cached = DConfig.Defaults();
                 return cached;
@@ -208,7 +208,7 @@ namespace WStation.Core
             if (c.programs == null) c.programs = new List<DProgram>();
             if (c.schedules == null) c.schedules = new List<DSchedule>();
             int k = 0;
-            foreach (var p in c.profiles) if (string.IsNullOrEmpty(p.id)) p.id = "p" + (++k) + "_" + DateTime.Now.Ticks % 100000;
+            foreach (var p in c.profiles) if (string.IsNullOrEmpty(p.id)) p.id = "p" + (++k) + "_" + Clock.Now.Ticks % 100000;
             // 1.x–2.0: a profil „automata öntözés” mezői → mentett program + évente ismétlődő időszak
             if (c.version < 2)
             {
@@ -430,7 +430,7 @@ namespace WStation.Core
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Adj nevet a presetnek.");
             Json.DeserializeObject(dataJson); // érvényes JSON?
             Guard.CreateDirectory(PresetDir);
-            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", DateTime.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Json.DeserializeObject(dataJson) } };
+            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", Clock.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Json.DeserializeObject(dataJson) } };
             Guard.WriteAllText(Path.Combine(PresetDir, SafeName(kind) + "__" + SafeName(name) + ".json"), Json.Serialize(o), new UTF8Encoding(false));
         }
 

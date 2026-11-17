@@ -32,7 +32,7 @@ namespace WStation.Core
 
         public static int Run(Layout src)
         {
-            Line("WStation – önteszt, " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", Inv));
+            Line("WStation – önteszt, " + Clock.Now.ToString("yyyy-MM-dd HH:mm:ss", Inv));
             Line("Programmappa: " + src.Base);
             string tmp = Path.Combine(Path.GetTempPath(), "BudaorsIdojarasTeszt");
             Guard.SetRoot(tmp);   // a teszt csak a saját ideiglenes mappájába írhat
