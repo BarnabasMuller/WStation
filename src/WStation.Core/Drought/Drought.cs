@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+#pragma warning disable CS0219   // 1.5: a 2.x-ben is fel nem használt változó (cumM) – a régi build is elnémította (/nowarn:0219); nem javítjuk
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // ===================================================================== beállítások (appdata_megjelenítő\szarazsag.json)
     // A mezőnevek a JSON-ban és a felületen is ugyanezek. Az alapértékek a szabványos (FAO-56, USDA) értékek.
@@ -158,7 +160,6 @@ namespace Idojaras
         static readonly object Lock = new object();
         static DConfig cached;
         public static string RepairNote;
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         static string FilePath { get { return Path.Combine(AppState.L.App, "szarazsag.json"); } }
         static string PresetDir { get { return Path.Combine(AppState.L.App, "presetek"); } }
 
@@ -171,12 +172,12 @@ namespace Idojaras
                 {
                     if (File.Exists(FilePath))
                     {
-                        cached = Js.Deserialize<DConfig>(File.ReadAllText(FilePath, Encoding.UTF8));
+                        cached = Json.Deserialize<DConfig>(File.ReadAllText(FilePath, Encoding.UTF8));
                         Normalize(cached);
                         var rep = Repair(cached);
                         if (rep.Count > 0)
                         {
-                            Program.Log("A szarazsag.json hibás értékeket tartalmazott, ezek az alapértékre álltak: " + string.Join("; ", rep));
+                            AppState.Log("A szarazsag.json hibás értékeket tartalmazott, ezek az alapértékre álltak: " + string.Join("; ", rep));
                             RepairNote = "Hibás értékek az alapértékre álltak: " + string.Join("; ", rep);
                             try { Guard.Copy(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                         }
@@ -185,7 +186,7 @@ namespace Idojaras
                 }
                 catch (Exception ex)
                 {
-                    Program.Log("A szarazsag.json sérült, félreteszem és alapértékekkel indulok: " + ex.Message);
+                    AppState.Log("A szarazsag.json sérült, félreteszem és alapértékekkel indulok: " + ex.Message);
                     try { Guard.Move(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                 }
                 cached = DConfig.Defaults();
@@ -282,7 +283,7 @@ namespace Idojaras
 
         public static DConfig Parse(string json)
         {
-            var c = Js.Deserialize<DConfig>(json);
+            var c = Json.Deserialize<DConfig>(json);
             if (c == null) throw new Exception("üres beállítás");
             Normalize(c);
             Validate(c);
@@ -329,7 +330,7 @@ namespace Idojaras
                 {
                     var def = d.profiles.FirstOrDefault(x => x.type == p.type && (p.type != "fa" || x.fajta == p.fajta)) ?? d.profiles.First(x => x.type == p.type || x.type == "gyep");
                     var js = Serialize(def);
-                    var np = Js.Deserialize<DProfile>(js);
+                    var np = Json.Deserialize<DProfile>(js);
                     np.id = p.id; np.name = string.IsNullOrWhiteSpace(p.name) ? def.name : (p.name.Length > 60 ? p.name.Substring(0, 60) : p.name); np.enabled = p.enabled; np.type = p.type; np.fajta = p.fajta;
                     c.profiles[i] = np;
                     fixedParts.Add("profil „" + np.name + "” (" + ex.Message + ")");
@@ -408,13 +409,13 @@ namespace Idojaras
             {
                 Guard.CreateDirectory(AppState.L.App);
                 string tmp = FilePath + ".tmp";
-                Guard.WriteAllText(tmp, Js.Serialize(c), new UTF8Encoding(false));
+                Guard.WriteAllText(tmp, Json.Serialize(c), new UTF8Encoding(false));
                 if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
                 cached = c;
             }
         }
 
-        public static string Serialize(object o) { return Js.Serialize(o); }
+        public static string Serialize(object o) { return Json.Serialize(o); }
 
         // presetek: presetek\<fajta>__<név>.json  ({kind, name, saved, data})
         static string SafeName(string s)
@@ -427,10 +428,10 @@ namespace Idojaras
         public static void SavePreset(string kind, string name, string dataJson)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Adj nevet a presetnek.");
-            Js.DeserializeObject(dataJson); // érvényes JSON?
+            Json.DeserializeObject(dataJson); // érvényes JSON?
             Guard.CreateDirectory(PresetDir);
-            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", DateTime.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Js.DeserializeObject(dataJson) } };
-            Guard.WriteAllText(Path.Combine(PresetDir, SafeName(kind) + "__" + SafeName(name) + ".json"), Js.Serialize(o), new UTF8Encoding(false));
+            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", DateTime.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Json.DeserializeObject(dataJson) } };
+            Guard.WriteAllText(Path.Combine(PresetDir, SafeName(kind) + "__" + SafeName(name) + ".json"), Json.Serialize(o), new UTF8Encoding(false));
         }
 
         public static void DeletePreset(string kind, string name)
@@ -447,7 +448,7 @@ namespace Idojaras
             {
                 try
                 {
-                    var o = (Dictionary<string, object>)Js.DeserializeObject(File.ReadAllText(f, Encoding.UTF8));
+                    var o = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(f, Encoding.UTF8));
                     if (o.ContainsKey("kind") && o.ContainsKey("name") && o.ContainsKey("data")) res.Add(o);
                 }
                 catch { }

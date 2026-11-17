@@ -7,6 +7,10 @@ rem             dist\bin\                    (a ket program kulon, teszteleshez)
 rem =====================================================================
 setlocal
 cd /d "%~dp0"
+rem 3.0 (PLAN-3.0 1.5): a 2.x forrasai a src/WStation.Core es a src/WStation.Desktop ala kerultek, ez a regi build
+rem a main-en megszunt. A 2.x a release/2.x agon ezzel a fajllal epul tovabb; a 3.0: dotnet build WStation.sln -c Release
+echo A 2.x build a release/2.x agon el (git switch release/2.x). A 3.0 forditasa: dotnet build WStation.sln -c Release
+exit /b 1
 set "CSC=%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 if not exist "%CSC%" (echo HIBA: nem talalom a C# forditot: %CSC% & exit /b 1)
 if not exist dist\bin mkdir dist\bin

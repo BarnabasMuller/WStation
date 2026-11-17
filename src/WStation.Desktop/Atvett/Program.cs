@@ -1,4 +1,5 @@
-﻿// WStation – Megjelenítő – főprogram és ablakok
+﻿#nullable disable
+// WStation – Megjelenítő – főprogram és ablakok
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -11,13 +12,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
+using WStation.Core;
+using WStation.Core.Common;
 
 [assembly: System.Reflection.AssemblyTitle("WStation")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Megjelenítő")]
 [assembly: System.Reflection.AssemblyVersion("2.2.8.0")]
 [assembly: System.Reflection.AssemblyFileVersion("2.2.8.0")]
 
-namespace Idojaras
+namespace WStation.Desktop
 {
     static class Program
     {
@@ -152,14 +155,8 @@ namespace Idojaras
             else if (ServerUrl != null) OpenExternal(ServerUrl);
         }
 
-        public static void Log(string msg)
-        {
-            // 5 MB felett a régi naplót félreteszi, hogy ne nőjön a végtelenségig (2.2.7.2)
-            try { var fi = new FileInfo(AppState.L.ErrorLog); if (fi.Exists && fi.Length > 5 * 1024 * 1024) { string old = fi.FullName + ".regi"; if (File.Exists(old)) Guard.Delete(old); Guard.Move(fi.FullName, old); } }
-            catch { }
-            try { Guard.AppendAllText(AppState.L.ErrorLog, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg + Environment.NewLine); }
-            catch { }
-        }
+        // 1.5: a hibanapló a magba került (AppState.Log), változatlanul
+        public static void Log(string msg) { AppState.Log(msg); }
 
         // külső cím megnyitása az alapértelmezett böngészőben – csak http/https (2.2.7.1). Minden más séma (file:, ms-…:,
         // search-ms:, hálózati megosztás stb.) programot vagy fájlt indíthatna, ezért azt elutasítjuk és naplózzuk

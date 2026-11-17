@@ -1,10 +1,12 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // megjelenito.ini – küszöbértékek és megjelenítési beállítások
     class Settings
@@ -198,7 +200,7 @@ SzelesDelutanKmh=20
                 if (!File.Exists(path))
                     Guard.WriteAllText(path, Template.Replace("\r\n", "\n").Replace("\n", "\r\n"), new UTF8Encoding(true));
                 else
-                    Kozos.IniMerge.Merge(path, Template); // frissítés után az új kulcsok bekerülnek
+                    IniMerge.Merge(path, Template); // frissítés után az új kulcsok bekerülnek
             }
             catch (Exception ex) { s.Warnings.Add("A megjelenito.ini nem hozható létre: " + ex.Message); }
 

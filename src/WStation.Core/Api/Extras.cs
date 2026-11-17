@@ -1,14 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
-using System.Windows.Forms;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // A felület beállításai (téma, fülek, heti kártyák stb.) – appdata_megjelenítő\felulet.json
     static class UiSettings
@@ -23,7 +23,7 @@ namespace Idojaras
             {
                 if (method == "POST")
                 {
-                    try { new JavaScriptSerializer().DeserializeObject(body ?? ""); }
+                    try { Json.DeserializeObject(body ?? ""); }
                     catch { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = FilePath + ".tmp";
@@ -36,11 +36,11 @@ namespace Idojaras
                     if (File.Exists(FilePath))
                     {
                         string t = File.ReadAllText(FilePath, Encoding.UTF8);
-                        new JavaScriptSerializer().DeserializeObject(t);
+                        Json.DeserializeObject(t);
                         return t;
                     }
                 }
-                catch (Exception ex) { Program.Log("A felulet.json sérült, alapértékekkel indulok: " + ex.Message); }
+                catch (Exception ex) { AppState.Log("A felulet.json sérült, alapértékekkel indulok: " + ex.Message); }
                 return "{}";
             }
         }
@@ -51,7 +51,7 @@ namespace Idojaras
             try
             {
                 int st;
-                var d = new JavaScriptSerializer().DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
+                var d = Json.DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
                 object v;
                 if (d != null && d.TryGetValue("lang", out v) && v != null && Langs.Exists(Convert.ToString(v))) return Convert.ToString(v);
             }
@@ -65,7 +65,7 @@ namespace Idojaras
             try
             {
                 int st;
-                var d = new JavaScriptSerializer().DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
+                var d = Json.DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
                 object u;
                 if (d != null && d.TryGetValue("units", out u) && u is System.Collections.Generic.Dictionary<string, object>)
                 {
@@ -82,19 +82,19 @@ namespace Idojaras
     // Egyszerű Excel-export: napi összesítő CSV a felület nyelvén és számformátumával (9.9)
     static class Export
     {
-        static readonly CultureInfo Hu = CultureInfo.GetCultureInfo("hu-HU");
+        static readonly NumFmt Hu = NumFmt.Hu;
 
         public static string FileName()
         {
             return "idojaras_napi_osszesito_" + DateTime.Now.ToString("yyyy-MM-dd") + ".csv";
         }
 
-        static CultureInfo Ci = Hu;
+        static NumFmt Ci = Hu;
         static string[] Dirs = { "É", "ÉÉK", "ÉK", "KÉK", "K", "KDK", "DK", "DDK", "D", "DDNy", "DNy", "NyDNy", "Ny", "NyÉNy", "ÉNy", "ÉÉNy" };
 
         static string N(double v, int dec)
         {
-            return double.IsNaN(v) ? "" : Math.Round(v, dec).ToString(dec > 0 ? "0." + new string('0', dec) : "0", Ci);
+            return double.IsNaN(v) ? "" : Ci.Format(Math.Round(v, dec), dec > 0 ? "0." + new string('0', dec) : "0");
         }
 
         static string Dir(double deg)
@@ -112,10 +112,10 @@ namespace Idojaras
             if (m != null)
             {
                 object l, dirs;
-                if (m.TryGetValue("locale", out l)) { try { Ci = CultureInfo.GetCultureInfo(Convert.ToString(l)); } catch { Ci = Hu; } }
+                if (m.TryGetValue("locale", out l)) { try { Ci = NumFmt.For(lang); } catch { Ci = Hu; } }
                 if (m.TryGetValue("dirs", out dirs) && dirs is object[] && ((object[])dirs).Length == 16) Dirs = ((object[])dirs).Select(x => Convert.ToString(x)).ToArray();
             }
-            return Ci.NumberFormat.NumberDecimalSeparator == "," ? ";" : ",";
+            return Ci.Dec == "," ? ";" : ",";
         }
 
         public static string DailyCsv(Dataset ds, bool raw = false)
@@ -150,7 +150,7 @@ namespace Idojaras
             {
                 var row = new[]
                 {
-                    d.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Ci.DateTimeFormat.GetDayName(d.Date.DayOfWeek), N(d.Coverage * 100, 0), d.Count.ToString(),
+                    d.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), Ci.DayName(d.Date.DayOfWeek), N(d.Coverage * 100, 0), d.Count.ToString(),
                     N(T(d.Tmin), 1), time(d.TminT), N(T(d.Tmax), 1), time(d.TmaxT), N(T(d.Tavg), 1), N(TD(d.Tmax - d.Tmin), 1), N(T(d.DewAvg), 1),
                     N(d.HumMin, 0), N(d.HumMax, 0), N(d.HumAvg, 0), N(P(d.PresMin), pd), N(P(d.PresMax), pd), N(P(d.PresAvg), pd),
                     N(W(d.WindAvg), wd), N(W(d.WindMax), 1), N(W(d.GustMax), 1), time(d.GustMaxT), Dir(d.WindDir), N(d.WindDir, 0),
@@ -164,25 +164,17 @@ namespace Idojaras
         // ablakos módban mentés-párbeszédablakkal; böngészős módban a felület letöltésként kéri le
         public static string SaveWithDialog(Dataset ds, bool raw = false)
         {
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"download\":true}";
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"download\":true}";
             string csv = DailyCsv(ds, raw);
             string saved = null, error = null;
-            win.Invoke((Action)(() =>
+            string fn = win.SaveFileDialog("Napi összesítő mentése (Excelhez)", "CSV (Excel) (*.csv)|*.csv", FileName(),
+                                           Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+            if (fn != null)
             {
-                using (var d = new SaveFileDialog
-                {
-                    Title = "Napi összesítő mentése (Excelhez)",
-                    Filter = "CSV (Excel) (*.csv)|*.csv",
-                    FileName = FileName(),
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-                })
-                {
-                    if (d.ShowDialog(win) != DialogResult.OK) return;
-                    try { File.WriteAllText(d.FileName, csv, new UTF8Encoding(true)); saved = d.FileName; } // kivétel: a felhasználó maga választotta a helyet
-                    catch (Exception ex) { error = ex.Message; }
-                }
-            }));
+                try { File.WriteAllText(fn, csv, new UTF8Encoding(true)); saved = fn; } // kivétel: a felhasználó maga választotta a helyet
+                catch (Exception ex) { error = ex.Message; }
+            }
             var w = new JW().Obj();
             if (saved != null) w.P("saved", true).P("path", saved).P("rows", ds.Days.Count);
             else if (error != null) w.P("saved", false).P("error", "A fájl nem menthető: " + error);
@@ -205,18 +197,15 @@ namespace Idojaras
         {
             var z = Latest();
             if (z == null) return "{\"error\":\"Még nincs biztonsági mentés – előbb készíts egyet.\"}";
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"download\":true}";
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"download\":true}";
             string saved = null, error = null;
-            win.Invoke((Action)(() =>
+            string fn = win.SaveFileDialog("Biztonsági mentés másolása (pl. pendrive-ra vagy OneDrive-ba)", "Zip (*.zip)|*.zip", z.Name, null);
+            if (fn != null)
             {
-                using (var d = new SaveFileDialog { Title = "Biztonsági mentés másolása (pl. pendrive-ra vagy OneDrive-ba)", Filter = "Zip (*.zip)|*.zip", FileName = z.Name })
-                {
-                    if (d.ShowDialog(win) != DialogResult.OK) return;
-                    try { File.Copy(z.FullName, d.FileName, true); saved = d.FileName; }   // kivétel az őr alól: a felhasználó választotta a helyet
-                    catch (Exception ex) { error = ex.Message; }
-                }
-            }));
+                try { File.Copy(z.FullName, fn, true); saved = fn; }   // kivétel az őr alól: a felhasználó választotta a helyet
+                catch (Exception ex) { error = ex.Message; }
+            }
             var w = new JW().Obj();
             if (saved != null) { w.P("saved", true).P("path", saved); ChangeLog.Add("Biztonsági mentés", "másolat", null, saved, null); }
             else if (error != null) w.P("error", "A másolat nem készült el: " + error);
@@ -241,14 +230,9 @@ namespace Idojaras
 
         public static string Restore()
         {
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"error\":\"A visszaállítás a program ablakában érhető el (böngészős módban nem).\"}";
-            string src = null;
-            win.Invoke((Action)(() =>
-            {
-                using (var d = new OpenFileDialog { Title = "Visszaállítás biztonsági mentésből", Filter = "WStation biztonsági mentés (*.zip)|*.zip", InitialDirectory = Directory.Exists(Dir) ? Dir : AppState.L.Base })
-                    if (d.ShowDialog(win) == DialogResult.OK) src = d.FileName;
-            }));
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"error\":\"A visszaállítás a program ablakában érhető el (böngészős módban nem).\"}";
+            string src = win.OpenFileDialog("Visszaállítás biztonsági mentésből", "WStation biztonsági mentés (*.zip)|*.zip", Directory.Exists(Dir) ? Dir : AppState.L.Base);
             if (src == null) return "{\"cancelled\":true}";
             // munkapéldányból dolgozunk: a visszaállítás előtti mentés a mentesek mappa legrégebbi zipjét törölheti,
             // ami épp a kiválasztott fájl is lehet
@@ -275,7 +259,7 @@ namespace Idojaras
                     if (exe != null)
                         using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
                             if (p != null && !p.WaitForExit(600000)) { try { p.Kill(); } catch { } }   // nagy adatnál percekig tarthat
-                    paused = Kozos.Utemezes.Pause(true);
+                    paused = Host.Scheduler != null && Host.Scheduler.Pause(true);   // 1.5: a Feladatütemező a gazdától
                     // 1. kibontás ideiglenes fájlokba (a mostani fájlokhoz még nem nyúlunk)
                     long total = 0;
                     foreach (var x in items)
@@ -329,7 +313,7 @@ namespace Idojaras
             finally
             {
                 foreach (var pl in plan) if (pl[1] != null) try { if (File.Exists(pl[1])) Guard.Delete(pl[1]); } catch { }
-                if (paused) Kozos.Utemezes.Pause(false);
+                if (paused) Host.Scheduler.Pause(false);
                 try { if (File.Exists(work)) Guard.Delete(work); } catch { }
             }
         }
@@ -353,14 +337,13 @@ namespace Idojaras
         // ha nem lista vagy nem olvasható, üres listát hagy (a betöltés is így tenne)
         internal static void CleanStore(string tmp, string name)
         {
-            var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             object[] arr;
-            try { arr = js.DeserializeObject(File.ReadAllText(tmp, Encoding.UTF8)) as object[]; } catch { arr = null; }
+            try { arr = Json.DeserializeObject(File.ReadAllText(tmp, Encoding.UTF8)) as object[]; } catch { arr = null; }
             int dropped;
             var clean = JsonStore.Clean(name, arr ?? new object[0], out dropped);
             if (arr != null && dropped == 0) return;
-            Guard.WriteAllText(tmp, js.Serialize(clean), new UTF8Encoding(false));
-            Program.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
+            Guard.WriteAllText(tmp, Json.Serialize(clean), new UTF8Encoding(false));
+            AppState.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
         }
 
         internal static void KeepSecrets(string tmp, string current)

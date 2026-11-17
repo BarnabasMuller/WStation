@@ -4,7 +4,9 @@ param([string]$Root = (Split-Path -Parent $PSScriptRoot), [string]$Out)
 # Magyar szövegdarabok kigyűjtése a webes és a C# forrásokból (fordításhoz)
 $files = @()
 $files += Get-ChildItem (Join-Path $Root 'web') -Include *.js,*.html -Recurse | Where-Object { $_.Name -notlike 'echarts*' -and $_.Name -notlike 'i18n*' }
-$files += Get-ChildItem (Join-Path $Root 'src\megjelenito') -Filter *.cs | Where-Object { $_.Name -ne 'SelfTest.cs' }
+# a 2.x Megjelenítő forrásai a 3.0-ban a magban és az asztali gazdában vannak (PLAN-3.0 7.1); a kigyűjtött kör ugyanaz, mint a 2.x-ben
+$csSkip = 'SelfTest.cs','Json.cs','BuildInfo.cs','NumFmt.cs','Guard.cs','IniMerge.cs','Lang.cs','TaskSchedulerWin.cs'
+$files += Get-ChildItem (Join-Path $Root 'src\WStation.Core'), (Join-Path $Root 'src\WStation.Desktop') -Filter *.cs -Recurse | Where-Object { $csSkip -notcontains $_.Name -and $_.FullName -notmatch '\\(obj|bin)\\' }
 $set = New-Object 'System.Collections.Generic.HashSet[string]'
 $hu = '[áéíóöőúüűÁÉÍÓÖŐÚÜŰ]|\b(nap|napi|óra|perc|és|vagy|nincs|szél|eső|hét|hónap|év|Ma|ma|igen|nem|ki|be|alap|tól|ig|Mentés|Törlés|Betöltés|Alkalmaz|Mégse|Bezárás|Program|Beállítások|Statisztika|Futás|Jelentés|Naptár|Szárazság|Idővonal|Áttekintés|Eső|Szél)\b'
 foreach ($f in $files) {

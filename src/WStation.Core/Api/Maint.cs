@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -6,15 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Napló a beállítás-változásokról: appdata_megjelenítő\valtozasnaplo.json (a legutóbbi 2000 bejegyzés)
     static class ChangeLog
     {
         static readonly object Lock = new object();
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         static string FilePath { get { return Path.Combine(AppState.L.App, "valtozasnaplo.json"); } }
 
         static List<Dictionary<string, object>> Read()
@@ -23,7 +23,7 @@ namespace Idojaras
             {
                 if (File.Exists(FilePath))
                 {
-                    var arr = Js.DeserializeObject(File.ReadAllText(FilePath, Encoding.UTF8)) as object[];
+                    var arr = Json.DeserializeObject(File.ReadAllText(FilePath, Encoding.UTF8)) as object[];
                     if (arr != null) return arr.OfType<Dictionary<string, object>>().ToList();
                 }
             }
@@ -49,10 +49,10 @@ namespace Idojaras
                     while (list.Count > 2000) list.RemoveAt(0);
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = FilePath + ".tmp";
-                    Guard.WriteAllText(tmp, Js.Serialize(list), new UTF8Encoding(false));
+                    Guard.WriteAllText(tmp, Json.Serialize(list), new UTF8Encoding(false));
                     if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
                 }
-                catch (Exception ex) { Program.Log("A változásnapló nem írható: " + ex.Message); }
+                catch (Exception ex) { AppState.Log("A változásnapló nem írható: " + ex.Message); }
             }
         }
 
@@ -64,7 +64,7 @@ namespace Idojaras
                 // a felület egyszerre több bejegyzést is küldhet: [{area,key,from,to,revert}]
                 try
                 {
-                    var o = Js.DeserializeObject(body ?? "[]");
+                    var o = Json.DeserializeObject(body ?? "[]");
                     var items = o as object[] ?? new object[] { o };
                     foreach (var it in items.OfType<Dictionary<string, object>>())
                     {
@@ -75,7 +75,7 @@ namespace Idojaras
                 }
                 catch { status = 400; return "{\"error\":\"érvénytelen napló-bejegyzés\"}"; }
             }
-            lock (Lock) return Js.Serialize(Read());
+            lock (Lock) return Json.Serialize(Read());
         }
     }
 
@@ -116,11 +116,11 @@ namespace Idojaras
                     try
                     {
                         // a telepítő a futó programot nem tudja cserélni: elindítjuk, és a Megjelenítő bezárja magát
-                        Process.Start(new ProcessStartInfo(best.p, "--cel \"" + AppState.L.Base + "\"") { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(best.p) });
+                        // (1.5: az indítás és a bezárás a gazdától)
+                        if (Host.Desktop == null) throw new InvalidOperationException("a frissítés csak az asztali programból indítható");
+                        Host.Desktop.StartInstaller(best.p, "--cel \"" + AppState.L.Base + "\"", Path.GetDirectoryName(best.p));
                         ChangeLog.Add("Frissítés", "program", me.ToString(), best.v.ToString(), null);
-                        var win = Program.Window;
-                        if (win != null && !win.IsDisposed) win.BeginInvoke((Action)(() => win.Close()));
-                        else System.Threading.ThreadPool.QueueUserWorkItem(_ => { System.Threading.Thread.Sleep(800); Environment.Exit(0); });
+                        Host.Desktop.CloseForUpdate();
                         w.P("started", true);
                     }
                     catch (Exception ex) { w.P("error", "A telepítő nem indítható: " + ex.Message); }
@@ -139,7 +139,7 @@ namespace Idojaras
             err = null;
             var res = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, object> d;
-            try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
+            try { d = (Dictionary<string, object>)Json.DeserializeObject(body ?? "{}"); }
             catch { err = "érvénytelen kérés"; return null; }
             foreach (var kv in d)
             {
@@ -227,7 +227,7 @@ namespace Idojaras
             if (method == "POST")
             {
                 Dictionary<string, object> d;
-                try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
+                try { d = (Dictionary<string, object>)Json.DeserializeObject(body ?? "{}"); }
                 catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 if (!File.Exists(ini)) { status = 400; return "{\"error\":\"Még nincs beallitasok.ini – előbb indítsd el egyszer a Letöltőt.\"}"; }
                 // olvasás és írás egy zár alatt: közben az ütemezett Letöltő nem írhat bele (15.3)

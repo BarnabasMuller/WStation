@@ -1,5 +1,5 @@
 <Project>
-  <!-- A 3.0 közös beállításai (docs/dev/PLAN-3.0.md 4.3, 4.4). A 2.x forrásait (src/megjelenito stb.) továbbra is a build.bat fordítja. -->
+  <!-- A 3.0 közös beállításai (docs/dev/PLAN-3.0.md 4.3, 4.4). A 2.x a release/2.x ágon él tovább (build.bat); a main-en a 2.x forrásai a WStation.Core / WStation.Desktop alatt vannak (1.5). -->
   <PropertyGroup>
     <!-- Egy verziószám van: minden program és a felület ezt mutatja. -->
     <Version>3.0.0-alpha.1</Version>

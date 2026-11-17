@@ -1,13 +1,15 @@
-﻿using System;
+﻿#nullable disable
+#pragma warning disable SYSLIB0014   // 1.5: a 2.x önteszt WebRequest-tel hívja a helyi API-t; a modern .NET-ben elavult, de működik
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Idojaras.exe --teszt : a tisztítás, a napi csapadék, a hiányok, az időzóna és a cache ellenőrzése a mappa adatain
     static class SelfTest
@@ -152,7 +154,7 @@ namespace Idojaras
                     var q = new NameValueCollection { { "from", ((g0.From - 6 * 3600) * 1000).ToString(Inv) }, { "to", ((g0.To + 6 * 3600) * 1000).ToString(Inv) }, { "n", "5000" } };
                     int st;
                     string json = Api.Handle("/api/series", q, "GET", out st);
-                    var root = (Dictionary<string, object>)new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(json);
+                    var root = (Dictionary<string, object>)Json.DeserializeObject(json);
                     var temp = (Dictionary<string, object>)((Dictionary<string, object>)root["groups"])["temp"];
                     var ts = ((object[])temp["t"]).Select(x => Convert.ToInt64(x)).ToList();
                     var vs = (object[])temp["v"];
@@ -170,7 +172,7 @@ namespace Idojaras
                     var q = new NameValueCollection { { "n", "1500" } };
                     int st;
                     string json = Api.Handle("/api/series", q, "GET", out st);
-                    var root = (Dictionary<string, object>)new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(json);
+                    var root = (Dictionary<string, object>)Json.DeserializeObject(json);
                     var temp = (Dictionary<string, object>)((Dictionary<string, object>)root["groups"])["temp"];
                     int pts = ((object[])temp["t"]).Length;
                     var hi = ((object[])temp["hi"]).Where(x => x != null).Select(x => Convert.ToDouble(x)).Max();
@@ -221,7 +223,7 @@ namespace Idojaras
                 // --- napi végpont (naptár, heti összesítő)
                 {
                     int sdays;
-                    var root = (Dictionary<string, object>)new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(Api.Handle("/api/days", new NameValueCollection { { "clean", "1" } }, "GET", out sdays));
+                    var root = (Dictionary<string, object>)Json.DeserializeObject(Api.Handle("/api/days", new NameValueCollection { { "clean", "1" } }, "GET", out sdays));
                     var dates = (object[])root["date"]; var rain = (object[])root["rain"]; var pc = (object[])root["presChg"];
                     int k = Array.IndexOf(dates, "2026-10-10");
                     Ok(sdays == 200 && dates.Length == ds.Days.Count && (!sample || (k >= 0 && Math.Abs(Convert.ToDouble(rain[k]) - 20.32) < 0.01)) && pc.Any(x => x != null),
@@ -353,11 +355,10 @@ namespace Idojaras
                 Ok(sa1 == 400 && sa2 == 200 && q1 == "6" && q2 == "-2.5" && !File.ReadAllText(a.DlIni).Contains("ApiBaseUrl=x"),
                    "Riasztás-beállítás: hibás érték elutasítva, helyes elmentve (2.2.7.1)", sa1 + " / " + sa2 + " / " + q1 + " / " + q2);
 
-                var js = new System.Web.Script.Serialization.JavaScriptSerializer();
                 int drop1, drop2;
-                var n1 = JsonStore.Clean("naplo", (object[])js.DeserializeObject("[{\"id\":\"d1\",\"date\":\"2026-10-10\",\"text\":\"metszés\",\"amount\":2}," +
+                var n1 = JsonStore.Clean("naplo", (object[])Json.DeserializeObject("[{\"id\":\"d1\",\"date\":\"2026-10-10\",\"text\":\"metszés\",\"amount\":2}," +
                     "{\"id\":\"d2\",\"date\":\"\\\"><img src=x>\",\"text\":\"x\"},{\"date\":\"2026-10-11\",\"amount\":\"5\"},{\"id\":\"a b\",\"date\":\"2026-10-12\"}]"), out drop1);
-                var n2 = JsonStore.Clean("futas", (object[])js.DeserializeObject("[{\"id\":1,\"t\":1792000000000,\"who\":\"A\",\"intensity\":5},{\"id\":2,\"t\":1792000000000,\"intensity\":\"<b>\"},{\"who\":\"C\"}]"), out drop2);
+                var n2 = JsonStore.Clean("futas", (object[])Json.DeserializeObject("[{\"id\":1,\"t\":1792000000000,\"who\":\"A\",\"intensity\":5},{\"id\":2,\"t\":1792000000000,\"intensity\":\"<b>\"},{\"who\":\"C\"}]"), out drop2);
                 Ok(n1.Count == 1 && drop1 == 3 && n2.Count == 1 && drop2 == 2, "Napló / futásnapló: hibás tételek kiszűrve (2.2.7.1)", "napló " + n1.Count + "/" + (n1.Count + drop1) + ", futás " + n2.Count + "/" + (n2.Count + drop2));
 
                 Ok(BackupTools.Target(Layout.AppName + "/presetek/x.exe") == null && BackupTools.Target(Layout.AppName + "/presetek/talaj__a.json") != null

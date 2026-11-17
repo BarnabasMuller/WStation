@@ -1,11 +1,13 @@
+#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Felhőzet becslése a saját állomás méréseiből (TERV_4 5. pont)
     //  nappal: tisztaégbolt-index k = G_mért · k_Rs / G_tiszta (Haurwitz), okta = 8 · ((1 − k) / A)^(1/B) (Kasten–Czeplak megfordítva),

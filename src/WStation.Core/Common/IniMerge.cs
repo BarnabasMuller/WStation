@@ -1,10 +1,11 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Kozos
+namespace WStation.Core.Common
 {
     // Frissítéskor a beállításfájlba beírja a sablon azon kulcsait, amik még hiányoznak (a megjegyzésükkel együtt).
     // A felhasználó által átírt értékekhez nem nyúl.

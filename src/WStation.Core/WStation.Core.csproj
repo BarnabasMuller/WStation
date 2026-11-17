@@ -3,4 +3,13 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- A nyelvi fájlok (a Langs a saját szerelvényéből olvassa őket, „web/lang/<kód>.json” néven); a „_” kezdetűek nem. -->
+    <EmbeddedResource Include="..\..\web\lang\*.json" Exclude="..\..\web\lang\_*.json" LogicalName="web/lang/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- IDEIGLENES (1.5): az átvett 2.x-osztályok belsők (internal); az asztali gazda és a tesztek így érik el őket. -->
+    <InternalsVisibleTo Include="WStation.Desktop" />
+    <InternalsVisibleTo Include="WStation.Tests" />
+  </ItemGroup>
 </Project>
