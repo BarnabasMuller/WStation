@@ -2275,5 +2275,13 @@
   "a mentés kibontva túl nagy": "la copia descomprimida es demasiado grande",
   "Ismeretlen beállítás": "Ajuste desconocido",
   "true vagy false lehet": "puede ser true o false",
-  "időtúllépés": "tiempo agotado"
+  "időtúllépés": "tiempo agotado",
+  "A programok kibontása": "Descomprimiendo los programas",
+  "régi program félretéve": "programa antiguo apartado",
+  "régi program a helyén maradt": "el programa antiguo se quedó en su sitio",
+  "a régi WebView2-könyvtárak félretéve": "bibliotecas WebView2 antiguas apartadas",
+  "a régi WebView2-könyvtárak a helyükön maradtak": "las bibliotecas WebView2 antiguas se quedaron en su sitio",
+  "egy nem WStation-mappa megmaradt": "se conservó una carpeta que no es de WStation",
+  "a korábbi programmappa nem törölhető": "no se pudo eliminar la carpeta de programas anterior",
+  "Hibás bejegyzés a telepítőben": "Entrada no válida en el instalador"
 }

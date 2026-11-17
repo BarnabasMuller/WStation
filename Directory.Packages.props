@@ -6,6 +6,8 @@
   <ItemGroup>
     <!-- Asztali gazda (PLAN-3.0 5.): a WebView2-vezérlő; ugyanaz a verzió, mint a 2.2.8 lib/ mappájában. -->
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <!-- A .NET Framework 4.8-as telepítő és indítók fordításához (PLAN-3.0 9.4, 1.8): csak referencia-szerelvények, futáskor nem kell. -->
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
