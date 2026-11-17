@@ -1,7 +1,10 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+
+namespace WStation.Core.Common;
 
 // Fájlművelet-őr: a programok csak a saját mappájukon belül írhatnak, törölhetnek, nevezhetnek át.
 // Minden író művelet ezen keresztül megy; ami a mappán kívülre mutatna, azt megtagadja (és a hívó naplózza).

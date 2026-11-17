@@ -1,9 +1,10 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
-namespace Idojaras
+namespace WStation.Core.Common
 {
     // Egyszerű, gyors JSON-író (a nagy számtömbökhöz a JavaScriptSerializer lassú lenne)
     class JW

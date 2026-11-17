@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -7,8 +8,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Napló a beállítás-változásokról: appdata_megjelenítő\valtozasnaplo.json (a legutóbbi 2000 bejegyzés)
     static class ChangeLog

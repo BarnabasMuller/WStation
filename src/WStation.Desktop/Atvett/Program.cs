@@ -1,4 +1,5 @@
-﻿// WStation – Megjelenítő – főprogram és ablakok
+﻿#nullable disable
+// WStation – Megjelenítő – főprogram és ablakok
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -11,13 +12,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
+using WStation.Core;
+using WStation.Core.Common;
 
 [assembly: System.Reflection.AssemblyTitle("WStation")]
 [assembly: System.Reflection.AssemblyProduct("WStation – Megjelenítő")]
 [assembly: System.Reflection.AssemblyVersion("2.2.8.0")]
 [assembly: System.Reflection.AssemblyFileVersion("2.2.8.0")]
 
-namespace Idojaras
+namespace WStation.Desktop
 {
     static class Program
     {

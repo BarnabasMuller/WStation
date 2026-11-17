@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Kis HTTP-szerver csak a saját gépen (localhost). Ezt látja a WebView2 ablak és a tartalék böngésző is.
     class Server

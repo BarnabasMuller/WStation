@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Csapadékmérő-kalibráció: kézi mérések tól–ig időszakokra → szorzó (Σ kézi / Σ állomás), globálisan vagy időszakosan.
     // appdata_megjelenítő\kalibracio.json; a nyers érték megmarad (Dataset.RawPtot / RawPrate).

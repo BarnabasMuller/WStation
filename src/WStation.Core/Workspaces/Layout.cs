@@ -1,10 +1,12 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // A telepített mappa szerkezete:
     //   Időjárás\Letöltő.exe, Megjelenítő.exe, leírások

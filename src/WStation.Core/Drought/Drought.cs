@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // ===================================================================== beállítások (appdata_megjelenítő\szarazsag.json)
     // A mezőnevek a JSON-ban és a felületen is ugyanezek. Az alapértékek a szabványos (FAO-56, USDA) értékek.

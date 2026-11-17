@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using WStation.Core.Common;
 
-namespace Kozos
+namespace WStation.Desktop
 {
     // A Letöltő automatikus futtatása a Windows Feladatütemezőjével (schtasks, a felhasználó nevében, rendszergazda nélkül)
     static class Utemezes

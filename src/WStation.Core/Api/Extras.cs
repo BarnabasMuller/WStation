@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -7,8 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // A felület beállításai (téma, fülek, heti kártyák stb.) – appdata_megjelenítő\felulet.json
     static class UiSettings

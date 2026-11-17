@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -8,8 +9,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // Elemzések: esőesemények, front-/zivatardetektor, rekordok, szél-statisztika, óránkénti hőtérkép, adatminőség,
     // változórács a saját képletekhez, időjárás egy időpontban, egyszerű JSON-tárak (kerti napló, futónapló), riasztás-beállítások

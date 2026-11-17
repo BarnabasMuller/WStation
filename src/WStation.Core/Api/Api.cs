@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -6,8 +7,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // A program állapota: a betöltött adat, a betöltés és a letöltés folyamata
     static class AppState

@@ -1,12 +1,14 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using WStation.Core.Common;
 
-namespace Idojaras
+namespace WStation.Core
 {
     // A részletes mérések oszlopai (a WU_Letolto idojaras_adatok.csv-je szerint)
     static class Col

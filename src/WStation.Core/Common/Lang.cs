@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable disable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -6,6 +7,8 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
+
+namespace WStation.Core.Common;
 
 // Többnyelvűség a C# programokban (Megjelenítő, Letöltő, Telepítő) – ugyanazokból a fájlokból, mint a felület:
 // web/lang/<kód>.json (beágyazott erőforrásként „web/lang/<kód>.json” néven). A szöveg forrása mindig a magyar;
