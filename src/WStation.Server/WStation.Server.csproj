@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Szerver gazda (Kestrel). A tartalma az S5 szakaszban érkezik. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WStation.Core\WStation.Core.csproj" />
+  </ItemGroup>
+</Project>

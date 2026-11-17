@@ -22,3 +22,7 @@ OLVASS_EL.md
 WU_Letolto.exe
 build.cmd
 src/WU_Letolto.cs
+
+# .NET fordítási mappák (3.0)
+bin/
+obj/
