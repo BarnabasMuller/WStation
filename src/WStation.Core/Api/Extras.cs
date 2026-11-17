@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 using WStation.Core.Common;
 
 namespace WStation.Core
@@ -41,7 +40,7 @@ namespace WStation.Core
                         return t;
                     }
                 }
-                catch (Exception ex) { Program.Log("A felulet.json sérült, alapértékekkel indulok: " + ex.Message); }
+                catch (Exception ex) { AppState.Log("A felulet.json sérült, alapértékekkel indulok: " + ex.Message); }
                 return "{}";
             }
         }
@@ -165,25 +164,17 @@ namespace WStation.Core
         // ablakos módban mentés-párbeszédablakkal; böngészős módban a felület letöltésként kéri le
         public static string SaveWithDialog(Dataset ds, bool raw = false)
         {
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"download\":true}";
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"download\":true}";
             string csv = DailyCsv(ds, raw);
             string saved = null, error = null;
-            win.Invoke((Action)(() =>
+            string fn = win.SaveFileDialog("Napi összesítő mentése (Excelhez)", "CSV (Excel) (*.csv)|*.csv", FileName(),
+                                           Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
+            if (fn != null)
             {
-                using (var d = new SaveFileDialog
-                {
-                    Title = "Napi összesítő mentése (Excelhez)",
-                    Filter = "CSV (Excel) (*.csv)|*.csv",
-                    FileName = FileName(),
-                    InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
-                })
-                {
-                    if (d.ShowDialog(win) != DialogResult.OK) return;
-                    try { File.WriteAllText(d.FileName, csv, new UTF8Encoding(true)); saved = d.FileName; } // kivétel: a felhasználó maga választotta a helyet
-                    catch (Exception ex) { error = ex.Message; }
-                }
-            }));
+                try { File.WriteAllText(fn, csv, new UTF8Encoding(true)); saved = fn; } // kivétel: a felhasználó maga választotta a helyet
+                catch (Exception ex) { error = ex.Message; }
+            }
             var w = new JW().Obj();
             if (saved != null) w.P("saved", true).P("path", saved).P("rows", ds.Days.Count);
             else if (error != null) w.P("saved", false).P("error", "A fájl nem menthető: " + error);
@@ -206,18 +197,15 @@ namespace WStation.Core
         {
             var z = Latest();
             if (z == null) return "{\"error\":\"Még nincs biztonsági mentés – előbb készíts egyet.\"}";
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"download\":true}";
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"download\":true}";
             string saved = null, error = null;
-            win.Invoke((Action)(() =>
+            string fn = win.SaveFileDialog("Biztonsági mentés másolása (pl. pendrive-ra vagy OneDrive-ba)", "Zip (*.zip)|*.zip", z.Name, null);
+            if (fn != null)
             {
-                using (var d = new SaveFileDialog { Title = "Biztonsági mentés másolása (pl. pendrive-ra vagy OneDrive-ba)", Filter = "Zip (*.zip)|*.zip", FileName = z.Name })
-                {
-                    if (d.ShowDialog(win) != DialogResult.OK) return;
-                    try { File.Copy(z.FullName, d.FileName, true); saved = d.FileName; }   // kivétel az őr alól: a felhasználó választotta a helyet
-                    catch (Exception ex) { error = ex.Message; }
-                }
-            }));
+                try { File.Copy(z.FullName, fn, true); saved = fn; }   // kivétel az őr alól: a felhasználó választotta a helyet
+                catch (Exception ex) { error = ex.Message; }
+            }
             var w = new JW().Obj();
             if (saved != null) { w.P("saved", true).P("path", saved); ChangeLog.Add("Biztonsági mentés", "másolat", null, saved, null); }
             else if (error != null) w.P("error", "A másolat nem készült el: " + error);
@@ -242,14 +230,9 @@ namespace WStation.Core
 
         public static string Restore()
         {
-            var win = Program.Window;
-            if (win == null || win.IsDisposed) return "{\"error\":\"A visszaállítás a program ablakában érhető el (böngészős módban nem).\"}";
-            string src = null;
-            win.Invoke((Action)(() =>
-            {
-                using (var d = new OpenFileDialog { Title = "Visszaállítás biztonsági mentésből", Filter = "WStation biztonsági mentés (*.zip)|*.zip", InitialDirectory = Directory.Exists(Dir) ? Dir : AppState.L.Base })
-                    if (d.ShowDialog(win) == DialogResult.OK) src = d.FileName;
-            }));
+            var win = Host.Desktop;   // 1.5: a párbeszédablak a gazdától
+            if (win == null || !win.HasWindow) return "{\"error\":\"A visszaállítás a program ablakában érhető el (böngészős módban nem).\"}";
+            string src = win.OpenFileDialog("Visszaállítás biztonsági mentésből", "WStation biztonsági mentés (*.zip)|*.zip", Directory.Exists(Dir) ? Dir : AppState.L.Base);
             if (src == null) return "{\"cancelled\":true}";
             // munkapéldányból dolgozunk: a visszaállítás előtti mentés a mentesek mappa legrégebbi zipjét törölheti,
             // ami épp a kiválasztott fájl is lehet
@@ -276,7 +259,7 @@ namespace WStation.Core
                     if (exe != null)
                         using (var p = Process.Start(new ProcessStartInfo(exe, "--mentes --most") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base }))
                             if (p != null && !p.WaitForExit(600000)) { try { p.Kill(); } catch { } }   // nagy adatnál percekig tarthat
-                    paused = Kozos.Utemezes.Pause(true);
+                    paused = Host.Scheduler != null && Host.Scheduler.Pause(true);   // 1.5: a Feladatütemező a gazdától
                     // 1. kibontás ideiglenes fájlokba (a mostani fájlokhoz még nem nyúlunk)
                     long total = 0;
                     foreach (var x in items)
@@ -330,7 +313,7 @@ namespace WStation.Core
             finally
             {
                 foreach (var pl in plan) if (pl[1] != null) try { if (File.Exists(pl[1])) Guard.Delete(pl[1]); } catch { }
-                if (paused) Kozos.Utemezes.Pause(false);
+                if (paused) Host.Scheduler.Pause(false);
                 try { if (File.Exists(work)) Guard.Delete(work); } catch { }
             }
         }
@@ -360,7 +343,7 @@ namespace WStation.Core
             var clean = JsonStore.Clean(name, arr ?? new object[0], out dropped);
             if (arr != null && dropped == 0) return;
             Guard.WriteAllText(tmp, Json.Serialize(clean), new UTF8Encoding(false));
-            Program.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
+            AppState.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
         }
 
         internal static void KeepSecrets(string tmp, string current)

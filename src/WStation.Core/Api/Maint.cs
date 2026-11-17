@@ -52,7 +52,7 @@ namespace WStation.Core
                     Guard.WriteAllText(tmp, Json.Serialize(list), new UTF8Encoding(false));
                     if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
                 }
-                catch (Exception ex) { Program.Log("A változásnapló nem írható: " + ex.Message); }
+                catch (Exception ex) { AppState.Log("A változásnapló nem írható: " + ex.Message); }
             }
         }
 
@@ -116,11 +116,11 @@ namespace WStation.Core
                     try
                     {
                         // a telepítő a futó programot nem tudja cserélni: elindítjuk, és a Megjelenítő bezárja magát
-                        Process.Start(new ProcessStartInfo(best.p, "--cel \"" + AppState.L.Base + "\"") { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(best.p) });
+                        // (1.5: az indítás és a bezárás a gazdától)
+                        if (Host.Desktop == null) throw new InvalidOperationException("a frissítés csak az asztali programból indítható");
+                        Host.Desktop.StartInstaller(best.p, "--cel \"" + AppState.L.Base + "\"", Path.GetDirectoryName(best.p));
                         ChangeLog.Add("Frissítés", "program", me.ToString(), best.v.ToString(), null);
-                        var win = Program.Window;
-                        if (win != null && !win.IsDisposed) win.BeginInvoke((Action)(() => win.Close()));
-                        else System.Threading.ThreadPool.QueueUserWorkItem(_ => { System.Threading.Thread.Sleep(800); Environment.Exit(0); });
+                        Host.Desktop.CloseForUpdate();
                         w.P("started", true);
                     }
                     catch (Exception ex) { w.P("error", "A telepítő nem indítható: " + ex.Message); }

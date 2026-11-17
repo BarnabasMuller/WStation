@@ -556,7 +556,7 @@ namespace WStation.Core
                     if (arr == null) { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
                     int dropped;
                     var clean = Clean(name, arr, out dropped);
-                    if (dropped > 0) Program.Log("A " + name + ".json mentésekor " + dropped + " hibás tétel kimaradt.");
+                    if (dropped > 0) AppState.Log("A " + name + ".json mentésekor " + dropped + " hibás tétel kimaradt.");
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = path + ".tmp";
                     Guard.WriteAllText(tmp, Json.Serialize(clean), new UTF8Encoding(false));
@@ -574,14 +574,14 @@ namespace WStation.Core
                         int dropped;
                         var clean = Clean(name, arr, out dropped);
                         if (dropped == 0) return t;
-                        Program.Log("A " + name + ".json " + dropped + " hibás tételét kihagytam.");
+                        AppState.Log("A " + name + ".json " + dropped + " hibás tételét kihagytam.");
                         return Json.Serialize(clean);
                     }
                 }
                 catch (Exception ex)
                 {
                     // sérült fájl (pl. kézi szerkesztés): a felület üres listával induljon, a régi tartalom egy másolatban megmarad
-                    Program.Log("A " + name + ".json sérült, üres listával indulok: " + ex.Message);
+                    AppState.Log("A " + name + ".json sérült, üres listával indulok: " + ex.Message);
                     try { string bak = Path.Combine(AppState.L.App, name + "_serult.json"); if (!File.Exists(bak)) Guard.Copy(path, bak); } catch { }
                 }
                 return "[]";

@@ -6,8 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
-    <!-- IDEIGLENES (1.5): a 2.x-ből áthelyezett fájlok egyelőre nem fordulnak. -->
-    <Compile Remove="Atvett/**;TaskSchedulerWin.cs" />
+    <!-- IDEIGLENES (1.5): a 2.x főprogramja (WebView2-ablak) az 1.6-ban fordul, a WebView2 csomaggal együtt. -->
+    <Compile Remove="Atvett/**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WStation.Core\WStation.Core.csproj" />

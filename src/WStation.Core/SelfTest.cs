@@ -1,4 +1,5 @@
 ﻿#nullable disable
+#pragma warning disable SYSLIB0014   // 1.5: a 2.x önteszt WebRequest-tel hívja a helyi API-t; a modern .NET-ben elavult, de működik
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;

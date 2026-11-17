@@ -1,4 +1,5 @@
 ﻿#nullable disable
+#pragma warning disable CS0219   // 1.5: a 2.x-ben is fel nem használt változó (cumM) – a régi build is elnémította (/nowarn:0219); nem javítjuk
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -176,7 +177,7 @@ namespace WStation.Core
                         var rep = Repair(cached);
                         if (rep.Count > 0)
                         {
-                            Program.Log("A szarazsag.json hibás értékeket tartalmazott, ezek az alapértékre álltak: " + string.Join("; ", rep));
+                            AppState.Log("A szarazsag.json hibás értékeket tartalmazott, ezek az alapértékre álltak: " + string.Join("; ", rep));
                             RepairNote = "Hibás értékek az alapértékre álltak: " + string.Join("; ", rep);
                             try { Guard.Copy(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                         }
@@ -185,7 +186,7 @@ namespace WStation.Core
                 }
                 catch (Exception ex)
                 {
-                    Program.Log("A szarazsag.json sérült, félreteszem és alapértékekkel indulok: " + ex.Message);
+                    AppState.Log("A szarazsag.json sérült, félreteszem és alapértékekkel indulok: " + ex.Message);
                     try { Guard.Move(FilePath, FilePath + ".hibas_" + DateTime.Now.ToString("yyyyMMdd_HHmmss")); } catch { }
                 }
                 cached = DConfig.Defaults();

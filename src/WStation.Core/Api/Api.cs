@@ -51,6 +51,16 @@ namespace WStation.Core
 
         public static void ReloadAsync() { RefreshAsync(false); }
 
+        // hibanapló (1.5: a 2.x Program.Log-ja, változatlanul – nem függ az ablaktól, ezért a magban van)
+        public static void Log(string msg)
+        {
+            // 5 MB felett a régi naplót félreteszi, hogy ne nőjön a végtelenségig (2.2.7.2)
+            try { var fi = new FileInfo(AppState.L.ErrorLog); if (fi.Exists && fi.Length > 5 * 1024 * 1024) { string old = fi.FullName + ".regi"; if (File.Exists(old)) Guard.Delete(old); Guard.Move(fi.FullName, old); } }
+            catch { }
+            try { Guard.AppendAllText(AppState.L.ErrorLog, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " " + msg + Environment.NewLine); }
+            catch { }
+        }
+
         static void RunDownloader()
         {
             string exe = L.FindDownloader();
@@ -149,7 +159,7 @@ namespace WStation.Core
             {
                 Status = "error";
                 Message = "Hiba az adatok betöltésekor: " + ex.Message;
-                Program.Log(ex.ToString());
+                AppState.Log(ex.ToString());
             }
             finally
             {
@@ -284,32 +294,34 @@ namespace WStation.Core
         {
             string msg = null, before = null;
             string exe = AppState.L.FindDownloader();
+            var sched = Host.Scheduler;   // 1.5: a Feladatütemező a gazdától jön
+            if (sched == null) return "{\"error\":\"Az automatikus letöltés ütemezése ezen a gépen nem érhető el.\"}";
             if (body != null)
             {
-                var spec = new Kozos.Utemezes.Spec();
+                var spec = new ScheduleSpec();
                 if (body.Trim().StartsWith("{"))
                 {
-                    try { spec = Json.Deserialize<Kozos.Utemezes.Spec>(body) ?? spec; }
+                    try { spec = Json.Deserialize<ScheduleSpec>(body) ?? spec; }
                     catch { msg = "Érvénytelen ütemezés."; }
                 }
                 else { int m; int.TryParse(minutesQ ?? "", out m); spec.kind = m > 0 ? "interval" : "off"; spec.minutes = m; }
                 if (msg == null)
                 {
-                    before = Kozos.Utemezes.Text(Kozos.Utemezes.QuerySpec());
+                    before = sched.Text(sched.QuerySpec());
                     if (exe == null && spec.kind != "off") msg = "Nem találom a Letöltő.exe-t a program mappájában.";
                     else
                     {
-                        bool ok = Kozos.Utemezes.SetSpec(exe, spec, out msg);
-                        if (ok) ChangeLog.Add("Automatikus letöltés", "ütemezés", before, Kozos.Utemezes.Text(spec), null);
+                        bool ok = sched.SetSpec(exe, spec, out msg);
+                        if (ok) ChangeLog.Add("Automatikus letöltés", "ütemezés", before, sched.Text(spec), null);
                     }
                 }
             }
-            var s = Kozos.Utemezes.QuerySpec();
+            var s = sched.QuerySpec();
             bool ours = s.exe != null && exe != null && string.Equals(Path.GetFullPath(s.exe), Path.GetFullPath(exe), StringComparison.OrdinalIgnoreCase);
-            var w = new JW().Obj().P("kind", s.kind).P("minutes", s.minutes).P("time", s.time).P("text", Kozos.Utemezes.Text(s)).P("path", s.exe).P("ours", ours).P("hasDownloader", exe != null);
+            var w = new JW().Obj().P("kind", s.kind).P("minutes", s.minutes).P("time", s.time).P("text", sched.Text(s)).P("path", s.exe).P("ours", ours).P("hasDownloader", exe != null);
             w.Key("days").Arr(); foreach (var d in s.days) w.Str(d); w.EndArr();
             if (msg != null) w.P("message", msg);
-            w.Key("choices").Arr(); foreach (var c in Kozos.Utemezes.Choices) w.Long(c); w.EndArr();
+            w.Key("choices").Arr(); foreach (var c in sched.Choices) w.Long(c); w.EndArr();
             return w.End().ToString();
         }
 
@@ -358,9 +370,9 @@ namespace WStation.Core
                 string exe = AppState.L.FindDownloader();
                 if (exe == null) return;
                 Process.Start(new ProcessStartInfo(exe, "--mentes") { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = AppState.L.Base });
-                Program.Log("Esedékes biztonsági mentés elindítva (induláskor).");
+                AppState.Log("Esedékes biztonsági mentés elindítva (induláskor).");
             }
-            catch (Exception ex) { Program.Log("Az induláskori mentés-ellenőrzés nem sikerült: " + ex.Message); }
+            catch (Exception ex) { AppState.Log("Az induláskori mentés-ellenőrzés nem sikerült: " + ex.Message); }
         }
 
         // csak a program saját mappáit nyitja meg (nem fogad tetszőleges útvonalat)
@@ -374,7 +386,8 @@ namespace WStation.Core
             if (p == null) { status = 400; return "{\"error\":\"ismeretlen mappa\"}"; }
             if (!Directory.Exists(p))
                 return "{\"error\":\"" + (what == "backup" ? "Még nincs biztonsági mentés (a Letöltő hetente készít)." : "A mappa nem létezik.") + "\"}";
-            try { Process.Start(new ProcessStartInfo("explorer.exe", "\"" + p + "\"") { UseShellExecute = true }); }
+            if (Host.Desktop == null) return "{\"error\":\"A mappa megnyitása csak az asztali programban érhető el.\"}";   // 1.5: az Intéző a gazdától
+            try { Host.Desktop.OpenFolder(p); }
             catch (Exception ex) { return "{\"error\":\"" + ex.Message.Replace("\"", "'") + "\"}"; }
             return "{\"ok\":true}";
         }

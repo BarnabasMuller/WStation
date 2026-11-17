@@ -10,6 +10,8 @@ using WStation.Core.Common;
 
 namespace WStation.Desktop
 {
+    using Spec = WStation.Core.Common.ScheduleSpec;
+
     // A Letöltő automatikus futtatása a Windows Feladatütemezőjével (schtasks, a felhasználó nevében, rendszergazda nélkül)
     static class Utemezes
     {
@@ -21,15 +23,7 @@ namespace WStation.Desktop
         static readonly string[] DayXml = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
         static readonly string[] DayHu = { "H", "K", "Sze", "Cs", "P", "Szo", "V" };
 
-        // ütemezés leírása: kind = off | interval | daily | weekly
-        public class Spec
-        {
-            public string kind = "off";
-            public int minutes;               // interval: percben (15 … 1440)
-            public string time = "06:00";     // daily / weekly: HH:MM
-            public List<string> days = new List<string>();   // weekly: MON … SUN
-            public string exe;                // a feladat által futtatott program
-        }
+        // az ütemezés leírása (Spec) a magban van: WStation.Core.Common.ScheduleSpec (1.5)
 
         // a schtasks a konzol (OEM) kódlapján ír, magyar gépen 852
         static readonly Encoding Oem = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage);

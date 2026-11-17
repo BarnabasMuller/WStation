@@ -42,7 +42,7 @@ namespace WStation.Core
         public static Cfg Load()
         {
             try { if (File.Exists(FilePath)) return Common.Json.Deserialize<Cfg>(File.ReadAllText(FilePath, Encoding.UTF8)) ?? new Cfg(); }
-            catch (Exception ex) { Program.Log("A kalibracio.json sérült: " + ex.Message); }
+            catch (Exception ex) { AppState.Log("A kalibracio.json sérült: " + ex.Message); }
             return new Cfg();
         }
 
