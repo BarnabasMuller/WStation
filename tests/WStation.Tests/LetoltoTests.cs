@@ -24,7 +24,9 @@ namespace WStation.Tests
     /// <remarks>
     /// A <c>Letolto228</c> mappa a 2.2.8 kimenete ugyanezekre a válaszokra: a <c>tests\LetoltoProba\forditas_228.cmd</c> a
     /// <c>release/2.x</c> forrásából, a régi fordítóval lefordítja a 2.2.8 letöltőjét és ugyanezt az indítót (.NET Framework 4.8);
-    /// azzal futtatva ugyanezeket az eseteket keletkeztek a fájlok (2026-11-17). Az összevetés bájtra történik; csak a futás idejétől
+    /// azzal futtatva ugyanezeket az eseteket keletkeztek a fájlok (2026-11-17). A mappában laposan vannak (a <c>data/</c>,
+    /// <c>appdata_*/</c> mappát és a <c>beallitasok.ini</c> nevet a <c>.gitignore</c> a személyes adatok miatt kizárja), a
+    /// beállításfájl <c>beallitasok_ini.txt</c> néven. Az összevetés bájtra történik; csak a futás idejétől
     /// függő mezők (a pillanatnyi állapot „letoltve” oszlopa, a beállításfájlba írt „Új beállítások (dátum)” sor) vannak kitakarva.
     /// </remarks>
     public class LetoltoTests
@@ -39,7 +41,7 @@ namespace WStation.Tests
             var (kod, ki) = Letolto.Fut(m.Ut, "ok");
             Assert.Equal(1, kod);
             Assert.Contains("Hiányzik az ApiKey vagy a StationId", ki);
-            Assert.Equal(Letolto.Minta("kulcs", "appdata_letöltő", "beallitasok.ini"), File.ReadAllBytes(m.Fajl("appdata_letöltő", "beallitasok.ini")));
+            Assert.Equal(Letolto.Minta("kulcs", "beallitasok_ini.txt"), File.ReadAllBytes(m.Fajl("appdata_letöltő", "beallitasok.ini")));
             Assert.Equal("", File.ReadAllText(m.Fajl("keresek.txt")));   // hálózatot nem ért el
             Assert.False(Directory.Exists(m.Fajl("data")) && Directory.GetFiles(m.Fajl("data")).Length > 0);
         }
@@ -148,7 +150,7 @@ namespace WStation.Tests
             using var s = z.GetEntry("data/idojaras_adatok.csv")!.Open();
             using var ms = new MemoryStream();
             s.CopyTo(ms);
-            Assert.Equal(Letolto.Minta("ok", "data", "idojaras_adatok.csv"), ms.ToArray());
+            Assert.Equal(Letolto.Minta("ok", "idojaras_adatok.csv"), ms.ToArray());
         }
 
         [LetoltoFact]
@@ -239,11 +241,11 @@ namespace WStation.Tests
         static void Ellenoriz(Mappa m, string eset, bool kereses = true)
         {
             foreach (var f in new[] { "idojaras_adatok.csv", "napi_osszesito.csv" })
-                Assert.True(Letolto.Minta(eset, "data", f).SequenceEqual(File.ReadAllBytes(m.Fajl("data", f))), eset + ": " + f + " eltér a 2.2.8-étól");
-            string pill = Path.Combine(Letolto.MintaMappa(eset), "data", "pillanatnyi_allapot.csv");
+                Assert.True(Letolto.Minta(eset, f).SequenceEqual(File.ReadAllBytes(m.Fajl("data", f))), eset + ": " + f + " eltér a 2.2.8-étól");
+            string pill = Path.Combine(Letolto.MintaMappa(eset), "pillanatnyi_allapot.csv");
             if (File.Exists(pill))
                 Assert.Equal(Letolto.LetoltveNelkul(File.ReadAllText(pill, Encoding.UTF8)), Letolto.LetoltveNelkul(File.ReadAllText(m.Fajl("data", "pillanatnyi_allapot.csv"), Encoding.UTF8)));
-            Assert.Equal(Letolto.DatumNelkul(Letolto.Minta(eset, "appdata_letöltő", "beallitasok.ini")), Letolto.DatumNelkul(File.ReadAllBytes(m.Fajl("appdata_letöltő", "beallitasok.ini"))));
+            Assert.Equal(Letolto.DatumNelkul(Letolto.Minta(eset, "beallitasok_ini.txt")), Letolto.DatumNelkul(File.ReadAllBytes(m.Fajl("appdata_letöltő", "beallitasok.ini"))));
             Assert.Equal(kereses ? File.ReadAllText(Path.Combine(Letolto.MintaMappa(eset), "keresek.txt")) : "", File.ReadAllText(m.Fajl("keresek.txt")));
         }
     }
@@ -355,7 +357,7 @@ namespace WStation.Tests
         }
 
         public static string MintaMappa(string eset) => Path.Combine(RepoGyoker(), "tests", "WStation.Tests", "Letolto228", eset);
-        public static byte[] Minta(string eset, params string[] r) => File.ReadAllBytes(Path.Combine(new[] { MintaMappa(eset) }.Concat(r).ToArray()));
+        public static byte[] Minta(string eset, string fajl) => File.ReadAllBytes(Path.Combine(MintaMappa(eset), fajl));
 
         /// <summary>A letöltő futtatása a próbaindítóval; a kimenet (konzol) UTF-8, mint amikor a Megjelenítő olvassa.</summary>
         public static (int Kod, string Ki) Fut(string mappa, string forgatokonyv, string[]? kapcsolok = null, string? kereslista = null, int idokorlatPerc = 3)

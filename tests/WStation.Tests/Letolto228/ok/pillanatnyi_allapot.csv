@@ -1,0 +1,3 @@
+﻿letoltve;stationID;obsTimeLocal;obsTimeUtc;epoch;neighborhood;softwareType;country;solarRadiation;lon;realtimeFrequency;lat;uv;winddir;humidity;qcStatus;temp;heatIndex;dewpt;windChill;windSpeed;windGust;pressure;precipRate;precipTotal;elev;units
+2026-11-17 16:30:46;ITESZT1;2026-09-01 12:40:00;2026-09-01T10:40:00Z;1788259200;"Kőszeg – Árvíztűrő; ""teszt""";"Teszt
+állomás 1.0";HU;512,30;19,654321;;47,123456;4,0;225;61;1;21,4;21,4;13,6;21,4;7,2;11,5;1013,21;0,00;0,25;110;m
