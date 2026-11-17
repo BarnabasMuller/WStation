@@ -19,7 +19,8 @@ namespace WStation.Core
         public const string AppName = "appdata_megjelenítő";
         public const string DlAppName = "appdata_letöltő";
         // a Letöltő bármelyik nyelvi nevén (a telepítő nyelvétől függ, pl. Downloader.exe), és a régi nevein
-        public static IEnumerable<string> DownloaderNames { get { return Langs.AllFileNames("downloader").Concat(new[] { "Letolto.exe", "WU_Letolto.exe" }); } }
+        // 1.7: elöl a 3.0 letöltőjének neve (WStation.Downloader.exe) – ha mellette egy 2.x-es Letöltő.exe is maradt, az újat indítjuk
+        public static IEnumerable<string> DownloaderNames { get { return new[] { "WStation.Downloader.exe" }.Concat(Langs.AllFileNames("downloader")).Concat(new[] { "Letolto.exe", "WU_Letolto.exe" }); } }
 
         public string Base, Data, App, Cache, Lib, DlApp;
 

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Próbaindító a letöltő tesztjeihez (1.7): hamis WU-kiszolgáló + a letöltő Main-je egy folyamatban (lásd LetoltoProba.cs).
+       A forrás C# 5-ös, mert ugyanez fordul a 2.2.8-hoz is a .NET Framework régi fordítójával (rogzit_228.cmd). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- a letöltő a WinForms-ot is betölti (értesítés), ezért a folyamatnak is a Windows asztali keretrendszer kell -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- WebRequest.RegisterPrefix / CreateHttp: elavult, de a letöltő 2.x-es HttpWebRequest-jét csak így lehet átirányítani -->
+    <NoWarn>$(NoWarn);SYSLIB0014</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\WStation.Downloader\WStation.Downloader.csproj" />
+  </ItemGroup>
+</Project>

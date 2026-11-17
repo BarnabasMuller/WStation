@@ -1,0 +1,85 @@
+﻿# =====================================================================
+#  Weather Underground PWS letöltő - beállítások
+#  A '#' kezdetű sorok megjegyzések. Formátum: Kulcs=Érték
+# =====================================================================
+
+# Az API kulcsod. Itt találod / generálod:
+#   https://www.wunderground.com/member/api-keys
+ApiKey=
+
+# Az időjárás-állomás azonosítója (pl. IBUDAP123)
+StationId=
+
+# Mértékegység: a mérések mindig metrikusan (°C, km/h, mm, hPa) töltődnek le;
+# a kijelzés egységét a Megjelenítő Beállítások › Mértékegységek részében lehet állítani.
+Units=m
+
+# Első futáskor (és ha hiány van) hány napra visszamenőleg töltse le
+# a legrészletesebb (kb. 5 perces) méréseket.
+BackfillDays=30
+
+# Opcionális kezdő dátum (ÉÉÉÉ-HH-NN). Ha meg van adva, felülírja a BackfillDays-t.
+# Pl. az állomás üzembe helyezésének napja, ha mindent le akarsz tölteni.
+StartDate=
+
+# Egy futás alatt legfeljebb ennyi API hívás (a többit a következő futás pótolja)
+MaxCallsPerRun=300
+
+# A Weather Underground limitje 1500 hívás/nap. Ennél ne legyen nagyobb.
+DailyCallLimit=1450
+
+# Két hívás közti szünet ezredmásodpercben (a limit 30 hívás/perc)
+CallDelayMs=2100
+
+# A pillanatnyi és 24 órás lekérdezést legfeljebb ennyi percenként futtatja
+# (az állomások kb. 5 percenként frissítenek, gyakrabban nincs értelme)
+MinMinutesBetweenRecent=5
+
+# Mentse-e külön fájlba a pillanatnyi állapotot és a napi összesítőket
+SaveCurrent=true
+SaveDailySummary=true
+
+# CSV formátum. Magyar Excelhez: elválasztó ; és tizedesjel ,
+# (tabulátorhoz írd: tab)
+CsvDelimiter=;
+DecimalSeparator=,
+
+# Futás végén várjon-e Enter lenyomására (ütemezett futásnál add meg a --nowait kapcsolót)
+WaitAtEnd=true
+
+# Az API címe (normál esetben ne módosítsd)
+ApiBaseUrl=https://api.weather.com
+
+# Automatikus biztonsági mentés (zip) a data mappáról és a beállításokról
+# az appdata_letöltő\mentesek mappába. Hány naponta (0 = soha), és hányat tartson meg.
+MentesNaponta=7
+MentesekSzama=8
+# A Letöltő üzeneteinek és riasztásainak nyelve (hu, en, de, es …; a Megjelenítő Beállítások › Nyelv állítja)
+Nyelv=hu
+
+# --- Riasztások (Windows-értesítés minden futáskor, ütemezve is) ---
+# Fagyveszély: a hőmérséklet legfeljebb ennyi °C
+RiasztasFagy=true
+FagyHatar=1
+# Gyors nyomásesés: legalább ennyi hPa 3 óra alatt
+RiasztasNyomas=true
+NyomasEses3h=4
+# Erős szél: széllökés legalább ennyi km/h az utolsó órában
+RiasztasSzel=true
+LokesHatar=60
+# Felhőszakadás: csapadékintenzitás legalább ennyi mm/h
+RiasztasEso=true
+EsoIntenzitas=30
+# Hőség: a hőmérséklet legalább ennyi °C
+RiasztasHoseg=true
+HosegHatar=33
+# Ugyanarra az eseményre legfeljebb ennyi óránként szól; csendes órák (ekkor nem szól)
+RiasztasIsmetlesOra=6
+CsendesTol=22
+CsendesIg=7
+
+# --- Felhőzet-ellenőrzés (opcionális) ---
+# A legközelebbi repülőtér METAR-jelentései (NOAA Aviation Weather Center, ingyenes, kulcs nélkül),
+# csak a Megjelenítő felhőzet-becslésének ellenőrzéséhez. Kikapcsolva (vagy internet nélkül) semmi nem áll le.
+MetarEllenorzes=false
+MetarKod=LHBP
