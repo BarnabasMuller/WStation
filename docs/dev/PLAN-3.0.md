@@ -1026,7 +1026,7 @@ Minden szakasz végén **kapu** van: mérhető feltétel, amely nélkül a köve
 | Szakasz | Tartalom | Kapu |
 |---|---|---|
 | **K0 – próba a NAS-on** (a fejlesztés előtt, kb. fél óra a felhasználóval) | Egy apró próbaprogram (.NET 10, ARM64) másolása a NAS-ra és futtatása: elindul-e; rendszerkönyvtár verziója; HTTPS-hívás a WU felé; időzóna; fájlzár a köteten; 20 MB-os CSV beolvasásának ideje; memória. | Kiderül, a 10.6 négy útja közül melyik járható. Ha a 4. (más gép kell), a felhasználó dönt a folytatásról. |
-| **S1 – átírás modern .NET-re** | Projektváz, JSON-réteg, a kód áthelyezése a magba, Windowson fordul és fut; a működés változatlan (még egy munkaterület, még a régi letöltő-indítás). | Golden tesztek zöldek; az önteszt 40/40; a felület végigkattintva ugyanaz. |
+| **S1 – átírás modern .NET-re** | Projektváz, JSON-réteg, a kód áthelyezése a magba, Windowson fordul és fut; a működés változatlan (még egy munkaterület, még a régi letöltő-indítás). | Golden tesztek zöldek; az önteszt minden pontja sikeres (ugyanannyi, mint a 2.2.8-on – a számot az 1.3 rögzíti); a felület végigkattintva ugyanaz. |
 | **S2 – környezet és munkaterületek** | `Ctx`, `WorkspaceContext`, nyilvántartás, váltó a felületen, `/api/ws/{id}` címek, több `Guard`-gyökér. | Két munkaterület egyszerre betöltve, párhuzamos kérések nem keverednek (teszt); golden zöld. |
 | **S3 – letöltő a magban** | `DownloadEngine`, `ObservationStore` (hozzáfűzés), növekményes betöltés, munkaterület-zár, `ReplaceRetry`, belső Frissítés. | 5 éves generált adat: memória < 100 MB; félbeszakított írás utáni helyreállítás; a `Letöltő.exe` kapcsolói és kilépési kódjai változatlanok. |
 | **S4 – útvonaltábla, szerepek, képességek** | Deklaratív útvonalak, `IAuth`, szerepellenőrzés, képességlista, hibakezelő, felület-átállás. | A 14.4 tesztjei zöldek helyi módban; a felület néző szerepben (tesztkapcsolóval) nem mutat módosító vezérlőt. |
@@ -1094,12 +1094,18 @@ Jelölés: ★ = biztonsági vagy adatvesztési kockázat – erős modellel ír
 | 1.3 | Golden rögzítő | Segédprogram a 2.2.8 forrásaiból (régi fordítóval, saját belépési ponttal): minden olvasó végpont válasza a mintaadaton → `tests/golden/`. A végpontok és paramétereik listája egy fájlban (`tests/golden/hivasok.json`). | A golden mappa a repóban; a rögzítés megismételhető és azonos eredményt ad. | 14.2 |
 | 1.4 ★ | JSON-réteg | `Core/Common/Json.cs` a 7.2 szerint, tesztekkel (típusok, sorrend, kódolás, korlátok, oda-vissza a 2.2.8 fájljain). | Minden 7.2-beli viselkedésre teszt; a mintaadat beállításfájljai oda-vissza egyeznek. | 7.2 |
 | 1.5 | A mag áthelyezése | A `megjelenito/*.cs` és `kozos/*.cs` fájlok a `Core` mappáiba (7.1 tábla), névterek rendezése, `JavaScriptSerializer` → `Json`, `CultureInfo` számformázás → `NumFmt` (7.3), kódlap-regisztráció ahol kell. **Logikai változtatás nélkül.** A Windows-függő részek egyelőre `#if`-fel vagy ideiglenes felülettel a Desktopban. | A mag lefordul Windowson és Linuxon; a golden teszt zöld. | 7.1, 7.3, 17. |
-| 1.6 | Asztali gazda | `WStation.Desktop`: a mai `Program.cs`, `MainForm`, `FallbackForm`, WebView2-kezelés; a felület fájljai erőforrásként a magból (a `web/` mappa mintával beágyazva). | A program indul, minden fül működik; önteszt 40/40. | 9.1, 12. |
+| 1.6 | Asztali gazda | `WStation.Desktop`: a mai `Program.cs`, `MainForm`, `FallbackForm`, WebView2-kezelés; a felület fájljai erőforrásként a magból (a `web/` mappa mintával beágyazva). | A program indul, minden fül működik; az önteszt ugyanannyi sikeres pontot ad, mint a 2.2.8-on. | 9.1, 12. |
 | 1.7 | Letöltő gazda (átmeneti) | A `Letolto.cs` változatlan logikával új projektben fordul (.NET 10); a Megjelenítő még külön folyamatként indítja. | Letöltés működik valódi kulccsal (◆); kilépési kódok változatlanok. | 9.2 |
 | 1.8 | Telepítő tartalma | A telepítő zipből telepít (9.4); `packaging/windows` összeállítja a tartalmat; `release.yml` első változata. | Friss telepítés és frissítés 2.2.8-ról virtuális mappában: az adatok megmaradnak, a régi fájlok félretéve. | 9.4, 4.4 |
 | 1.9 | Óra | `Clock` bevezetése, a `DateTime.Now/UtcNow` cseréje a magban (14.3). | Forráskeresés: nincs közvetlen órahívás a magban; golden zöld rögzített órával. | 14.3 |
 
 **Megjegyzések az S1-hez**
+- **Sorrend** (a függőségek miatt): 1.1 → 1.2 és 1.4 (párhuzamosan mehet) → 1.3 → 1.5 → 1.6 és 1.7 → 1.9 → 1.8. Az 1.1 egyedül megy
+  elsőnek, mert az hozza létre a CI-t; az 1.5 csak akkor indulhat, ha az 1.3 golden fájljai a `main`-en vannak.
+- **Hol futhat:** 1.1, 1.2, 1.4, 1.9 – bárhol (Linuxon is). 1.3 – csak Windowson (a 2.2.8 a .NET Framework fordítójával fordul; az
+  1.3 az önteszt 2.2.8-as eredményét is rögzíti a golden mappába). 1.5 – Windowson (a golden összevetés miatt), a CI Linuxon is fordít.
+  1.6, 1.8 – Windowson, a felhasználó végigkattintja (◆). 1.7 – Windowson, valódi kulccsal (◆).
+- Amíg az 1.5 tart, a `release/2.x`-re ne kerüljön javítás (az áthelyezés miatt nehéz átvinni); ha mégis kell, az 1.5 beolvasztása után.
 - Az 1.5 egyetlen nagy lépés, mert a fájlok kölcsönösen hivatkoznak egymásra (részenként nem fordulna). A pull requesten belül a
   commitok sorrendje: (1) csak áthelyezés `git mv`-vel, tartalmi változás nélkül – így a fájltörténet megmarad és a különbség üres;
   (2) névterek és `using` sorok; (3) `JavaScriptSerializer` → `Json`; (4) számformázás → `NumFmt`; (5) ami Windows-függő, ideiglenesen a
@@ -1231,7 +1237,7 @@ számítást érint. Javasolt sorrend: 21.4 (Zambretti), 20.10 + 20.11 + 11.1 (n
 | R14 | A jelszókivonat a NAS-on lassú (K0: hidegen 10 000 kör 631 ms) | közepes | közepes | S6 előtt meleg újramérés; körszám-alsóhatár a NAS-on 50 000, belépés-korlátozás (10.3) |
 
 **Nyitott kérdések (a felhasználónak, nem sürgősek):**
-1. A NAS-on melyik DSM-verzió fut? (A K0 próba megmondja.)
+1. ~~A NAS-on melyik DSM-verzió fut?~~ Megválaszolva (K0): DSM 7.2.2.
 2. Legyen-e a nézőnek joga a kerti naplóba és a futónaplóba írni? (A terv szerint nem; külön „szerkesztő” szerep később adható.)
 3. Milyen értesítési csatorna kell a szerverről: e-mail, telefonos push (ntfy), a NAS saját értesítése? (A terv mindhármat tartalmazza;
    elég az elsőként szükségeset megcsinálni.)
