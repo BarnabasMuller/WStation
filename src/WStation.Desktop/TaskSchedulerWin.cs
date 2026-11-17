@@ -26,7 +26,13 @@ namespace WStation.Desktop
         // az ütemezés leírása (Spec) a magban van: WStation.Core.Common.ScheduleSpec (1.5)
 
         // a schtasks a konzol (OEM) kódlapján ír, magyar gépen 852
-        static readonly Encoding Oem = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+        // 1.6: a 3.0 kultúrafüggetlen módban fut (InvariantGlobalization), ott a CultureInfo.CurrentCulture.TextInfo.OEMCodePage
+        // mindig 437 lenne – ezért a Windowstól kérdezzük a gép OEM-kódlapját (a 852-es a kódlap-regisztráció után érhető el,
+        // lásd AsztaliGazda.Install)
+        static readonly Encoding Oem = Encoding.GetEncoding(GetOEMCP());
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        static extern int GetOEMCP();
 
         static int Run(string args, out string output)
         {
