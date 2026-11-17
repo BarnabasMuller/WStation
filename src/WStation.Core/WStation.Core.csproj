@@ -11,8 +11,9 @@
     <EmbeddedResource Include="..\..\web\*" Exclude="..\..\web\_*" LogicalName="web/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
-    <!-- IDEIGLENES (1.5): az átvett 2.x-osztályok belsők (internal); az asztali gazda és a tesztek így érik el őket. -->
+    <!-- IDEIGLENES (1.5): az átvett 2.x-osztályok belsők (internal); a gazdák (asztali, letöltő – 1.7) és a tesztek így érik el őket. -->
     <InternalsVisibleTo Include="WStation.Desktop" />
+    <InternalsVisibleTo Include="WStation.Downloader" />
     <InternalsVisibleTo Include="WStation.Tests" />
   </ItemGroup>
 </Project>

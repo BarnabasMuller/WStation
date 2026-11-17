@@ -1,5 +1,9 @@
-﻿// Weather Underground PWS adatletöltő
-// Fordítás: a projekt gyökerében a build.bat (a Windows beépített .NET Framework 4.8 C# fordítójával)
+﻿#nullable disable
+// Weather Underground PWS adatletöltő
+// Fordítás: a WStation.Downloader projekt (.NET 10, PLAN-3.0 1.7 – a 2.x build.bat .NET Framework 4.8-cal fordította)
+// A HttpWebRequest / ServicePointManager a modern .NET-ben elavult (SYSLIB0014), de működik; a letöltés logikája változatlan
+// marad, amíg a DownloadEngine (S3) ki nem váltja.
+#pragma warning disable SYSLIB0014
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,14 +14,9 @@ using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
-using System.Web.Script.Serialization;
+using WStation.Core.Common;
 
-[assembly: System.Reflection.AssemblyTitle("Weather Underground PWS adatletolto")]
-[assembly: System.Reflection.AssemblyProduct("WStation – Letöltő")]
-[assembly: System.Reflection.AssemblyVersion("2.2.8.0")]
-[assembly: System.Reflection.AssemblyFileVersion("2.2.8.0")]
-
-namespace WuLetolto
+namespace WStation.Downloader
 {
     class FatalException : Exception
     {
@@ -205,7 +204,7 @@ MetarKod=LHBP
             {
                 try
                 {
-                    var added = Kozos.IniMerge.Merge(path, Template);
+                    var added = IniMerge.Merge(path, Template);
                     if (added.Count > 0) Log.Info("Új beállítások kerültek a beállításfájlba: " + string.Join(", ", added));
                 }
                 catch (Exception ex) { Log.Warn("A beállításfájl nem bővíthető: " + ex.Message); }
@@ -665,7 +664,6 @@ MetarKod=LHBP
         public string CallDay = "";
         public int CallCount;
         public List<object> Runs = new List<object>();
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
         public static State Load(string path)
         {
@@ -677,7 +675,7 @@ MetarKod=LHBP
             }
             try
             {
-                var root = (Dictionary<string, object>)Js.DeserializeObject(File.ReadAllText(path, Encoding.UTF8));
+                var root = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(path, Encoding.UTF8));
                 st.CallDay = Convert.ToString(Get(root, "apiCallDay")) ?? "";
                 st.CallCount = Convert.ToInt32(Get(root, "apiCallCount") ?? 0);
                 var runs = Get(root, "runs") as object[];
@@ -777,7 +775,7 @@ MetarKod=LHBP
                 { "runs", Runs }
             };
             string tmp = FilePath + ".tmp";
-            Guard.WriteAllText(tmp, PrettyJson(Js.Serialize(root)), new UTF8Encoding(false));
+            Guard.WriteAllText(tmp, PrettyJson(Json.Serialize(root)), new UTF8Encoding(false));
             // egy vírusirtó / indexelő / felhőszinkron pillanatnyilag zárolhatja a fájlt: rövid szünetekkel újrapróbáljuk,
             // végül felülírással másolunk (2.2.8 – eddig az első sikertelen csere az egész futást leállította)
             Exception last = null;
@@ -961,7 +959,6 @@ MetarKod=LHBP
 
     static class Program
     {
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue, RecursionLimit = 200 };
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
         [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool AllocConsole();
@@ -1534,7 +1531,7 @@ MetarKod=LHBP
             var res = new List<Dictionary<string, object>>();
             if (string.IsNullOrWhiteSpace(body)) return res;
             object root;
-            try { root = Js.DeserializeObject(body); }
+            try { root = Json.DeserializeObject(body); }
             catch (Exception ex) { Log.Warn("Értelmezhetetlen JSON válasz: " + ex.Message); return res; }
             var d = root as Dictionary<string, object>;
             object arr;
@@ -1600,7 +1597,7 @@ MetarKod=LHBP
                 return Cfg.Dec == "." ? s : s.Replace(".", Cfg.Dec);
             }
             if (v is int || v is long) return Convert.ToString(v, Inv);
-            if (v is Dictionary<string, object>) return Js.Serialize(v);
+            if (v is Dictionary<string, object>) return Json.Serialize(v);
             var en = v as IEnumerable;
             if (en != null)
             {
@@ -1689,8 +1686,7 @@ MetarKod=LHBP
             int added = 0;
             try
             {
-                var js = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue };
-                var arr = js.DeserializeObject(body) as object[];
+                var arr = Json.DeserializeObject(body) as object[];
                 if (arr == null) { Log.Warn("METAR (" + icao + "): nincs adat (ismeretlen repülőtér?)."); return false; }
                 foreach (var o in arr.OfType<Dictionary<string, object>>())
                 {
@@ -1789,7 +1785,7 @@ MetarKod=LHBP
 
         // a Megjelenítőben választott mértékegységek (appdata_megjelenítő\felulet.json „units”), hogy az értesítés is azokat írja (11.8)
         static string uT = "C", uR = "mm", uW = "kmh", uP = "hPa";
-        static CultureInfo Num0 = CultureInfo.GetCultureInfo("hu-HU");
+        static NumFmt Num0 = NumFmt.Hu;   // PLAN-3.0 7.3: nyelvi adatbázis (ICU) nélkül
         static void LoadUnits(string appDir)
         {
             try
@@ -1797,7 +1793,7 @@ MetarKod=LHBP
                 string f = Path.Combine(Path.GetDirectoryName(appDir.TrimEnd('\\')), "appdata_megjelenítő", "felulet.json");
                 if (File.Exists(f))
                 {
-                    var d = new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(File.ReadAllText(f, Encoding.UTF8)) as Dictionary<string, object>;
+                    var d = Json.DeserializeObject(File.ReadAllText(f, Encoding.UTF8)) as Dictionary<string, object>;
                     object u;
                     if (d != null && d.TryGetValue("units", out u) && u is Dictionary<string, object>)
                     {
@@ -1810,9 +1806,9 @@ MetarKod=LHBP
                 }
             }
             catch { }
-            try { var m = Langs.Meta(Langs.Current); object l; if (m != null && m.TryGetValue("locale", out l)) Num0 = CultureInfo.GetCultureInfo(Convert.ToString(l)); } catch { }
+            try { var m = Langs.Meta(Langs.Current); object l; if (m != null && m.TryGetValue("locale", out l)) Num0 = NumFmt.FromMeta(m); } catch { }
         }
-        static string Fmt(double v, string f) { return v.ToString(f, Num0); }
+        static string Fmt(double v, string f) { return Num0.Format(v, f); }
         static string TempText(double c) { return uT == "F" ? Fmt(c * 9 / 5 + 32, "0.0") + " °F" : Fmt(c, "0.0") + " °C"; }
         static string PresDiff(double h) { return uP == "inHg" ? Fmt(h * 0.02953, "0.00") + " inHg" : Fmt(h, "0.0") + " hPa"; }
         static string RateText(double mmh) { return uR == "in" ? Fmt(mmh / 25.4, "0.00") + " in/h" : Fmt(mmh, "0") + " mm/h"; }
@@ -1877,9 +1873,8 @@ MetarKod=LHBP
 
             // ismétlésvédelem: riasztasok.json { kulcs: utolsó jelzés (UTC) }
             string path = Path.Combine(appDir, "riasztasok.json");
-            var js = new System.Web.Script.Serialization.JavaScriptSerializer();
             var sent = new Dictionary<string, object>();
-            try { if (File.Exists(path)) sent = (Dictionary<string, object>)js.DeserializeObject(File.ReadAllText(path)); } catch { }
+            try { if (File.Exists(path)) sent = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(path)); } catch { }
             var due = msgs.Where(m =>
             {
                 object o; DateTime last;
@@ -1887,7 +1882,7 @@ MetarKod=LHBP
             }).ToList();
             if (due.Count == 0) return;
             foreach (var m in due) sent[m[0]] = DateTime.UtcNow.ToString("o", Inv);
-            try { Guard.WriteAllText(path, js.Serialize(sent)); } catch { }
+            try { Guard.WriteAllText(path, Json.Serialize(sent)); } catch { }
             string title = due.Count == 1 ? due[0][1] : string.Join(" · ", due.Select(m => m[1]));
             string text = string.Join("\n", due.Select(m => due.Count == 1 ? m[2] : m[1] + ": " + m[2]));
             Log.Warn("Riasztás: " + title + " – " + text.Replace("\n", " | "));
@@ -1901,7 +1896,7 @@ MetarKod=LHBP
             {
                 using (var ni = new System.Windows.Forms.NotifyIcon())
                 {
-                    try { ni.Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Reflection.Assembly.GetExecutingAssembly().Location); }
+                    try { ni.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath); }
                     catch { ni.Icon = System.Drawing.SystemIcons.Information; }
                     ni.Text = "WStation";
                     ni.Visible = true;
