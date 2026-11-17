@@ -1089,7 +1089,7 @@ Jelölés: ★ = biztonsági vagy adatvesztési kockázat – erős modellel ír
 ### S1 – átírás modern .NET-re
 | # | Csomag | Tartalom | Elfogadás | Olvasmány |
 |---|---|---|---|---|
-| 1.1 | Projektváz | `WStation.sln`, `Directory.Build.props` (verzió, `InvariantGlobalization`, figyelmeztetések hibaként az új kódban), üres projektek a 4.3 szerint, `ci.yml` (fordítás Windows + Linux). A régi `build.bat` egyelőre marad. | A CI lefordítja az üres vázat mindkét rendszeren. | 4., 5. |
+| 1.1 ✅ (2026-11-17, PR #1) | Projektváz | `WStation.sln`, `Directory.Build.props` (verzió, `InvariantGlobalization`, figyelmeztetések hibaként az új kódban), üres projektek a 4.3 szerint, `ci.yml` (fordítás Windows + Linux). A régi `build.bat` egyelőre marad. | A CI lefordítja az üres vázat mindkét rendszeren. | 4., 5. |
 | 1.2 | Mintaadat-generátor | `tools/adatgen`: determinisztikus, a WU-oszlopokkal azonos CSV (14.2/1). | Kétszer futtatva bájtra azonos fájl; a 2.2.8 Megjelenítő megnyitja és minden fül mutat adatot. | 14.2 |
 | 1.3 | Golden rögzítő | Segédprogram a 2.2.8 forrásaiból (régi fordítóval, saját belépési ponttal): minden olvasó végpont válasza a mintaadaton → `tests/golden/`. A végpontok és paramétereik listája egy fájlban (`tests/golden/hivasok.json`). | A golden mappa a repóban; a rögzítés megismételhető és azonos eredményt ad. | 14.2 |
 | 1.4 ★ | JSON-réteg | `Core/Common/Json.cs` a 7.2 szerint, tesztekkel (típusok, sorrend, kódolás, korlátok, oda-vissza a 2.2.8 fájljain). | Minden 7.2-beli viselkedésre teszt; a mintaadat beállításfájljai oda-vissza egyeznek. | 7.2 |
