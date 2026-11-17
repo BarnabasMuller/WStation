@@ -647,8 +647,8 @@ interface IApiFront { void Start(FrontOptions o, Func<ApiRequest, ApiResponse> h
   nevében) a `packaging/synology/indit.sh` szkripttel, amely újraindítja a szervert, ha kilép. Később: natív `.spk` csomag.
 - **Felhasználó:** külön `wstation` felhasználó, amelynek csak a `/volume1/WStation` mappához van joga. A megosztott mappa a DSM-ben
   csak a rendszergazdának legyen látható (benne vannak a titkok).
-- **Memória (1 GB-os NAS):** munkaállomás-szemétgyűjtés, memóriatakarékos beállítás, kemény korlát 400 MB (`runtimeconfig`), a nem
-  használt munkaterületek kiürítése (6.4). Cél: nyugalomban 150 MB alatt egy 3 éves munkaterülettel.
+- **Memória (1 GB-os NAS, ebből kb. 120 MB szabad – K0):** munkaállomás-szemétgyűjtés, memóriatakarékos beállítás, kemény korlát 250 MB (`runtimeconfig`), a nem
+  használt munkaterületek kiürítése (6.4). Cél: nyugalomban 120 MB alatt egy 3 éves munkaterülettel.
 - **Lemezkímélés:** a naplók pufferelve íródnak (legfeljebb 5 percenként, hiba és öntözési esemény azonnal); állapotfájl csak
   változáskor; a letöltés gyakorisága állítható. Így a lemezek a letöltések között aludhatnak.
 - **A futtatókörnyezet és a régi rendszerkönyvtár (glibc) – a K0 kapu dönti el:**
@@ -658,6 +658,7 @@ interface IApiFront { void Start(FrontOptions o, Func<ApiRequest, ApiResponse> h
   3. Ha az sem megy: a csomag saját, újabb glibc-t visz magával, és azzal indul (ugyanilyen módon).
   4. Ha egyik sem: a szerver egy olcsó minigépen fut (x64 vagy ARM Linux, bármi, ami .NET 10-et futtat), a NAS csak tárhely.
   A .NET 8 nem megoldás: 2026 novemberétől nem kap javításokat.
+  **A K0 döntése (2026-11-17): az 1. út**, DSM 7.2-től (B. függelék, „A K0 eredménye”). DSM 6.2-n nem indul.
 - **Frissítés:** kézzel – új csomag letöltése, SHA-256 ellenőrzés, a `frissit.sh` leállítja a szervert, az `app` mappát félreteszi
   (`app.elozo`), kibontja az újat, elindítja; ha 60 s-on belül nem válaszol az állapotlekérdezés, visszaáll az előzőre.
 - **Leállás:** SIGTERM-re a szerver befejezi a futó mentést, **lezár minden nyitott zónát**, kiírja az állapotot, és legfeljebb 20 s alatt kilép.
@@ -1046,7 +1047,7 @@ Minden szakasz végén **kapu** van: mérhető feltétel, amely nélkül a köve
 |---|---|---|
 | E1 ✅ (2026-11-16) | A `v2.2` ág beolvasztása a `main`-be (előre tekerés – a `main` a `v2.2` őse, 40 commit a különbség), `release/2.x` létrehozása, feltöltés. | helyi munkamenet; a feltöltéshez a felhasználó jóváhagyása |
 | E2 ✅ (2026-11-16, SDK 10.0.404) | A .NET 10 SDK telepítése a fejlesztői gépre. | felhasználó (telepítő futtatása) |
-| E3 ⏳ (a csomag kész: `tools/k0proba`) | K0 próba a NAS-on (B. függelék). | fejlesztő készíti, felhasználó futtatja |
+| E3 ✅ (2026-11-17, DSM 7.2.2-n: a `linux-arm64` kiadás fut) | K0 próba a NAS-on (B. függelék). | fejlesztő készíti, felhasználó futtatja |
 | E4 ✅ (2026-11-16) | Ennek a tervnek a repóba tétele `docs/dev/PLAN-3.0.md` néven, a 0.2 pont (saját eszközök) és a személyes utalások nélkül – különben a felhős munkamenetek nem látják. | helyi munkamenet; jóváhagyással |
 | E5 | A nyitott kérdések megválaszolása (18. fejezet), amennyire az adott szakaszhoz kell. | felhasználó |
 
@@ -1214,8 +1215,8 @@ számítást érint. Javasolt sorrend: 21.4 (Zambretti), 20.10 + 20.11 + 11.1 (n
 
 | # | Kockázat | Valószínűség | Hatás | Kezelés |
 |---|---|---|---|---|
-| R1 | A .NET 10 nem indul a cél-NAS-on (régi rendszerkönyvtár, 4.4-es kernel) | közepes | nagy | K0 próba a fejlesztés előtt; 10.6 négy útja; végső esetben minigép |
-| R2 | 1 GB memória kevés | kicsi–közepes | közepes | memóriakorlát, lusta betöltés, 8.2; K0 és K3 mérés |
+| R1 ✅ | A .NET 10 nem indul a cél-NAS-on (régi rendszerkönyvtár, 4.4-es kernel) | közepes | nagy | K0 próba a fejlesztés előtt; 10.6 négy útja; végső esetben minigép |
+| R2 | 1 GB memória kevés (K0: kb. 120 MB szabad) | **közepes–nagy** | közepes | memóriakorlát, lusta betöltés, 8.2; K0 és K3 mérés |
 | R3 | A szelepvezérlő nem tud eszköz-oldali időkorlátot | közepes | nagy (nincs automata üzem) | K4 előtt nincs ígéret; saját firmware mint tartalék; a döntés a felhasználóé |
 | R4 | A Tuya helyi protokoll a firmware-frissítéssel változik | kicsi | közepes | a meghajtó verziót egyeztet; a SmartLife-ban az automatikus frissítés kikapcsolása; értesítés, ha a vezérlő nem elérhető |
 | R5 | Az átírás észrevétlenül megváltoztat egy számítást | közepes | közepes | golden tesztek generált és valódi adaton (14.2) |
@@ -1226,6 +1227,8 @@ számítást érint. Javasolt sorrend: 21.4 (Zambretti), 20.10 + 20.11 + 11.1 (n
 | R10 | A szerver a belső hálózaton támadási felület | kicsi | nagy | 10. fejezet; alapból HTTPS és jelszó; a szelepvezérlés titkosítatlanul tiltott; nem internetre |
 | R11 | Kétféle telepítés szétcsúszó verziói (Windows-kliens régebbi, mint a szerver) | közepes | kicsi | távoli módban a felületet a szerver adja – a kliens verziója szinte mindegy; a gazda–felület üzenetcsatorna verziózott |
 | R12 | A nézőnek szánt jelszó kiszivárog | közepes | kicsi | a néző semmit nem módosíthat és titkot nem lát; külön jelszó, külön cserélhető |
+| R13 | A DSM egy frissítése elrontja a futást, vagy a felhasználó DSM 6.2-n marad | kicsi | nagy | indításkor DSM-verzió-ellenőrzés érthető hibaüzenettel; tartalék: musl-os kiadás saját betöltővel (B. függelék, K0 eredménye) |
+| R14 | A jelszókivonat a NAS-on lassú (K0: hidegen 10 000 kör 631 ms) | közepes | közepes | S6 előtt meleg újramérés; körszám-alsóhatár a NAS-on 50 000, belépés-korlátozás (10.3) |
 
 **Nyitott kérdések (a felhasználónak, nem sürgősek):**
 1. A NAS-on melyik DSM-verzió fut? (A K0 próba megmondja.)
@@ -1330,6 +1333,34 @@ kezelő GET-et és POST-ot is fogad, a táblában két sor lesz. „–” = az 
 
 **Kiértékelés:** melyik kiadás indult el; a 2–9. pontok eredménye; a 6. és 7. pont számai alapján a 8.3 (növekményes betöltés) és a
 10.3 (körök száma) beállítása. Ha egyik kiadás sem indul: a 10.6 3. vagy 4. útja, a felhasználó döntésével.
+
+### A K0 eredménye (2026-11-17) – a kapu teljesült
+- **1. kör, DSM 6.2.4:** a `linux-arm64` kiadás nem indult (`GLIBCXX_3.4.21 not defined`: a rendszer libstdc++-a GCC 4.9-es szintű); a
+  musl-os kiadás betöltő nélkül nem indulhatott. A NAS-on frissíteni a DSM-et kellett.
+- **2. kör, DSM 7.2.2 (kernel 4.4.302):** a sima **`linux-arm64` kiadás minden lépése sikeres** (.NET 10.0.15) – a 10.6 **1. útja** a végleges.
+  A musl-os út (saját betöltő + Alpine-könyvtárak, `indit.sh`-val) összeállítva, de nem kellett; tartalék, ha egy DSM-frissítés elrontaná (R13).
+  Feltétel: **DSM 7.2 vagy újabb** (a telepítési leírásba és az indítószkript ellenőrzésébe).
+
+| Lépés | Eredmény a cél-NAS-on |
+|---|---|
+| 1. környezet | 4 mag; a rendszer **643 MB** memóriát lát, ebből a mérés idején kb. **120 MB szabad**, a swapból már 0,5 GB foglalt (a DSM 7.2 maga). A próba indulás után 27 MB. |
+| 2. HTTPS | működik (HTTP 401 a WU felől), kb. 2 s az első kérés |
+| 3. időzóna | helyes (nyár 14:00, tél 13:00) |
+| 4–5. fájlzár, csere | a kizárólagos zár működik; `File.Replace` és hozzáfűzés rendben |
+| 6. 20 MB-os CSV | írás 1,0 s; beolvasás + feldolgozás **3,2 s** (135 158 sor), memória 62 → **113 MB** |
+| 7. PBKDF2-SHA256 | 10 000 kör 631 ms – egyetlen, „hideg” mérés (benne a titkosító könyvtár betöltése), ezért csak felső becslés |
+| 8. AES-GCM, ECDSA | elérhető, működik |
+| 9. Kestrel HTTPS | elindult, 60 s-ig futott (104 MB); böngészőből nem próbáltuk – az S6-ban kell (a DSM tűzfala) |
+
+**Következmények a tervre:**
+- **Memória (10.6, R2):** a valóban szabad memória sokkal kevesebb az 1 GB-nál. A kemény korlát **250 MB**, a cél nyugalomban
+  **120 MB alatt** egy 3 éves munkaterülettel. A 20 MB-os fájl naiv beolvasása +50 MB → egy 5 éves (kb. 100 MB-os) fájlt nem szabad
+  egyben `double[]`-sorokká olvasni: oszlopos tárolás (`float`, ahol elég), és a 8.3 növekményes betöltése **kötelező**, nem opció.
+  Az S3 kapujában ezt a cél-NAS-on kell mérni.
+- **Betöltési idő:** kb. 6 MB/s feldolgozás → egy 100 MB-os fájl teljes újraolvasása kb. 16 s; indításkor elfogadható, óránként nem (8.3).
+- **Jelszókivonat (10.3):** ha a hideg mérés közel áll a valósághoz, a „legalább 150 000 kör” a NAS-on kb. 9 s / ellenőrzés (és belépéskor
+  két kivonat) – nem tartható. Az S6 előtt melegen újramérni (több ismétlés); ha marad a lassúság: a NAS-on a mért 300 ms-os
+  körszám, de legalább 50 000, és a belépés-korlátozás (10.3) kompenzál (R14).
 
 ---
 

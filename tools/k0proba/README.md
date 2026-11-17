@@ -13,3 +13,5 @@ dotnet publish -c Release -r linux-musl-arm64 -o out/k0/musl
 
 Copy `proba.sh` (LF line endings) next to the `glibc` and `musl` folders, upload the folder to the NAS and run
 `sh <folder>/proba.sh` from the DSM Task Scheduler as a normal user. Results: `eredmeny_*.txt` in the same folder.
+
+Result (2026-11-17): the plain `linux-arm64` build runs on DSM 7.2.2; on DSM 6.2 it does not (old libstdc++). See "A K0 eredménye" in the plan.
