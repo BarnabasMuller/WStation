@@ -6,6 +6,10 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
+    <!-- IDEIGLENES (1.5): a 2.x-ből áthelyezett fájlok egyelőre nem fordulnak. -->
+    <Compile Remove="Atvett/**;TaskSchedulerWin.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\WStation.Core\WStation.Core.csproj" />
   </ItemGroup>
 </Project>
