@@ -1,0 +1,1 @@
+{"lang":"hu","theme":"sotet","units":{"temp":"C","rain":"mm","wind":"kmh","pres":"hPa"},"tabs":["ma","het","szarazsag"],"zoom":1.25,"refreshSec":300,"showGrid":true,"lastTab":null,"chart":{"smooth":0.5,"colors":["#ff8800","#3366cc"],"range":[-20,45]},"tiny":1E-07,"big":1E+21,"egesz":4294967296}
