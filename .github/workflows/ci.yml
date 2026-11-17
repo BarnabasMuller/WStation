@@ -1,0 +1,37 @@
+# Fordítás és egységtesztek Windowson és Linuxon (docs/dev/PLAN-3.0.md 4.4).
+# A külső lépések commit-azonosítóra rögzítettek; a jogosultság csak olvasás; titok nincs.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Fordítás és teszt (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 10.0.x
+      - name: Csomagok visszaállítása (zárolófájl szerint)
+        run: dotnet restore WStation.sln --locked-mode
+      - name: Fordítás
+        run: dotnet build WStation.sln -c Release --no-restore
+      - name: Egységtesztek
+        run: dotnet test WStation.sln -c Release --no-build

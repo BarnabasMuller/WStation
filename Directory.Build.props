@@ -1,0 +1,18 @@
+<Project>
+  <!-- A 3.0 közös beállításai (docs/dev/PLAN-3.0.md 4.3, 4.4). A 2.x forrásait (src/megjelenito stb.) továbbra is a build.bat fordítja. -->
+  <PropertyGroup>
+    <!-- Egy verziószám van: minden program és a felület ezt mutatja. -->
+    <Version>3.0.0-alpha.1</Version>
+    <Product>WStation</Product>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <!-- A külső csomagok verziója rögzített, zárolófájllal (4.4). -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- A Windows-gazdák Linuxon is leforduljanak (CI). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>
