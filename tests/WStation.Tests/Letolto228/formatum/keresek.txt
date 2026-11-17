@@ -1,0 +1,5 @@
+/v2/pws/observations/current?stationId=ITESZT1&format=json&units=m&numericPrecision=decimal&apiKey=<kulcs>
+/v2/pws/observations/all/1day?stationId=ITESZT1&format=json&units=m&numericPrecision=decimal&apiKey=<kulcs>
+/v2/pws/dailysummary/7day?stationId=ITESZT1&format=json&units=m&numericPrecision=decimal&apiKey=<kulcs>
+/v2/pws/history/all?stationId=ITESZT1&date=T-1&format=json&units=m&numericPrecision=decimal&apiKey=<kulcs>
+/v2/pws/history/all?stationId=ITESZT1&date=T-2&format=json&units=m&numericPrecision=decimal&apiKey=<kulcs>
