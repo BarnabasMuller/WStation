@@ -9,6 +9,10 @@
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
   <ItemGroup>
+    <!-- A 2.2.8 fájlformátumainak mintái (kitalált tartalommal, a régi sorosítóval előállítva) – a JSON-réteg oda-vissza tesztjeihez. -->
+    <EmbeddedResource Include="Json228/*.json" LogicalName="Json228/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\WStation.Core\WStation.Core.csproj" />
     <!-- A determinizmus-teszthez (14.2/1): a generátor egyetlen, külső csomag nélküli projekt. -->
     <ProjectReference Include="..\..\tools\adatgen\WStation.AdatGen.csproj" />

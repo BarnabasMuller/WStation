@@ -1,0 +1,53 @@
+{
+  "info": "A Letolto program allapotfajlja. Ha torlod, a CSV alapjan ujraepul.",
+  "apiCallDay": "2026-09-30",
+  "apiCallCount": 37,
+  "stations": {
+    "ITESZT1": {
+      "lastSuccessUtc": "2026-09-30T10:15:02.1234567Z",
+      "lastRecentUtc": "2026-09-30T10:15:00.0000000Z",
+      "lastDailyUtc": null,
+      "lastObsLocal": "2026-09-30 12:10:00",
+      "tzOffsetMin": 120,
+      "days": {
+        "2026-09-28": "kesz",
+        "2026-09-29": "kesz",
+        "2026-09-30": "reszleges"
+      }
+    },
+    "ITESZT2": {
+      "lastSuccessUtc": null,
+      "lastRecentUtc": null,
+      "lastDailyUtc": null,
+      "lastObsLocal": null,
+      "tzOffsetMin": -60,
+      "days": {
+        
+      }
+    }
+  },
+  "runs": [
+    {
+      "start": "2026-09-30T10:14:58.0000000Z",
+      "end": "2026-09-30T10:15:02.5000000Z",
+      "station": "ITESZT1",
+      "apiCalls": 3,
+      "newRows": 12,
+      "updatedRows": 1,
+      "historyDaysFetched": 2,
+      "historyDaysRemaining": 0,
+      "result": "ok"
+    },
+    {
+      "start": "2026-09-30T10:29:58.0000000Z",
+      "end": "2026-09-30T10:30:00.0000000Z",
+      "station": "ITESZT2",
+      "apiCalls": 1,
+      "newRows": 0,
+      "updatedRows": 0,
+      "historyDaysFetched": 0,
+      "historyDaysRemaining": 14,
+      "result": "hiba: a kiszolgáló válasza: \"401\" {érvénytelen kulcs}, [próbáld újra]"
+    }
+  ]
+}
