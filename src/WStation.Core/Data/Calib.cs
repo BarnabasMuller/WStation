@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
 using WStation.Core.Common;
 
 namespace WStation.Core
@@ -37,13 +36,12 @@ namespace WStation.Core
             }
         }
 
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer();
         static string FilePath { get { return Path.Combine(AppState.L.App, "kalibracio.json"); } }
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
         public static Cfg Load()
         {
-            try { if (File.Exists(FilePath)) return Js.Deserialize<Cfg>(File.ReadAllText(FilePath, Encoding.UTF8)) ?? new Cfg(); }
+            try { if (File.Exists(FilePath)) return Common.Json.Deserialize<Cfg>(File.ReadAllText(FilePath, Encoding.UTF8)) ?? new Cfg(); }
             catch (Exception ex) { Program.Log("A kalibracio.json sérült: " + ex.Message); }
             return new Cfg();
         }
@@ -69,7 +67,7 @@ namespace WStation.Core
         {
             Guard.CreateDirectory(AppState.L.App);
             string tmp = FilePath + ".tmp";
-            Guard.WriteAllText(tmp, Js.Serialize(c), new UTF8Encoding(false));
+            Guard.WriteAllText(tmp, Common.Json.Serialize(c), new UTF8Encoding(false));
             if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
         }
 
@@ -214,13 +212,13 @@ namespace WStation.Core
             if (method == "POST")
             {
                 Cfg c;
-                try { c = Js.Deserialize<Cfg>(body ?? "{}"); } catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
+                try { c = Common.Json.Deserialize<Cfg>(body ?? "{}"); } catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 string err = Validate(c);
                 if (err != null) { status = 400; return new JW().Obj().P("error", err).End().ToString(); }
                 var old = Load();
                 Save(c);
                 double of = ds != null && ds.CalibRes != null ? ds.CalibRes.Global : 1;
-                ChangeLog.Add("Csapadék-kalibráció", "beállítás", Js.Serialize(old), Js.Serialize(c), new Dictionary<string, object> { { "type", "calib" }, { "value", Js.Serialize(old) } });
+                ChangeLog.Add("Csapadék-kalibráció", "beállítás", Common.Json.Serialize(old), Common.Json.Serialize(c), new Dictionary<string, object> { { "type", "calib" }, { "value", Common.Json.Serialize(old) } });
                 if (ds == null) return "{\"ok\":true}";
                 var ev = Evaluate(ds, c, AppState.S.GapMinutes);
                 AppState.ReloadAsync();   // a kalibrált csapadék mindenhol (napi összesítő, mérleg, FWI, rekordok…)

@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using WStation.Core.Common;
 
@@ -25,7 +24,7 @@ namespace WStation.Core
             {
                 if (method == "POST")
                 {
-                    try { new JavaScriptSerializer().DeserializeObject(body ?? ""); }
+                    try { Json.DeserializeObject(body ?? ""); }
                     catch { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = FilePath + ".tmp";
@@ -38,7 +37,7 @@ namespace WStation.Core
                     if (File.Exists(FilePath))
                     {
                         string t = File.ReadAllText(FilePath, Encoding.UTF8);
-                        new JavaScriptSerializer().DeserializeObject(t);
+                        Json.DeserializeObject(t);
                         return t;
                     }
                 }
@@ -53,7 +52,7 @@ namespace WStation.Core
             try
             {
                 int st;
-                var d = new JavaScriptSerializer().DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
+                var d = Json.DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
                 object v;
                 if (d != null && d.TryGetValue("lang", out v) && v != null && Langs.Exists(Convert.ToString(v))) return Convert.ToString(v);
             }
@@ -67,7 +66,7 @@ namespace WStation.Core
             try
             {
                 int st;
-                var d = new JavaScriptSerializer().DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
+                var d = Json.DeserializeObject(Handle("GET", null, out st)) as System.Collections.Generic.Dictionary<string, object>;
                 object u;
                 if (d != null && d.TryGetValue("units", out u) && u is System.Collections.Generic.Dictionary<string, object>)
                 {
@@ -355,13 +354,12 @@ namespace WStation.Core
         // ha nem lista vagy nem olvasható, üres listát hagy (a betöltés is így tenne)
         internal static void CleanStore(string tmp, string name)
         {
-            var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             object[] arr;
-            try { arr = js.DeserializeObject(File.ReadAllText(tmp, Encoding.UTF8)) as object[]; } catch { arr = null; }
+            try { arr = Json.DeserializeObject(File.ReadAllText(tmp, Encoding.UTF8)) as object[]; } catch { arr = null; }
             int dropped;
             var clean = JsonStore.Clean(name, arr ?? new object[0], out dropped);
             if (arr != null && dropped == 0) return;
-            Guard.WriteAllText(tmp, js.Serialize(clean), new UTF8Encoding(false));
+            Guard.WriteAllText(tmp, Json.Serialize(clean), new UTF8Encoding(false));
             Program.Log("Visszaállítás: a " + name + ".json " + (arr == null ? "nem volt érvényes lista" : dropped + " hibás tétele kimaradt") + ".");
         }
 

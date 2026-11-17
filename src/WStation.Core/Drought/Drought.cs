@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
 using WStation.Core.Common;
 
 namespace WStation.Core
@@ -160,7 +159,6 @@ namespace WStation.Core
         static readonly object Lock = new object();
         static DConfig cached;
         public static string RepairNote;
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         static string FilePath { get { return Path.Combine(AppState.L.App, "szarazsag.json"); } }
         static string PresetDir { get { return Path.Combine(AppState.L.App, "presetek"); } }
 
@@ -173,7 +171,7 @@ namespace WStation.Core
                 {
                     if (File.Exists(FilePath))
                     {
-                        cached = Js.Deserialize<DConfig>(File.ReadAllText(FilePath, Encoding.UTF8));
+                        cached = Json.Deserialize<DConfig>(File.ReadAllText(FilePath, Encoding.UTF8));
                         Normalize(cached);
                         var rep = Repair(cached);
                         if (rep.Count > 0)
@@ -284,7 +282,7 @@ namespace WStation.Core
 
         public static DConfig Parse(string json)
         {
-            var c = Js.Deserialize<DConfig>(json);
+            var c = Json.Deserialize<DConfig>(json);
             if (c == null) throw new Exception("üres beállítás");
             Normalize(c);
             Validate(c);
@@ -331,7 +329,7 @@ namespace WStation.Core
                 {
                     var def = d.profiles.FirstOrDefault(x => x.type == p.type && (p.type != "fa" || x.fajta == p.fajta)) ?? d.profiles.First(x => x.type == p.type || x.type == "gyep");
                     var js = Serialize(def);
-                    var np = Js.Deserialize<DProfile>(js);
+                    var np = Json.Deserialize<DProfile>(js);
                     np.id = p.id; np.name = string.IsNullOrWhiteSpace(p.name) ? def.name : (p.name.Length > 60 ? p.name.Substring(0, 60) : p.name); np.enabled = p.enabled; np.type = p.type; np.fajta = p.fajta;
                     c.profiles[i] = np;
                     fixedParts.Add("profil „" + np.name + "” (" + ex.Message + ")");
@@ -410,13 +408,13 @@ namespace WStation.Core
             {
                 Guard.CreateDirectory(AppState.L.App);
                 string tmp = FilePath + ".tmp";
-                Guard.WriteAllText(tmp, Js.Serialize(c), new UTF8Encoding(false));
+                Guard.WriteAllText(tmp, Json.Serialize(c), new UTF8Encoding(false));
                 if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
                 cached = c;
             }
         }
 
-        public static string Serialize(object o) { return Js.Serialize(o); }
+        public static string Serialize(object o) { return Json.Serialize(o); }
 
         // presetek: presetek\<fajta>__<név>.json  ({kind, name, saved, data})
         static string SafeName(string s)
@@ -429,10 +427,10 @@ namespace WStation.Core
         public static void SavePreset(string kind, string name, string dataJson)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new Exception("Adj nevet a presetnek.");
-            Js.DeserializeObject(dataJson); // érvényes JSON?
+            Json.DeserializeObject(dataJson); // érvényes JSON?
             Guard.CreateDirectory(PresetDir);
-            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", DateTime.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Js.DeserializeObject(dataJson) } };
-            Guard.WriteAllText(Path.Combine(PresetDir, SafeName(kind) + "__" + SafeName(name) + ".json"), Js.Serialize(o), new UTF8Encoding(false));
+            var o = new Dictionary<string, object> { { "kind", kind }, { "name", name.Trim() }, { "saved", DateTime.Now.ToString("yyyy-MM-dd HH:mm") }, { "data", Json.DeserializeObject(dataJson) } };
+            Guard.WriteAllText(Path.Combine(PresetDir, SafeName(kind) + "__" + SafeName(name) + ".json"), Json.Serialize(o), new UTF8Encoding(false));
         }
 
         public static void DeletePreset(string kind, string name)
@@ -449,7 +447,7 @@ namespace WStation.Core
             {
                 try
                 {
-                    var o = (Dictionary<string, object>)Js.DeserializeObject(File.ReadAllText(f, Encoding.UTF8));
+                    var o = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(f, Encoding.UTF8));
                     if (o.ContainsKey("kind") && o.ContainsKey("name") && o.ContainsKey("data")) res.Add(o);
                 }
                 catch { }

@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
 using WStation.Core.Common;
 
 namespace WStation.Core
@@ -18,7 +17,6 @@ namespace WStation.Core
     static class Analysis
     {
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
 
         static double V(Dataset ds, int col, int i, bool clean, int mask)
         {
@@ -169,7 +167,7 @@ namespace WStation.Core
             var w = new JW().Obj();
             w.Key("settings").Obj().P("frontTempDrop", s.FrontTempDrop).P("frontGust", s.FrontGust).P("frontTurn", s.FrontTurn)
                 .P("stormRate", s.StormRate).P("stormGust", s.StormGust).P("stormTempDrop", s.StormTempDrop).End();
-            w.Key("events").Raw(Js.Serialize(list));
+            w.Key("events").Raw(Json.Serialize(list));
             return w.End().ToString();
         }
 
@@ -553,7 +551,7 @@ namespace WStation.Core
                 {
                     // a felület mindkét tárolót listaként kezeli: más (pl. "x" vagy {}) ne kerülhessen a fájlba
                     object[] arr;
-                    try { arr = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") as object[]; }
+                    try { arr = Json.DeserializeObject(body ?? "") as object[]; }
                     catch { arr = null; }
                     if (arr == null) { status = 400; return "{\"error\":\"érvénytelen JSON\"}"; }
                     int dropped;
@@ -561,7 +559,7 @@ namespace WStation.Core
                     if (dropped > 0) Program.Log("A " + name + ".json mentésekor " + dropped + " hibás tétel kimaradt.");
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = path + ".tmp";
-                    Guard.WriteAllText(tmp, new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.Serialize(clean), new UTF8Encoding(false));
+                    Guard.WriteAllText(tmp, Json.Serialize(clean), new UTF8Encoding(false));
                     if (File.Exists(path)) Guard.Replace(tmp, path, null); else Guard.Move(tmp, path);
                     return "{\"ok\":true}";
                 }
@@ -570,15 +568,14 @@ namespace WStation.Core
                     if (File.Exists(path))
                     {
                         string t = File.ReadAllText(path, Encoding.UTF8);
-                        var js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
-                        var arr = js.DeserializeObject(t) as object[];
+                        var arr = Json.DeserializeObject(t) as object[];
                         if (arr == null) throw new Exception("nem lista");
                         // betöltéskor is tételenként ellenőrzünk (pl. egy kézzel szerkesztett vagy visszaállított fájl)
                         int dropped;
                         var clean = Clean(name, arr, out dropped);
                         if (dropped == 0) return t;
                         Program.Log("A " + name + ".json " + dropped + " hibás tételét kihagytam.");
-                        return js.Serialize(clean);
+                        return Json.Serialize(clean);
                     }
                 }
                 catch (Exception ex)
@@ -662,7 +659,7 @@ namespace WStation.Core
             if (method == "POST")
             {
                 Dictionary<string, object> d;
-                try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
+                try { d = (Dictionary<string, object>)Json.DeserializeObject(body ?? "{}"); }
                 catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 if (!File.Exists(ini)) { status = 400; return "{\"error\":\"Még nincs beallitasok.ini – előbb indítsd el egyszer a Letöltőt.\"}"; }
                 // előbb minden érték ellenőrzése (típus és tartomány, 2.2.7.1), csak utána írás

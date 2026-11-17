@@ -6,7 +6,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web.Script.Serialization;
+#if NETFRAMEWORK
+using System.Web.Script.Serialization;   // a telepítő (net48) a régi sorosítóval fordítja (PLAN-3.0 7.1)
+#endif
 
 namespace WStation.Core.Common;
 
@@ -48,7 +50,11 @@ static class Langs
                 else
                     using (var s = Assembly.GetExecutingAssembly().GetManifestResourceStream("web/lang/" + code + ".json"))
                         if (s != null) using (var r = new StreamReader(s, Encoding.UTF8)) text = r.ReadToEnd();
+#if NETFRAMEWORK
                 d = text == null ? null : new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(text) as Dictionary<string, object>;
+#else
+                d = text == null ? null : Json.DeserializeObject(text) as Dictionary<string, object>;
+#endif
             }
             catch { d = null; }
             Cache[code] = d;
@@ -91,7 +97,6 @@ static class Langs
     // [{code, name, locale}] – a magyar mindig az első
     public static string ListJson()
     {
-        var js = new JavaScriptSerializer();
         var list = new List<Dictionary<string, object>> { new Dictionary<string, object> { { "code", "hu" }, { "name", "Magyar" }, { "locale", "hu-HU" } } };
         foreach (var c in Codes())
         {
@@ -101,7 +106,11 @@ static class Langs
             m.TryGetValue("name", out n); m.TryGetValue("locale", out l);
             list.Add(new Dictionary<string, object> { { "code", c }, { "name", Convert.ToString(n ?? c) }, { "locale", Convert.ToString(l ?? c) } });
         }
-        return js.Serialize(list);
+#if NETFRAMEWORK
+        return new JavaScriptSerializer().Serialize(list);
+#else
+        return Json.Serialize(list);
+#endif
     }
 
     // fordítás a beállított nyelvre: teljes egyezés, különben a benne lévő ismert kifejezések cseréje

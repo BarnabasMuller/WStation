@@ -254,7 +254,7 @@ namespace WStation.Core
                     try
                     {
                         // csonka / üres kérés (pl. "{}") ne állítsa vissza csendben az összes profilt és programot
-                        var o = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(body ?? "") as Dictionary<string, object>;
+                        var o = Json.DeserializeObject(body ?? "") as Dictionary<string, object>;
                         if (o == null || !o.ContainsKey("version") || !o.ContainsKey("programs")) throw new Exception("hiányos adat");
                         DroughtStore.Save(DroughtStore.Parse(body));
                     }
@@ -289,7 +289,7 @@ namespace WStation.Core
                 var spec = new Kozos.Utemezes.Spec();
                 if (body.Trim().StartsWith("{"))
                 {
-                    try { spec = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<Kozos.Utemezes.Spec>(body) ?? spec; }
+                    try { spec = Json.Deserialize<Kozos.Utemezes.Spec>(body) ?? spec; }
                     catch { msg = "Érvénytelen ütemezés."; }
                 }
                 else { int m; int.TryParse(minutesQ ?? "", out m); spec.kind = m > 0 ? "interval" : "off"; spec.minutes = m; }
@@ -353,7 +353,7 @@ namespace WStation.Core
             try
             {
                 int st;
-                var j = (Dictionary<string, object>)new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(BackupJson("GET", null, out st));
+                var j = (Dictionary<string, object>)Json.DeserializeObject(BackupJson("GET", null, out st));
                 if (!(j["due"] is bool) || !(bool)j["due"]) return;
                 string exe = AppState.L.FindDownloader();
                 if (exe == null) return;

@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Web.Script.Serialization;
 using WStation.Core.Common;
 
 namespace WStation.Core
@@ -16,7 +15,6 @@ namespace WStation.Core
     static class ChangeLog
     {
         static readonly object Lock = new object();
-        static readonly JavaScriptSerializer Js = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
         static string FilePath { get { return Path.Combine(AppState.L.App, "valtozasnaplo.json"); } }
 
         static List<Dictionary<string, object>> Read()
@@ -25,7 +23,7 @@ namespace WStation.Core
             {
                 if (File.Exists(FilePath))
                 {
-                    var arr = Js.DeserializeObject(File.ReadAllText(FilePath, Encoding.UTF8)) as object[];
+                    var arr = Json.DeserializeObject(File.ReadAllText(FilePath, Encoding.UTF8)) as object[];
                     if (arr != null) return arr.OfType<Dictionary<string, object>>().ToList();
                 }
             }
@@ -51,7 +49,7 @@ namespace WStation.Core
                     while (list.Count > 2000) list.RemoveAt(0);
                     Guard.CreateDirectory(AppState.L.App);
                     string tmp = FilePath + ".tmp";
-                    Guard.WriteAllText(tmp, Js.Serialize(list), new UTF8Encoding(false));
+                    Guard.WriteAllText(tmp, Json.Serialize(list), new UTF8Encoding(false));
                     if (File.Exists(FilePath)) Guard.Replace(tmp, FilePath, null); else Guard.Move(tmp, FilePath);
                 }
                 catch (Exception ex) { Program.Log("A változásnapló nem írható: " + ex.Message); }
@@ -66,7 +64,7 @@ namespace WStation.Core
                 // a felület egyszerre több bejegyzést is küldhet: [{area,key,from,to,revert}]
                 try
                 {
-                    var o = Js.DeserializeObject(body ?? "[]");
+                    var o = Json.DeserializeObject(body ?? "[]");
                     var items = o as object[] ?? new object[] { o };
                     foreach (var it in items.OfType<Dictionary<string, object>>())
                     {
@@ -77,7 +75,7 @@ namespace WStation.Core
                 }
                 catch { status = 400; return "{\"error\":\"érvénytelen napló-bejegyzés\"}"; }
             }
-            lock (Lock) return Js.Serialize(Read());
+            lock (Lock) return Json.Serialize(Read());
         }
     }
 
@@ -141,7 +139,7 @@ namespace WStation.Core
             err = null;
             var res = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, object> d;
-            try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
+            try { d = (Dictionary<string, object>)Json.DeserializeObject(body ?? "{}"); }
             catch { err = "érvénytelen kérés"; return null; }
             foreach (var kv in d)
             {
@@ -229,7 +227,7 @@ namespace WStation.Core
             if (method == "POST")
             {
                 Dictionary<string, object> d;
-                try { d = (Dictionary<string, object>)new JavaScriptSerializer().DeserializeObject(body ?? "{}"); }
+                try { d = (Dictionary<string, object>)Json.DeserializeObject(body ?? "{}"); }
                 catch { status = 400; return "{\"error\":\"érvénytelen kérés\"}"; }
                 if (!File.Exists(ini)) { status = 400; return "{\"error\":\"Még nincs beallitasok.ini – előbb indítsd el egyszer a Letöltőt.\"}"; }
                 // olvasás és írás egy zár alatt: közben az ütemezett Letöltő nem írhat bele (15.3)
