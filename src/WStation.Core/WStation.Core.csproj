@@ -6,6 +6,9 @@
   <ItemGroup>
     <!-- A nyelvi fájlok (a Langs a saját szerelvényéből olvassa őket, „web/lang/<kód>.json” néven); a „_” kezdetűek nem. -->
     <EmbeddedResource Include="..\..\web\lang\*.json" Exclude="..\..\web\lang\_*.json" LogicalName="web/lang/%(Filename)%(Extension)" />
+    <!-- A felület (PLAN-3.0 12.): a web mappa minden fájlja mintával, „web/<név>” néven – a helyi szerver (HttpListenerFront)
+         innen szolgálja ki; új fájlnál a projektfájlt nem kell módosítani. A „_” kezdetűek (sablonok) kimaradnak. -->
+    <EmbeddedResource Include="..\..\web\*" Exclude="..\..\web\_*" LogicalName="web/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <!-- IDEIGLENES (1.5): az átvett 2.x-osztályok belsők (internal); az asztali gazda és a tesztek így érik el őket. -->

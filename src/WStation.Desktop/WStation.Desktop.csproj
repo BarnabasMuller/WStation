@@ -1,15 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Asztali gazda (Windows-ablak). A tartalma az 1.6 csomagban érkezik. -->
+  <!-- Asztali gazda (PLAN-3.0 9.1): WebView2-ablak a helyi HTTP-szerver fölött, böngészős tartalék mód, önteszt. -->
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyTitle>WStation – Megjelenítő</AssemblyTitle>
+    <!-- Az exe ikonja: a program saját rajza (AppIcon), a 2.x build módjára egyszer kiírva az ikon-kapcsolóval. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <!-- IDEIGLENES (1.5): a 2.x főprogramja (WebView2-ablak) az 1.6-ban fordul, a WebView2 csomaggal együtt. -->
-    <Compile Remove="Atvett/**" />
+    <!-- A WebView2 a csomagból (rögzített verzió, zárolófájl). A WebView2Loader.dll a kimenet runtimes\win-*\native mappájába
+         kerül, és a .NET onnan tölti be – a 2.x lib-kicsomagolására (EmbeddedLibs) nincs szükség. -->
+    <PackageReference Include="Microsoft.Web.WebView2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WStation.Core\WStation.Core.csproj" />
   </ItemGroup>
+  <!-- A csomag a WPF-vezérlőt is hivatkozásként adja; WinForms-programban nem kell, és a WindowsBase-ütközése figyelmeztetést
+       (MSB3277) adna. A hivatkozást a csomag céljai után vesszük ki. -->
+  <Target Name="WebView2WpfNelkul" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
 </Project>
