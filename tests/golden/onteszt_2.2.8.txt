@@ -1,0 +1,50 @@
+WStation 2.2.8 – az önteszt eredménye a generált mintaadaton (tools/golden)
+A pontok részletei (mért idők, darabszámok) nélkül; ez az S1 kapujának viszonyítási alapja.
+
+[OK]   Betöltés
+[OK]   Epoch szerint rendezett és duplikációmentes
+[--]   Mérések száma (kihagyva: nem a mintaadat)
+[OK]   Második indítás a cache-ből
+[OK]   Az állomás koordinátái a cache-ből is megvannak (2.2)
+[OK]   Két átfedő CSV egyesítése, duplikátumszűrés
+[OK]   Változáskor csak az új/megváltozott fájlt dolgozza fel
+[OK]   A CSV-ből törölt sor a cache-ből is eltűnik (2.2)
+[OK]   Napi csapadék = a nap precipTotal-maximuma (nem összeg)
+[--]   Ismert csapadékértékek (kihagyva: nem a mintaadat)
+[OK]   Nap közbeni számlálónullázás kezelése
+[OK]   Napi min/max/csapadék/lökés egyezik a WU napi összesítőjével
+[OK]   A grafikon nem köti össze a hiányt
+[OK]   LTTB-ritkítás a teljes időszakra
+[OK]   Ritkítás után is megmarad a csúcsérték (min–max sáv)
+[OK]   Téli időszámítás napja (2026-10-25) 25 órás
+[OK]   Nyári időszámítás napja (2026-03-29) 23 órás, 2 óra kimarad
+[OK]   Napváltás helyi éjfélkor (nyári idő, UTC 22:00)
+[--]   Ismert rekordértékek (kihagyva: nem a mintaadat)
+[OK]   Napi végpont (naptár, heti összesítő)
+[OK]   FAO-56 18. példa (Brüsszel): Ra és ET₀
+[OK]   Szél átszámítása 10 m-ről 2 m-re (FAO-56, 47. egyenlet)
+[OK]   SCS lefolyás (P = 50 mm, CN = 80)
+[OK]   Talajvíz-mérleg korlátai, nyári ET₀ ésszerű
+[OK]   A rögzített locsolás beszámít a mérlegbe
+[OK]   Kanadai FWI referenciapélda (Van Wagner & Pickett 1985)
+[OK]   Hőösszeg és FWI a mintaadaton
+[OK]   Esőesemények felismerése
+[OK]   Időszak-szűrő (több tartomány, nyitott vég)
+[OK]   Öntözési program napjai
+[OK]   Febr. 29-i éves időszak nem szökőévben (2.2)
+[--]   Csapadékugrás és befagyott szélmérő jelölése (kihagyva: nem a mintaadat)
+[HIBA] Felhőzet-becslés (2.2)
+[OK]   Javításkor csak a hibás öntözési program esik ki (2.2)
+[OK]   Gyanús-mérés szabályok kapcsolhatók
+[OK]   Nyelvi fájlok betöltése és fordítás
+[OK]   Írás-őr: a programmappán kívülre nem ír
+[OK]   A meta és a Ma végpont működik
+[OK]   Ini-írás: sortörés és „=” a kulcsban elutasítva (2.2.7.1)
+[OK]   Riasztás-beállítás: hibás érték elutasítva, helyes elmentve (2.2.7.1)
+[OK]   Napló / futásnapló: hibás tételek kiszűrve (2.2.7.1)
+[OK]   Visszaállítás: csak engedélyezett fájlok (presetek közé csak .json) (2.2.7.1)
+[OK]   Visszaállítás: a mostani API-kulcs és állomás marad, idegen ApiBaseUrl nem jön át (2.2.7.1)
+[OK]   Helyi API: azonosító nélkül elutasítva, a program címével elérhető (2.2.7.2)
+
+Összesen: 39 rendben, 1 hiba, 4 kihagyva.
+Kilépési kód: 1
