@@ -10,5 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\WStation.Core\WStation.Core.csproj" />
+    <!-- A determinizmus-teszthez (14.2/1): a generátor egyetlen, külső csomag nélküli projekt. -->
+    <ProjectReference Include="..\..\tools\adatgen\WStation.AdatGen.csproj" />
   </ItemGroup>
 </Project>
