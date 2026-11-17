@@ -5,6 +5,9 @@
     <!-- ablak nélküli program, mint a 2.x-ben (/target:winexe): ütemezve nem villan fel konzolablak; a konzolt maga kéri (AttachConsole/AllocConsole) -->
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- A Windows-telepítő tartalma önálló (self-contained) win-x64 kiadás (packaging/windows, PLAN-3.0 9.4): a visszaállítás
+         (és a zárolófájl) ezért a win-x64 változatot is tartalmazza; a sima fordításon ez nem változtat. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <!-- a riasztás Windows-értesítése (NotifyIcon) -->
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyTitle>WStation – Letöltő</AssemblyTitle>
@@ -18,7 +21,9 @@
        ott keresi). Ezért a letöltő saját fájljai fordításkor az asztali gazda kimeneti mappájába is átkerülnek, így a fordítás
        kimenetéből indított asztali program Frissítés gombja megtalálja. Ez csak másolás, nem hivatkozás (a gazdák egymásra nem
        hivatkoznak – PLAN-3.0 4.3); a közös WStation.Core.dll-t az asztali gazda maga hozza. A takarítás (clean) a másolatokat is törli. -->
-  <Target Name="KozosKimenet" AfterTargets="CopyFilesToOutputDirectory">
+  <!-- 1.8: csak a fejlesztői (RID nélküli) fordításnál; a telepítő önálló win-x64 kiadása a saját közös app\ mappájába kerül
+       (packaging/windows), és nem írhatja felül a fejlesztői kimenetet. -->
+  <Target Name="KozosKimenet" AfterTargets="CopyFilesToOutputDirectory" Condition="'$(RuntimeIdentifier)' == ''">
     <PropertyGroup>
       <KozosKimenetMappa>$(MSBuildThisFileDirectory)..\WStation.Desktop\bin\$(Configuration)\$(TargetFramework)\</KozosKimenetMappa>
     </PropertyGroup>

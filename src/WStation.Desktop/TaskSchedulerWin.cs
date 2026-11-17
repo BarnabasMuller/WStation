@@ -1,4 +1,5 @@
-﻿#nullable disable
+﻿// NET48: a telepítő is fordítja (WStation.Installer) – C# 10, csak .NET Framework 4.8-ban is meglévő API (PLAN-3.0 9.4)
+#nullable disable
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

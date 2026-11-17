@@ -1,0 +1,71 @@
+<Project DefaultTargets="Telepito">
+  <!--
+    A Windows-telepítő összeállítása (PLAN-3.0 4.3 packaging/windows, 9.4). Használat: build.bat (a repó gyökerében), amely
+    a csomagokat a zárolófájlok szerint visszaállítja („dotnet restore WStation.sln“ a locked-mode kapcsolóval), majd ezt futtatja:
+      dotnet msbuild packaging/windows/Telepito.proj -p:Configuration=Release
+    Eredmény:
+      dist\WStation_setup_v<verzió>.exe   – a telepítő
+      dist\SHA256SUMS.txt                 – az ellenőrzőösszege (sha256sum-formátum)
+    Lépések:
+      1. a Megjelenítő (WStation.Desktop) és a Letöltő (WStation.Downloader) önálló win-x64 kiadása egy KÖZÖS mappába
+         (build\telepito\app\): a futtatókörnyezetet egyszer szállítjuk, a két program ugyanazt használja;
+      2. a mappa tömörítése: build\telepito\tartalom\app.zip;
+      3. a két indító (.NET Framework 4.8): build\telepito\tartalom\Megjelenito.exe, Letolto.exe;
+      4. a telepítő a tartalommal (WStationPayload), majd másolás a dist\ mappába a verziószámos néven.
+    Ez a projekt maga nem állít vissza és nem tölt le csomagot (ezt az előtte futó, zárolt visszaállítás teszi).
+  -->
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</RepoRoot>
+    <Munka>$(RepoRoot)build\telepito\</Munka>
+    <AppDir>$(Munka)app\</AppDir>
+    <Tartalom>$(Munka)tartalom\</Tartalom>
+    <DistDir>$(RepoRoot)dist\</DistDir>
+  </PropertyGroup>
+  <!-- a verziószám (egy van – PLAN-3.0 4.4) -->
+  <Import Project="$(RepoRoot)Directory.Build.props" />
+  <PropertyGroup>
+    <SetupName>WStation_setup_v$(Version).exe</SetupName>
+  </PropertyGroup>
+
+  <Target Name="Telepito">
+    <RemoveDir Directories="$(Munka)" />
+
+    <!-- 1. önálló kiadás a közös app\ mappába (egymás után: ugyanabba a mappába írnak) -->
+    <MSBuild Projects="$(RepoRoot)src\WStation.Downloader\WStation.Downloader.csproj;$(RepoRoot)src\WStation.Desktop\WStation.Desktop.csproj"
+             Targets="Publish" BuildInParallel="false"
+             Properties="Configuration=$(Configuration);RuntimeIdentifier=win-x64;SelfContained=true;PublishDir=$(AppDir)" />
+    <Error Condition="!Exists('$(AppDir)WStation.Desktop.exe') or !Exists('$(AppDir)WStation.Downloader.exe')" Text="Hiányzik a kiadásból a WStation.Desktop.exe vagy a WStation.Downloader.exe ($(AppDir))." />
+    <!-- a pdb-k és a WebView2-csomag fejlesztői leírásai (xml) nem kellenek a felhasználónak -->
+    <ItemGroup>
+      <Felesleges Include="$(AppDir)**\*.pdb;$(AppDir)Microsoft.Web.WebView2.*.xml" />
+    </ItemGroup>
+    <Delete Files="@(Felesleges)" />
+
+    <!-- 2. tömörítés -->
+    <MakeDir Directories="$(Tartalom)" />
+    <ZipDirectory SourceDirectory="$(AppDir)" DestinationFile="$(Tartalom)app.zip" Overwrite="true" />
+
+    <!-- 3. az indítók -->
+    <MSBuild Projects="$(RepoRoot)src\WStation.Launcher\Megjelenito\WStation.Launcher.Viewer.csproj;$(RepoRoot)src\WStation.Launcher\Letolto\WStation.Launcher.Downloader.csproj"
+             Targets="Build" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="Indito" />
+    </MSBuild>
+    <Copy SourceFiles="@(Indito)" DestinationFolder="$(Tartalom)" />
+    <Error Condition="!Exists('$(Tartalom)Megjelenito.exe') or !Exists('$(Tartalom)Letolto.exe')" Text="Hiányzik az indító: $(Tartalom)Megjelenito.exe / Letolto.exe" />
+
+    <!-- 4. a telepítő a tartalommal -->
+    <MSBuild Projects="$(RepoRoot)src\WStation.Installer\WStation.Installer.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);WStationPayload=$(Tartalom);OutDir=$(Munka)telepito\">
+      <Output TaskParameter="TargetOutputs" ItemName="Telepito" />
+    </MSBuild>
+    <MakeDir Directories="$(DistDir)" />
+    <Copy SourceFiles="@(Telepito)" DestinationFiles="$(DistDir)$(SetupName)" />
+
+    <GetFileHash Files="$(DistDir)$(SetupName)" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="SetupHash" />
+    </GetFileHash>
+    <WriteLinesToFile File="$(DistDir)SHA256SUMS.txt" Lines="$(SetupHash.ToLowerInvariant())  $(SetupName)" Overwrite="true" Encoding="ASCII" />
+    <Message Importance="high" Text="Kész: $(DistDir)$(SetupName)" />
+  </Target>
+</Project>

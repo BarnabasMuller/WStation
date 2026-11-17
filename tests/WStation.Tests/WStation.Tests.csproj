@@ -13,6 +13,10 @@
     <EmbeddedResource Include="Json228/*.json" LogicalName="Json228/%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Az indítók (.NET Framework 4.8) parancssor-kezelése forrásként (1.8): a C# 7.3-as fájl .NET 10 alatt is fordul. -->
+    <Compile Include="..\..\src\WStation.Launcher\Parancssor.cs" Link="Indito\Parancssor.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\WStation.Core\WStation.Core.csproj" />
     <!-- A determinizmus-teszthez (14.2/1): a generátor egyetlen, külső csomag nélküli projekt. -->
     <ProjectReference Include="..\..\tools\adatgen\WStation.AdatGen.csproj" />

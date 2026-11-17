@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Letöltő indítója (PLAN-3.0 9.4): a telepített mappa gyökerében Letöltő.exe (Downloader.exe …) néven áll, és az
+       app\WStation.Downloader.exe-t indítja, megvárja, és továbbadja a kilépési kódját. A forrás közös (../Indito.cs). -->
+  <Import Project="..\..\Net48.props" />
+  <PropertyGroup>
+    <AssemblyName>Letolto</AssemblyName>
+    <RootNamespace>WStation.Launcher</RootNamespace>
+    <AssemblyTitle>WStation – Letöltő</AssemblyTitle>
+    <LangVersion>7.3</LangVersion>
+    <DefineConstants>$(DefineConstants);LETOLTO</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Indito.cs" />
+    <Compile Include="..\Parancssor.cs" />
+  </ItemGroup>
+</Project>

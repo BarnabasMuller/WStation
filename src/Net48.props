@@ -1,0 +1,31 @@
+<Project>
+  <!-- A .NET Framework 4.8-as programok (telepítő, indítók – PLAN-3.0 9.4) közös beállításai. A 4.8 minden támogatott Windows része,
+       ezért ezek akkor is indulnak, ha a gépen nincs .NET 10. A referencia-szerelvények a Microsoft.NETFramework.ReferenceAssemblies
+       csomagból jönnek (a tervező jóváhagyásával; rögzített verzió a Directory.Packages.props-ban, zárolófájl), így Linuxon (CI) és
+       a .NET Framework fejlesztői csomagja nélküli Windowson is fordulnak. Csak fordításkor kell, a kimenetbe nem kerül semmi belőle. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <!-- mint a 2.x build.bat-ban: /platform:x64 (a telepítő 64 bites folyamatok modulútvonalát is olvassa) -->
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <!-- Az SDK a .NET Framework-ös exe-nek csak Windowson ad alapértelmezett RID-et (win-x64, a PlatformTarget szerint;
+         Microsoft.NET.RuntimeIdentifierInference.targets). Linuxon (CI) e nélkül a visszaállítás más gráfot adna, mint a
+         zárolófájl („/win-x64” szakasz), és a zárolt módú visszaállítás hibát jelezne. Ezért kifejezetten megadjuk; a kimenet útvonala
+         ugyanaz marad, mint az alapértelmezett RID-nél (nincs „win-x64\” alkönyvtár). -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <!-- átvett (2.x) kód: Nullable nélkül (PLAN-3.0 5.) -->
+    <Nullable>disable</Nullable>
+    <ApplicationManifest>$(MSBuildThisFileDirectory)app.manifest</ApplicationManifest>
+    <ApplicationIcon>$(MSBuildThisFileDirectory)WStation.Desktop\app.ico</ApplicationIcon>
+    <!-- .NET Framework alatt nincs értelme (a runtimeconfig.json kapcsolója); így nem kerül a kimenetbe exe.config -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+    <!-- a csomagot kifejezetten hivatkozzuk (lent), nem az SDK beépített, rejtett hivatkozásával -->
+    <AutomaticallyUseReferenceAssemblyPackages>false</AutomaticallyUseReferenceAssemblyPackages>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

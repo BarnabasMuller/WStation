@@ -2275,5 +2275,13 @@
   "a mentés kibontva túl nagy": "the backup is too large when unpacked",
   "Ismeretlen beállítás": "Unknown setting",
   "true vagy false lehet": "can be true or false",
-  "időtúllépés": "timeout"
+  "időtúllépés": "timeout",
+  "A programok kibontása": "Unpacking the programs",
+  "régi program félretéve": "old program set aside",
+  "régi program a helyén maradt": "old program left in place",
+  "a régi WebView2-könyvtárak félretéve": "old WebView2 libraries set aside",
+  "a régi WebView2-könyvtárak a helyükön maradtak": "the old WebView2 libraries were left in place",
+  "egy nem WStation-mappa megmaradt": "a folder not belonging to WStation was kept",
+  "a korábbi programmappa nem törölhető": "the previous program folder could not be deleted",
+  "Hibás bejegyzés a telepítőben": "Invalid entry in the installer"
 }

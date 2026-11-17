@@ -1,5 +1,7 @@
 ﻿// WStation – telepítő
 // Abba a mappába telepít, ahonnan elindították (<ott>\Időjárás\), vagy helyben frissít, ha egy telepítésen belül indul.
+// 3.0 (PLAN-3.0 9.4, 1.8): a mappa gyökerébe a két indító kerül (nyelvfüggő néven), a .NET 10-es programok a futtatókörnyezettel
+// az app\ almappába (a beágyazott app.zip-ből, ideiglenes mappán át, a többi fájllal együtt „egyben cserélve”).
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,12 +15,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using Kozos;
+using WStation.Core.Common;   // Guard, Langs (forrásként befordítva – WStation.Installer.csproj)
+using WStation.Desktop;       // Utemezes (forrásként befordítva)
 
-[assembly: AssemblyTitle("WStation – telepítő")]
-[assembly: AssemblyProduct("WStation")]
-[assembly: AssemblyVersion("2.2.8.0")]
-[assembly: AssemblyFileVersion("2.2.8.0")]
+// a verzió és a termék neve a Directory.Build.props-ból (egy verziószám van – PLAN-3.0 4.4)
 
 namespace Telepito
 {
@@ -35,8 +35,13 @@ namespace Telepito
         public const string ViewApp = "appdata_megjelenítő";
         public const string Shortcut = "WStation.lnk";
         public const string Changelog = "Változások.txt";
+        // 3.0: a programok és a futtatókörnyezet almappája, a beágyazott tartalma, és a benne lévő programok (a gyökérben az indítóik)
+        public const string App = "app";
+        public const string AppZip = "app.zip";
+        public const string AppViewer = "WStation.Desktop.exe";
+        public const string AppDownloader = "WStation.Downloader.exe";
 
-        // beágyazott erőforrás -> fájlnév a telepített mappában (a programok neve nyelvfüggő)
+        // beágyazott erőforrás -> fájlnév a telepített mappában (a programok neve nyelvfüggő; 3.0: ezek az indítók)
         public static string[][] Files
         {
             get
@@ -104,7 +109,8 @@ namespace Telepito
         public static readonly string[] OldDownloaderFiles = { "WU_Letolto.exe", "OLVASS_EL.md", "Letolto.exe" };
         public static readonly string[] OldViewerFiles = { "Idojaras.exe", "Megjelenito.exe", "OLVASS_EL_megjelenito.md", "Microsoft.Web.WebView2.Core.dll",
                                                            "Microsoft.Web.WebView2.WinForms.dll", "WebView2Loader.dll", "WebView2_LICENSE.txt" };
-        static readonly string[] LegacyProcessNames = { "Megjelenito", "Letolto", "Idojaras", "WU_Letolto" };
+        // 3.0: az app\ mappában futó programok is (az indítóik mellett)
+        static readonly string[] LegacyProcessNames = { "Megjelenito", "Letolto", "Idojaras", "WU_Letolto", "WStation.Desktop", "WStation.Downloader" };
         public static IEnumerable<string> ProcessNames
         {
             get { return Langs.AllFileNames("viewer").Concat(Langs.AllFileNames("downloader")).Select(Path.GetFileNameWithoutExtension).Concat(LegacyProcessNames).Distinct(StringComparer.OrdinalIgnoreCase); }
@@ -133,6 +139,9 @@ namespace Telepito
     static class Installer
     {
         public static readonly Version Me = Assembly.GetExecutingAssembly().GetName().Version;
+        // --utemezes-nelkul (csak csendes módban, próbához): a Feladatütemezőhöz egyáltalán nem nyúl – nem kérdezi le, nem
+        // szünetelteti, nem állítja. A feladat felhasználónként egy, így egy próbamappába telepítés is a valódit érintené.
+        public static bool NoScheduler;
 
         public static bool IsInstallDir(string d)
         {
@@ -208,7 +217,7 @@ namespace Telepito
                 s.HasApiKey = HasApiKey(Path.Combine(target, Names.DlApp, "beallitasok.ini")) || HasApiKey(Path.Combine(target, "beallitasok.ini"));
             }
             string exe;
-            try { s.ScheduleMinutes = Utemezes.Query(out exe); } catch { }
+            if (!NoScheduler) try { s.ScheduleMinutes = Utemezes.Query(out exe); } catch { }
             return s;
         }
 
@@ -287,14 +296,14 @@ namespace Telepito
 
         public static string RunningIn(string target)
         {
-            string t = Norm(target);
+            string t = Norm(target), ta = Norm(Path.Combine(target, Names.App));   // 3.0: az app\ mappából futók is
             foreach (var name in Names.ProcessNames)
                 foreach (var p in Process.GetProcessesByName(name))
                 {
                     try
                     {
-                        string path = p.MainModule.FileName;
-                        if (Norm(Path.GetDirectoryName(path)) == t) return Path.GetFileName(path);
+                        string path = p.MainModule.FileName, d = Norm(Path.GetDirectoryName(path));
+                        if (d == t || d == ta) return Path.GetFileName(path);
                     }
                     catch { }
                 }
@@ -305,7 +314,7 @@ namespace Telepito
         // letöltést legfeljebb 90 másodpercig megvárunk, a Megjelenítőt nem (azt a felhasználónak kell bezárnia)
         static string RunningWaitDownloader(string target, Action<string, int> progress, int pct)
         {
-            var dl = new HashSet<string>(Langs.AllFileNames("downloader").Concat(new[] { "Letolto.exe", "WU_Letolto.exe" }), StringComparer.OrdinalIgnoreCase);
+            var dl = new HashSet<string>(Langs.AllFileNames("downloader").Concat(new[] { "Letolto.exe", "WU_Letolto.exe", Names.AppDownloader }), StringComparer.OrdinalIgnoreCase);
             var sw = Stopwatch.StartNew();
             string running;
             while ((running = RunningIn(target)) != null && dl.Contains(running) && sw.Elapsed.TotalSeconds < 90)
@@ -330,6 +339,11 @@ namespace Telepito
                 // a WStation almappát adja meg, a csendes mód hibával áll meg – így a „gyökér” sem lehet egy idegen mappa
                 if (IsForeignNonEmpty(target))
                     throw new Exception("A célmappa nem üres, és nincs benne WStation:\n" + target + "\n\nVálassz egy üres mappát, vagy egy " + Names.Root + " nevű almappát.");
+                // 3.0: a tartalom megléte, mielőtt bármihez hozzányúlnánk (egy tartalom nélkül fordított telepítő – pl. a CI-é –
+                // ne rendezzen át és ne mentsen semmit, ha utána úgysem tud telepíteni)
+                var have = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+                foreach (var need in Names.Files.Select(f => f[0]).Where(n => n.StartsWith("bin/")).Concat(new[] { Names.AppZip }))
+                    if (!have.Contains(need)) throw new Exception("Hiányzik a telepítőből: " + need);
                 Guard.SetRoot(target);   // a telepítő csak a célmappába ír (kivétel: asztali parancsikon, ütemezett feladat)
                 var survey = Look(target);
                 // ami bizonyosan WStation-telepítés (saját exe, ill. régi elrendezés saját exe-vel)
@@ -363,15 +377,21 @@ namespace Telepito
                 // Egyben cserél (16.7): előbb minden új fájl .uj-ként, és csak ha mind megvan, jönnek a cserék; ha egy csere
                 // nem sikerül (pl. közben elindult az ütemezett Letöltő), a már kicseréltek visszaállnak – nem marad félig frissített állapot.
                 var asm = Assembly.GetExecutingAssembly();
-                var plan = new List<string[]>();   // [cél, .uj, név]
+                var plan = new List<string[]>();   // [cél, .uj, név, erőforrás]
+                // 3.0: az app\ mappa (programok + futtatókörnyezet) ugyanígy: előbb app.uj, a cserénél app → app.regi, app.uj → app
+                string app = Path.Combine(target, Names.App), appNew = app + ".uj", appOld = app + ".regi";
                 int i = 0;
                 try
                 {
+                // egy korábbi, félbeszakadt telepítés maradéka: ha a csere két lépése között állt le, a régi programok az app.regi-ben vannak
+                if (!Directory.Exists(app) && Directory.Exists(appOld)) MoveDir(appOld, app);
+                if (Directory.Exists(appNew)) Guard.DeleteDirectory(appNew, true);
+                if (Directory.Exists(appOld)) Guard.DeleteDirectory(appOld, true);
                 foreach (var f in Names.Files)
                 {
                     // a leírások a választott nyelven (docs/<kód>/…), ha van ilyen; különben magyarul
                     string res = LocalDoc(asm, f[0]), name = res != f[0] ? Langs.T(f[1]) : f[1];
-                    progress("Másolás: " + name, 20 + 40 * i++ / Names.Files.Length);
+                    progress("Másolás: " + name, 20 + 20 * i++ / Names.Files.Length);
                     string dest = Path.Combine(target, name);
                     string tmp = dest + ".uj";
                     using (var s = asm.GetManifestResourceStream(res))
@@ -379,22 +399,41 @@ namespace Telepito
                         if (s == null) throw new Exception("Hiányzik a telepítőből: " + f[0]);
                         using (var fs = Guard.OpenWrite(tmp, FileMode.Create, FileAccess.Write, FileShare.None)) s.CopyTo(fs);
                     }
-                    plan.Add(new[] { dest, tmp, f[1] });
+                    plan.Add(new[] { dest, tmp, f[1], f[0] });
                 }
+                progress("A programok kibontása...", 40);
+                ExtractApp(asm, appNew, progress);
                 }
                 catch
                 {
-                    // pl. megtelt a lemez: a már kiírt .uj fájlok ne maradjanak a mappában
+                    // pl. megtelt a lemez: a már kiírt .uj fájlok (és a félig kibontott app.uj) ne maradjanak a mappában
                     foreach (var x in plan) try { if (File.Exists(x[1])) Guard.Delete(x[1]); } catch { }
+                    try { if (Directory.Exists(appNew)) Guard.DeleteDirectory(appNew, true); } catch { }
                     throw;
                 }
                 progress("A programfájlok cseréje...", 62);
-                bool paused = Kozos.Utemezes.Pause(true);   // közben ne induljon el az ütemezett Letöltő
+                bool paused = !NoScheduler && Utemezes.Pause(true);   // közben ne induljon el az ütemezett Letöltő
                 var done = new List<string[]>();
+                string appKept = null;    // ahová a meglévő app mappa félrekerült (a mienk: a végén törlődik; idegen: megmarad)
+                bool appOwned = true, appSwapped = false;
                 try
                 {
                     running = RunningWaitDownloader(target, progress, 62);
                     if (running != null) throw new Exception("A(z) " + running + " közben elindult ebből a mappából. Zárd be, majd próbáld újra.");
+                    try
+                    {
+                        if (Directory.Exists(app))
+                        {
+                            // egy azonos nevű, de nem a WStationtől származó mappa nem vész el: más néven megmarad
+                            appOwned = Names.IsOurs(Path.Combine(app, Names.AppViewer)) || Names.IsOurs(Path.Combine(app, Names.AppDownloader));
+                            appKept = appOwned ? appOld : app + "_regi_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                            MoveDir(app, appKept);   // egy futó (zárolt) program miatt itt áll meg, még minden változatlan
+                        }
+                        MoveDir(appNew, app);
+                        appSwapped = true;
+                    }
+                    catch (IOException) { throw InUse(Names.App + "\\"); }
+                    catch (UnauthorizedAccessException) { throw InUse(Names.App + "\\"); }
                     foreach (var x in plan)
                     {
                         string bak = x[0] + ".regi";
@@ -405,7 +444,7 @@ namespace Telepito
                             // nem vész el: a régi példány .regi néven megmarad (a végén sem töröljük)
                             bool own = !File.Exists(x[0]) || OwnedFile(x[0], manifest, proven);
                             if (File.Exists(x[0])) Guard.Replace(x[1], x[0], bak); else Guard.Move(x[1], x[0]);
-                            done.Add(new[] { x[0], File.Exists(bak) ? bak : null, own ? "" : "megtart" });
+                            done.Add(new[] { x[0], File.Exists(bak) ? bak : null, own ? "" : "megtart", x[3] });
                         }
                         catch (IOException) { throw InUse(x[2]); }
                         catch (UnauthorizedAccessException) { throw InUse(x[2]); }   // zárolt exe-nél ez is jöhet
@@ -416,15 +455,27 @@ namespace Telepito
                     // visszaállítás: a már kicserélt fájlok a régire, az újonnan létrehozottak törlődnek; a maradék .uj-k is
                     for (int k = done.Count - 1; k >= 0; k--)
                         try { if (done[k][1] != null) Guard.Replace(done[k][1], done[k][0], null); else Guard.Delete(done[k][0]); } catch { }
+                    // az app mappa: az új vissza az ideiglenes helyére (lent törlődik), a régi vissza a helyére
+                    try { if (appSwapped) MoveDir(app, appNew); } catch { }
+                    try { if (appKept != null && Directory.Exists(appKept) && !Directory.Exists(app)) MoveDir(appKept, app); } catch { }
                     foreach (var x in plan) try { if (File.Exists(x[1])) Guard.Delete(x[1]); } catch { }
+                    try { if (Directory.Exists(appNew)) Guard.DeleteDirectory(appNew, true); } catch { }
                     throw;
                 }
-                finally { if (paused) Kozos.Utemezes.Pause(false); }
+                finally { if (paused) Utemezes.Pause(false); }
                 foreach (var x in done)
                 {
                     if (x[1] == null) continue;
                     if (x[2] == "megtart") { r.Log.Add("egy nem WStation-fájl megmaradt: " + Path.GetFileName(x[1])); continue; }
+                    // 2.x → 3.0: a régi programfájl nem törlődik, hanem félrekerül (appdata_*\regi_fajlok), mint a régi elrendezésnél
+                    if (IsOld2x(x[1])) { Retire(x[1], Path.GetFileName(x[0]), x[3] == "bin/Letolto.exe" ? dlApp : viewApp, r); continue; }
                     try { Guard.Delete(x[1]); } catch { }
+                }
+                if (appKept != null)
+                {
+                    if (!appOwned) r.Log.Add("egy nem WStation-mappa megmaradt: " + Path.GetFileName(appKept));
+                    else try { Guard.DeleteDirectory(appKept, true); }
+                        catch (Exception ex) { r.Log.Add("a korábbi programmappa nem törölhető (" + Path.GetFileName(appKept) + "): " + ex.Message); }
                 }
                 r.Log.Add("programok és leírások: " + (r.Updated ? "frissítve" : "telepítve"));
 
@@ -437,6 +488,8 @@ namespace Telepito
                     {
                         string p = Path.Combine(target, n);
                         if (n.Equals(keep, StringComparison.OrdinalIgnoreCase) || !File.Exists(p) || !Names.IsOurs(p)) continue;
+                        // egy más nyelvű 2.x-es program is félrekerül (nem törlődik)
+                        if (IsOld2x(p)) { Retire(p, n, kind == "viewer" ? viewApp : dlApp, r); continue; }
                         try { Guard.Delete(p); r.Log.Add("más nyelvű program törölve: " + n); } catch { }
                     }
                 }
@@ -450,6 +503,16 @@ namespace Telepito
                         if (other.Equals(cur, StringComparison.OrdinalIgnoreCase) || !File.Exists(p) || !OwnedFile(p, manifest, proven)) continue;
                         try { Guard.Delete(p); r.Log.Add("régi leírás törölve: " + other); } catch { }
                     }
+                }
+
+                // 2.x → 3.0: a 2.x Megjelenítő által kibontott WebView2-könyvtárak félre (a 3.0 a sajátját az app\ mappából tölti be)
+                string oldLib = Path.Combine(viewApp, "lib");
+                if (Directory.Exists(oldLib) && File.Exists(Path.Combine(oldLib, "Microsoft.Web.WebView2.Core.dll")))
+                {
+                    string to = Path.Combine(viewApp, "regi_fajlok", "lib");
+                    if (Directory.Exists(to)) to += "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                    try { Guard.CreateDirectory(Path.GetDirectoryName(to)); MoveDir(oldLib, to); r.Log.Add("a régi WebView2-könyvtárak félretéve: " + Names.ViewApp + "\\regi_fajlok\\" + Path.GetFileName(to)); }
+                    catch (Exception ex) { r.Log.Add("a régi WebView2-könyvtárak a helyükön maradtak: " + ex.Message); }
                 }
 
                 if (!string.IsNullOrEmpty(importFrom) && Norm(importFrom) != Norm(target))
@@ -488,6 +551,8 @@ namespace Telepito
 
                 progress("Automatikus letöltés...", 92);
                 string msg;
+                if (NoScheduler) msg = "Automatikus letöltés: a telepítő nem nézte meg és nem módosította (--utemezes-nelkul).";
+                else
                 try
                 {
                     if (scheduleMinutes < 0)
@@ -567,6 +632,50 @@ namespace Telepito
                 try { Guard.DeleteDirectory(oldCache, true); moved++; } catch { }
             }
             if (moved > 0) r.Log.Add("régi elrendezés átalakítva (" + moved + " elem a helyére került)");
+        }
+
+        // 3.0: a beágyazott app.zip kibontása egy (még nem létező) ideiglenes mappába – csak a mappán belülre
+        static void ExtractApp(Assembly asm, string dir, Action<string, int> progress)
+        {
+            using (var s = asm.GetManifestResourceStream(Names.AppZip))
+            {
+                if (s == null) throw new Exception("Hiányzik a telepítőből: " + Names.AppZip);
+                using (var zip = new System.IO.Compression.ZipArchive(s, System.IO.Compression.ZipArchiveMode.Read))
+                {
+                    string root = Path.GetFullPath(dir).TrimEnd('\\') + "\\";
+                    Guard.CreateDirectory(dir);
+                    int n = 0, total = Math.Max(1, zip.Entries.Count);
+                    foreach (var e in zip.Entries)
+                    {
+                        // egy hibás (vagy hamisított) bejegyzés se írhasson a mappán kívülre („..\”, meghajtóbetű)
+                        string full = Path.GetFullPath(Path.Combine(root, e.FullName.Replace('/', '\\')));
+                        if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new Exception("Hibás bejegyzés a telepítőben: " + e.FullName);
+                        if (e.FullName.EndsWith("/", StringComparison.Ordinal)) { Guard.CreateDirectory(full); continue; }
+                        Guard.CreateDirectory(Path.GetDirectoryName(full));
+                        using (var src = e.Open())
+                        using (var fs = Guard.OpenWrite(full, FileMode.CreateNew, FileAccess.Write, FileShare.None)) src.CopyTo(fs);
+                        if (++n % 25 == 0) progress("A programok kibontása...", 40 + 20 * n / total);
+                    }
+                }
+            }
+        }
+
+        // mappa átnevezése a célmappán belül (a fájlőr ellenőrzésével)
+        static void MoveDir(string from, string to) { Directory.Move(Guard.P(from), Guard.P(to)); }
+
+        // egy 2.x-es WStation-program (a terméknév és a verzió alapján)
+        static bool IsOld2x(string path) { var v = ExeVersion(path); return v != null && v.Major < 3; }
+
+        // 2.x → 3.0: a régi program nem törlődik, hanem az appdata_*\regi_fajlok mappába kerül (mint a régi elrendezésnél – MigrateInPlace);
+        // ha ez nem sikerül, a helyén marad (a végén sem töröljük)
+        static void Retire(string path, string name, string appDir, Result r)
+        {
+            try
+            {
+                MoveSafe(path, Path.Combine(appDir, "regi_fajlok", name), r);
+                r.Log.Add("régi program félretéve: " + Path.GetFileName(appDir) + "\\regi_fajlok\\" + name);
+            }
+            catch (Exception ex) { r.Log.Add("régi program a helyén maradt: " + Path.GetFileName(path) + " (" + ex.Message + ")"); }
         }
 
         static int MoveSafe(string from, string to, Result r)
@@ -1066,9 +1175,11 @@ namespace Telepito
 
             // parancssori (felület nélküli) telepítés:
             //   --csendes [<célmappa>] [--atvetel <forrás>] [--parancsikon] [--utemezes <perc>, 0 = ki; nélküle marad] [--felmeres]
+            //             [--utemezes-nelkul: a Feladatütemezőhöz nem nyúl – próbamappába telepítéshez]
             int qi = Array.FindIndex(args, a => a.Equals("--csendes", StringComparison.OrdinalIgnoreCase));
             if (qi >= 0)
             {
+                Installer.NoScheduler = args.Any(a => a.Equals("--utemezes-nelkul", StringComparison.OrdinalIgnoreCase));
                 AttachConsole(-1);
                 try { Console.OutputEncoding = Encoding.UTF8; } catch { }
                 string target = qi + 1 < args.Length && !args[qi + 1].StartsWith("--") ? Path.GetFullPath(args[qi + 1]) : defaultTarget;

@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Windows-telepítő (PLAN-3.0 9.4): marad .NET Framework 4.8-on, hogy .NET 10 nélkül is induljon. A 2.x telepítő kódja
+       (áttelepítés, ütemezés, parancsikon, egyben csere visszaállítással); a tartalma 1.8 óta: a két indító (a mappa gyökerébe,
+       nyelvfüggő néven) és az app.zip (a .NET 10-es programok a futtatókörnyezettel, az app\ almappába).
+       A teljes telepítőt a packaging/windows/Telepito.proj állítja össze (build.bat); egy sima „dotnet build” tartalom nélkül
+       fordítja (CI) – az ilyen telepítő semmihez nem nyúl, csak hibát ad. -->
+  <Import Project="..\Net48.props" />
+  <PropertyGroup>
+    <AssemblyName>WStation.Installer</AssemblyName>
+    <RootNamespace>Telepito</RootNamespace>
+    <AssemblyTitle>WStation – telepítő</AssemblyTitle>
+    <!-- A magból forrásként befordított fájlok (lent) a 1.5 óta fájlszintű névteret (C# 10) használnak; a nyelvi szint ezért 10,
+         nem 7.3 (PLAN-3.0 9.4 – lásd a PR leírását). Ami ennél újabb, vagy a .NET Framework 4.8-ból hiányzó API, az itt nem fordul. -->
+    <LangVersion>10.0</LangVersion>
+    <!-- a Langs.Dir (fejlesztői mód: a web\lang mappából olvas) csak a Megjelenítőben kap értéket, a telepítőben nem -->
+    <NoWarn>$(NoWarn);CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- NET48: forrásként befordítva (a tetejükön megjegyzés jelzi). Így az ütemezés, a fájlőr és a nyelvkezelés egy helyen él. -->
+    <Compile Include="..\WStation.Core\Common\Guard.cs" Link="Kozos\Guard.cs" />
+    <Compile Include="..\WStation.Core\Common\Lang.cs" Link="Kozos\Lang.cs" />
+    <Compile Include="..\WStation.Core\Common\ScheduleSpec.cs" Link="Kozos\ScheduleSpec.cs" />
+    <Compile Include="..\WStation.Desktop\TaskSchedulerWin.cs" Link="Kozos\TaskSchedulerWin.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- a felület nyelvi fájljai (a „_” kezdetűek nem – mint a 2.x build.bat-ban) és a leírások minden nyelven -->
+    <EmbeddedResource Include="..\..\web\lang\*.json" Exclude="..\..\web\lang\_*.json" LogicalName="web/lang/%(Filename)%(Extension)" />
+    <!-- docs/*.txt és docs/<kód>/*.txt (új nyelvhez elég egy új almappa – docs/FORDITAS.md) -->
+    <EmbeddedResource Include="..\..\docs\**\*.txt" LogicalName="docs/$([System.String]::Copy('%(RecursiveDir)').Replace('\','/'))%(Filename)%(Extension)" />
+  </ItemGroup>
+  <!-- A tartalom (packaging/windows/Telepito.proj adja meg): a két indító és az app.zip. -->
+  <ItemGroup Condition="'$(WStationPayload)' != ''">
+    <EmbeddedResource Include="$(WStationPayload)\Megjelenito.exe" LogicalName="bin/Megjelenito.exe" />
+    <EmbeddedResource Include="$(WStationPayload)\Letolto.exe" LogicalName="bin/Letolto.exe" />
+    <EmbeddedResource Include="$(WStationPayload)\app.zip" LogicalName="app.zip" />
+  </ItemGroup>
+</Project>

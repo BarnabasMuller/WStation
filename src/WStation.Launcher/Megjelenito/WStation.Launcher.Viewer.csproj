@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A Megjelenítő indítója (PLAN-3.0 9.4): a telepített mappa gyökerében Megjelenítő.exe (Viewer.exe …) néven áll, és az
+       app\WStation.Desktop.exe-t indítja. A forrás közös a Letöltő indítójával (../Indito.cs). -->
+  <Import Project="..\..\Net48.props" />
+  <PropertyGroup>
+    <AssemblyName>Megjelenito</AssemblyName>
+    <RootNamespace>WStation.Launcher</RootNamespace>
+    <AssemblyTitle>WStation – Megjelenítő</AssemblyTitle>
+    <!-- az indító új kód, de a 9.4 szerint C# 7.3-mal (a telepítővel egy eszközlánc) -->
+    <LangVersion>7.3</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Indito.cs" />
+    <Compile Include="..\Parancssor.cs" />
+  </ItemGroup>
+</Project>

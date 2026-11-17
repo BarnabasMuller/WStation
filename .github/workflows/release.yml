@@ -1,0 +1,83 @@
+# Kiadás egy v* címkére (docs/dev/PLAN-3.0.md 4.4): fordítás, tesztek, a Windows-telepítő összeállítása, majd egy GitHub-kiadás
+# VÁZLATA a telepítővel és a SHA256SUMS.txt-vel. A vázlatot a felhasználó nézi át és teszi közzé; címkét csak ő tesz fel.
+# Az építési lánc védelme: a külső lépések commit-azonosítóra rögzítettek; a fordítás csak olvasási joggal fut, a kiadás írása
+# egy külön, rövid munkában történik (abban nem fut a projekt kódja); titok nincs (nincs kódaláírás, nincs feltöltés máshová).
+name: Kiadás
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows-telepítő
+    runs-on: windows-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      CIMKE: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 10.0.x
+      - name: A címke és a verziószám egyezik
+        shell: pwsh
+        run: |
+          $v = (Select-Xml -Path Directory.Build.props -XPath '//Version').Node.InnerText
+          if ("v$v" -ne $env:CIMKE) { throw "A címke ($env:CIMKE) és a Directory.Build.props verziója (v$v) eltér." }
+      - name: Csomagok visszaállítása (zárolófájl szerint)
+        run: dotnet restore WStation.sln --locked-mode
+      - name: Fordítás
+        run: dotnet build WStation.sln -c Release --no-restore
+      - name: Egységtesztek
+        run: dotnet test WStation.sln -c Release --no-build
+      - name: Telepítő összeállítása (packaging/windows)
+        run: dotnet msbuild packaging/windows/Telepito.proj -p:Configuration=Release -nologo
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows
+          path: |
+            dist/WStation_setup_v*.exe
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  # TODO (S5, PLAN-3.0 4.4, 9.3): a szerver-csomagok – wstation-server-v<verzió>-linux-arm64.tar.gz, -linux-x64.tar.gz és
+  # -win-x64.zip – külön munkákban készülnek, és a SHA256SUMS.txt-be is bekerülnek. Amíg a WStation.Server nincs kész, nincs ilyen munka.
+  # server:
+  #   name: Szerver-csomagok
+  #   runs-on: ubuntu-latest
+  #   ...
+
+  kiadas:
+    name: Kiadás vázlata
+    needs: [windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # csak a kiadás (vázlat) létrehozásához; ebben a munkában nem fut a projekt kódja
+    env:
+      CIMKE: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows
+          path: kiadas
+      - name: Ellenőrzőösszeg
+        working-directory: kiadas
+        run: sha256sum -c SHA256SUMS.txt
+      - name: Vázlat létrehozása
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          elozetes=""
+          case "$CIMKE" in *-*) elozetes="--prerelease" ;; esac
+          gh release create "$CIMKE" kiadas/WStation_setup_v*.exe kiadas/SHA256SUMS.txt \
+            --draft $elozetes --verify-tag --title "WStation ${CIMKE#v}" \
+            --notes "Vázlat – a leírást a közzététel előtt ki kell egészíteni. A telepítő ellenőrzőösszege a SHA256SUMS.txt-ben."

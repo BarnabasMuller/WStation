@@ -2275,5 +2275,13 @@
   "a mentés kibontva túl nagy": "die Sicherung ist entpackt zu groß",
   "Ismeretlen beállítás": "Unbekannte Einstellung",
   "true vagy false lehet": "kann true oder false sein",
-  "időtúllépés": "Zeitüberschreitung"
+  "időtúllépés": "Zeitüberschreitung",
+  "A programok kibontása": "Programme werden entpackt",
+  "régi program félretéve": "altes Programm beiseitegelegt",
+  "régi program a helyén maradt": "altes Programm blieb an seinem Platz",
+  "a régi WebView2-könyvtárak félretéve": "alte WebView2-Bibliotheken beiseitegelegt",
+  "a régi WebView2-könyvtárak a helyükön maradtak": "die alten WebView2-Bibliotheken blieben an ihrem Platz",
+  "egy nem WStation-mappa megmaradt": "ein nicht zu WStation gehörender Ordner wurde behalten",
+  "a korábbi programmappa nem törölhető": "der vorherige Programmordner konnte nicht gelöscht werden",
+  "Hibás bejegyzés a telepítőben": "Ungültiger Eintrag im Installationsprogramm"
 }
