@@ -1124,6 +1124,18 @@ Jelölés: ★ = biztonsági vagy adatvesztési kockázat – erős modellel ír
 | 2.2 | Nyilvántartás és elrendezés | `WorkspaceRegistry`, `rendszer\munkateruletek.json`, lusta betöltés, kiürítés, több `Guard`-gyökér + munkaterületenkénti őr (6.3–6.4). | Létrehozás, átnevezés, „törlés” (átnevezéssel) teszttel; egy munkaterület kódja nem tud a másikba írni (teszt). | 6.3–6.4 |
 | 2.3 | API-címek és felület | `/api/ws/{id}/…` és `/api/sys/…`; `api()` / `post()` előtag; munkaterület-választó a fejlécben; új munkaterület varázsló (név, API-kulcs, állomás). | A felület két munkaterület között vált újratöltés nélkül; a fordítások megvannak mind a 4 nyelven. | 6.5, 12. |
 
+**Megjegyzések az S2-höz** (a tervező döntései, 2026-11-18)
+- **Sorrend:** 2.1 → 2.2 → 2.3, szigorúan egymás után (a 2.2 a `WorkspaceContext`-re, a 2.3 a nyilvántartásra épül). Mind futhat
+  Windowson; a 2.3-at a felhasználó végigkattintja (◆).
+- **A Letöltő a 2.1-ben nem változik:** a `WuLetolto.Cfg` statikus marad (külön folyamat), `DlConfig` példány az S3-ban (8.1). A 2.1 csak a magot érinti.
+- **`Host`** (`Desktop`, `Scheduler`) folyamatszintű – a megengedett statikus mezők listájára kerül (egy gépnek egy ablaka, egy Feladatütemezője).
+- **`rendszer\munkateruletek.json`:** a program hozza létre az első induláskor, ha hiányzik – csak az alap munkaterülettel (= az otthonmappa).
+  A telepítő nem nyúl hozzá; egy 2.x-ről frissített mappa így változtatás nélkül működik (ez zárja le az 1.8 nyitott pontját).
+- **Szerepek még nincsenek:** a 6.4 „admin” ellenőrzése az S4-ben jön; az S2 helyi módban mindent megenged. A 2.3 a módosító
+  `/api/sys/…` végpontokat jelölje meg, hogy az S4 ráhúzhassa az ellenőrzést.
+- **A választott munkaterület** a felület beállításai közé mentődik; a munkamenethez kötés (6.4) az S5-ben jön.
+- **A régi `/api/…` címek megszűnnek** (6.5); a golden összevetés a `/api/ws/alap/…` címekre áll át – a válaszok tartalma nem változhat.
+
 ### S3 – letöltő a magban
 | # | Csomag | Tartalom | Elfogadás | Olvasmány |
 |---|---|---|---|---|
