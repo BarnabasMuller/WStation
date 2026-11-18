@@ -42,10 +42,11 @@ namespace WStation.Tests
         public void A_valasz_egyezik_a_2_2_8_valaszaval(string id)
         {
             var h = GoldenMinta.Hivasok().Single(x => x.Id == id);
-            GoldenMinta.Betolt();
+            var ws = GoldenMinta.Betolt();
             int status;
             string body;
             // rögzített óra: a mintaadat utolsó mérésének ideje (today.now.t), így az ageMin a rögzített 0
+            using (Ctx.Enter(ws))
             using (Clock.Freeze(GoldenMinta.UtolsoMeresUtc))
                 body = Api.Handle(h.Utvonal, ParseQuery(h.Lekerdezes), "GET", out status);
             body = Normalizal(body ?? "", GoldenMinta.Mappa);
@@ -211,9 +212,9 @@ namespace WStation.Tests
 
         static (string, bool, string) General()
         {
-            string dir = Path.Combine(Path.GetTempPath(), "wstation-golden-" + Path.GetRandomFileName());
+            // 2.1: a közös tesztgyökér alatt (a Guard gyökere folyamatszintű; a munkaterület-tesztek mappái is itt vannak)
+            string dir = TesztKornyezet.UjMappa("golden");
             WStation.AdatGen.Generator.Write(dir);
-            AppDomain.CurrentDomain.ProcessExit += (_, _) => { try { Directory.Delete(dir, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } };
             string kapott = Osszegek(dir);
             string vart = File.ReadAllText(Path.Combine(GoldenDir, "mintaadat.sha256"), Encoding.UTF8).Replace("\r", "");
             if (kapott == vart) return (dir, true, "A generált mintaadat egyezik a rögzítettel.");
@@ -240,25 +241,20 @@ namespace WStation.Tests
         }
 
         static readonly object BetoltZar = new();
-        static bool betoltve;
+        static WorkspaceContext? ws;
 
-        /// <summary>A mag elindítása a mintaadaton – ugyanúgy, mint a rögzítőben (ablak és szerver nélkül).</summary>
-        public static void Betolt()
+        /// <summary>A mag elindítása a mintaadaton – ugyanúgy, mint a rögzítőben (ablak és szerver nélkül). A munkaterületét adja vissza.</summary>
+        public static WorkspaceContext Betolt()
         {
             lock (BetoltZar)
             {
-                if (betoltve) return;
+                if (ws != null) return ws;
                 Assert.True(Egyezik || !OperatingSystem.IsWindows(), Uzenet);
-                string dir = Mappa;
-                var L = Layout.For(dir);
-                Guard.SetRoot(dir);
-                AppState.L = L;
-                L.Ensure();
-                AppState.RefreshAsync(false);
-                for (int i = 0; i < 1200 && AppState.Status == "loading"; i++) Thread.Sleep(100);
-                Assert.True(AppState.Status == "ready", "A mintaadat nem töltődött be: " + AppState.Status + " – " + AppState.Message);
+                // 2.1: a mintaadat egy munkaterület; a hívások ebbe lépnek be (Ctx.Enter)
+                var w = TesztKornyezet.Betolt(Mappa);
                 Thread.Sleep(500);   // az induláskori mentés-ellenőrzés (háttérszál) fusson le, mielőtt hívni kezdünk – mint a rögzítőben
-                betoltve = true;
+                ws = w;
+                return ws;
             }
         }
     }

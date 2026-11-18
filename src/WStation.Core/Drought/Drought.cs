@@ -158,8 +158,9 @@ namespace WStation.Core
     static class DroughtStore
     {
         static readonly object Lock = new object();
-        static DConfig cached;
-        public static string RepairNote;
+        // 2.1: a gyorsítótár és a javítási megjegyzés munkaterületenként (WorkspaceContext, PLAN-3.0 6.2); a zár közös
+        static DConfig cached { get { return Ctx.Current.DroughtCached; } set { Ctx.Current.DroughtCached = value; } }
+        public static string RepairNote { get { return Ctx.Current.DroughtRepairNote; } set { Ctx.Current.DroughtRepairNote = value; } }
         static string FilePath { get { return Path.Combine(AppState.L.App, "szarazsag.json"); } }
         static string PresetDir { get { return Path.Combine(AppState.L.App, "presetek"); } }
 

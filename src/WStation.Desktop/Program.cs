@@ -48,7 +48,10 @@ namespace WStation.Desktop
             if (test)
             {
                 AttachConsole(-1);
-                return SelfTest.Run(Layout.For(dir));
+                // 2.1: az önteszt is munkaterület-környezetben fut; a kezdő mappa a 2.x AppState.L kezdőértéke (a programmappa) –
+                // az önteszt utána a saját ideiglenes mappájára állítja
+                using (Ctx.Enter(new WorkspaceContext(Layout.For(AppDomain.CurrentDomain.BaseDirectory))))
+                    return SelfTest.Run(Layout.For(dir));
             }
 
             Application.EnableVisualStyles();
@@ -74,7 +77,10 @@ namespace WStation.Desktop
             // (1.6: a WebView2 DLL-ek a csomagból, a program mellől töltődnek be – a 2.x kicsomagolása megszűnt)
             var L = Layout.For(dir);
             Guard.SetRoot(dir);   // innentől a program csak a saját mappájába írhat
-            AppState.L = L;
+            // 2.1: az (egyetlen, alap) munkaterület; a főszál a Main végéig benne marad (a felületi szál eseményei is ezt látják),
+            // a szerver minden kérésnél, a háttérmunkák az induláskor belépnek (PLAN-3.0 6.2)
+            var ws = new WorkspaceContext(L);
+            using var wsScope = Ctx.Enter(ws);
             try
             {
                 L.Ensure();
@@ -90,7 +96,7 @@ namespace WStation.Desktop
             AppState.RefreshAsync(false);
 
             if (webDir != null) Langs.Dir = System.IO.Path.Combine(webDir, "lang");
-            var server = new Server { WebDir = webDir };
+            var server = new Server { WebDir = webDir, Workspace = ws };
             try { server.Start(port); }
             catch (Exception ex)
             {

@@ -89,22 +89,21 @@ namespace WStation.Core
             return "idojaras_napi_osszesito_" + Clock.Now.ToString("yyyy-MM-dd") + ".csv";
         }
 
-        static NumFmt Ci = Hu;
-        static string[] Dirs = { "É", "ÉÉK", "ÉK", "KÉK", "K", "KDK", "DK", "DDK", "D", "DDNy", "DNy", "NyDNy", "Ny", "NyÉNy", "ÉNy", "ÉÉNy" };
-
-        static string N(double v, int dec)
+        // 2.1: a kivitel nyelve (számformátum, égtájak) a kérés paramétere, nem statikus állapot (PLAN-3.0 6.2 leltár) –
+        // a 2.x statikus Ci/Dirs mezői helyett a SetLang kimenete, amit a DailyCsv helyi N/Dir függvényei használnak
+        static string N(NumFmt Ci, double v, int dec)
         {
             return double.IsNaN(v) ? "" : Ci.Format(Math.Round(v, dec), dec > 0 ? "0." + new string('0', dec) : "0");
         }
 
-        static string Dir(double deg)
+        static string Dir(string[] Dirs, double deg)
         {
             if (double.IsNaN(deg)) return "";
             return Dirs[(int)Math.Round(((deg % 360) + 360) % 360 / 22.5) % 16];
         }
 
         // a nyelv számformátuma és égtájai; tizedesvesszőnél „;”, tizedespontnál „,” az elválasztó (ahogy az adott nyelvű Excel várja)
-        static string SetLang(string lang)
+        static string SetLang(string lang, out NumFmt Ci, out string[] Dirs)
         {
             Ci = Hu;
             Dirs = new[] { "É", "ÉÉK", "ÉK", "KÉK", "K", "KDK", "DK", "DDK", "D", "DDNy", "DNy", "NyDNy", "Ny", "NyÉNy", "ÉNy", "ÉÉNy" };
@@ -122,7 +121,9 @@ namespace WStation.Core
         {
             var sb = new StringBuilder();
             if (ds == null) return "";
-            string lang = UiSettings.Lang(), sep = SetLang(lang);
+            string lang = UiSettings.Lang(), sep = SetLang(lang, out NumFmt Ci, out string[] Dirs);
+            string N(double v, int dec) => Export.N(Ci, v, dec);
+            string Dir(double deg) => Export.Dir(Dirs, deg);
             Func<string, string> L = h => Langs.T(h, lang);
             // a felületen választott mértékegységekben (belül minden metrikus)
             bool f = UiSettings.Unit("temp", "C") == "F", inch = UiSettings.Unit("rain", "mm") == "in", inHg = UiSettings.Unit("pres", "hPa") == "inHg";

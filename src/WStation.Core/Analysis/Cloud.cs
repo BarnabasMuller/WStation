@@ -51,8 +51,9 @@ namespace WStation.Core
         // árnyékolását (fák, házak alacsony napnál) és az érzékelő eltérését, amit egyetlen szorzó nem tudna.
         // Ahol kevés a minta, a Haurwitz-modell × k_Rs a tartalék.
         const int HB = 2, AB = 10;   // cellaméret: 2° magasság, 10° irány
-        static object envLock = new object();
-        static Dataset envFor; static double[,] env;
+        static readonly object envLock = new object();   // 2.1: közös zár (helyes, csak durvább – PLAN-3.0 6.2 leltár); a gyorsítótár munkaterületenként
+        static Dataset envFor { get { return Ctx.Current.CloudEnvFor; } set { Ctx.Current.CloudEnvFor = value; } }
+        static double[,] env { get { return Ctx.Current.CloudEnv; } set { Ctx.Current.CloudEnv = value; } }
 
         static double[,] Envelope(Dataset ds, Settings s)
         {

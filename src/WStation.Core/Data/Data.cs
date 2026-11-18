@@ -171,8 +171,9 @@ namespace WStation.Core
     static class Tz
     {
         // a helyi időzóna (Beállítások › Helyszín, megjelenito.ini Idozona; alapból Europe/Budapest)
-        public static TimeZoneInfo Zone = Find("Central Europe Standard Time");
-        public static string Iana = "Europe/Budapest";
+        // 2.1: a munkaterület-környezetben (WorkspaceContext.Zone / Iana, PLAN-3.0 6.2)
+        public static TimeZoneInfo Zone { get { return Ctx.Current.Zone; } set { Ctx.Current.Zone = value; } }
+        public static string Iana { get { return Ctx.Current.Iana; } set { Ctx.Current.Iana = value; } }
         public static readonly DateTime Base = new DateTime(2000, 1, 1);
         static readonly DateTime Unix = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -223,7 +224,7 @@ namespace WStation.Core
             catch { return false; }
         }
 
-        static TimeZoneInfo Find(string id)
+        internal static TimeZoneInfo Find(string id)
         {
             try { return TimeZoneInfo.FindSystemTimeZoneById(id); }
             catch { return TimeZoneInfo.Local; }
@@ -645,7 +646,7 @@ namespace WStation.Core
         // ------------------------------------------------------------------ feldolgozás
 
         // a napi lefedettségben ennél hosszabb szünet hiány (a „HianyPerc” beállítás, 13.5 – korábban fixen 15 perc)
-        static long gapSec = 900;
+        static long gapSec { get { return Ctx.Current.GapSec; } set { Ctx.Current.GapSec = value; } }   // 2.1: WorkspaceContext.GapSec (kezdőérték 900)
 
         public static void Process(Dataset ds, Settings s)
         {

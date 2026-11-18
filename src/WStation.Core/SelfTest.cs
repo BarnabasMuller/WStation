@@ -374,7 +374,7 @@ namespace WStation.Core
                 Ok(v1 == "JELENLEGI" && v2 == "ALLOMAS1" && v3 == null && v4 == "3", "Visszaállítás: a mostani API-kulcs és állomás marad, idegen ApiBaseUrl nem jön át (2.2.7.1)", v1 + " / " + v2 + " / " + (v3 ?? "–") + " / " + v4);
 
                 // a helyi API csak a munkamenet-azonosítóval (cookie) válaszol (2.2.7.2)
-                var srv = new Server();
+                var srv = new Server { Workspace = Ctx.Current };   // 2.1: a szerver a teszt munkaterületét szolgálja ki
                 srv.Start(0);
                 try
                 {
