@@ -39,9 +39,12 @@ namespace WStation.Core
             return diff == 0;
         }
         public string WebDir; // fejlesztéshez: ha meg van adva, a felület fájljait innen olvassa
+        // 2.1: a munkaterület, amelyet ez a szerver kiszolgál (egyelőre egyetlen, az alap); minden kérés a legelején ebbe lép be (PLAN-3.0 6.2)
+        public WorkspaceContext Workspace;
 
         public void Start(int port)
         {
+            if (Workspace == null) throw new InvalidOperationException("A szervernek nincs munkaterülete (Server.Workspace).");
             var rnd = new Random();
             for (int attempt = 0; attempt < 30; attempt++)
             {
@@ -78,7 +81,8 @@ namespace WStation.Core
                 HttpListenerContext ctx;
                 try { ctx = listener.GetContext(); }
                 catch { break; }
-                ThreadPool.QueueUserWorkItem(_ => Handle(ctx));
+                var ws = Workspace;
+                ThreadPool.QueueUserWorkItem(_ => { using (Ctx.Enter(ws)) Handle(ctx); });
             }
         }
 

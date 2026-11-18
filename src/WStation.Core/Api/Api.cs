@@ -14,18 +14,18 @@ namespace WStation.Core
     // A program állapota: a betöltött adat, a betöltés és a letöltés folyamata
     static class AppState
     {
-        public static Layout L = Layout.For(AppDomain.CurrentDomain.BaseDirectory);
-        public static Settings S = new Settings();
-        public static volatile Dataset Data;
-        public static volatile string Status = "loading"; // loading | downloading | ready | nodata | error
-        public static volatile string Message = "";
-        public static volatile string Progress = "";
-        public static volatile string DownloadMessage = "";
-        public static volatile bool DownloadOk = true;
-        public static long DownloadSerial;
-        static int busy;
-        static bool backupChecked;
-        static volatile bool cancelDownload;
+        // 2.1: az állapot a munkaterület-környezetben van (WorkspaceContext, PLAN-3.0 6.2); ezek a tulajdonságok onnan olvasnak.
+        // A ref-fel átadott mezők (busy, DownloadSerial) a hívási helyen Ctx.Current.<mező>.
+        public static Layout L { get { return Ctx.Current.L; } set { Ctx.Current.L = value; } }
+        public static Settings S { get { return Ctx.Current.S; } set { Ctx.Current.S = value; } }
+        public static Dataset Data { get { return Ctx.Current.Data; } set { Ctx.Current.Data = value; } }
+        public static string Status { get { return Ctx.Current.Status; } set { Ctx.Current.Status = value; } } // loading | downloading | ready | nodata | error
+        public static string Message { get { return Ctx.Current.Message; } set { Ctx.Current.Message = value; } }
+        public static string Progress { get { return Ctx.Current.Progress; } set { Ctx.Current.Progress = value; } }
+        public static string DownloadMessage { get { return Ctx.Current.DownloadMessage; } set { Ctx.Current.DownloadMessage = value; } }
+        public static bool DownloadOk { get { return Ctx.Current.DownloadOk; } set { Ctx.Current.DownloadOk = value; } }
+        static bool backupChecked { get { return Ctx.Current.backupChecked; } set { Ctx.Current.backupChecked = value; } }
+        static bool cancelDownload { get { return Ctx.Current.cancelDownload; } set { Ctx.Current.cancelDownload = value; } }
         const int DownloadTimeoutMin = 30;   // ennél tovább nem várunk a Letöltőre (12.3)
 
         // a futó letöltés megszakítása (a Frissítés melletti „Megszakítás” gomb); a már elmentett napok megmaradnak
@@ -39,13 +39,17 @@ namespace WStation.Core
         // download = true: előbb lefuttatja a Letöltőt (ha megvan), utána újraolvassa a CSV-ket
         public static void RefreshAsync(bool download)
         {
-            if (Interlocked.CompareExchange(ref busy, 1, 0) != 0) return;
+            if (Interlocked.CompareExchange(ref Ctx.Current.busy, 1, 0) != 0) return;
             Status = download && L.FindDownloader() != null ? "downloading" : "loading";
+            var ws = Ctx.Current;   // 2.1: a háttérmunka a hívó munkaterületén fut (kifejezett belépéssel, nem csak az öröklésre bízva)
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                try { if (download) RunDownloader(); }
-                catch (Exception ex) { DownloadOk = false; DownloadMessage = "A letöltő nem indítható: " + ex.Message; Interlocked.Increment(ref DownloadSerial); }
-                DoLoad();
+                using (Ctx.Enter(ws))
+                {
+                    try { if (download) RunDownloader(); }
+                    catch (Exception ex) { DownloadOk = false; DownloadMessage = "A letöltő nem indítható: " + ex.Message; Interlocked.Increment(ref Ctx.Current.DownloadSerial); }
+                    DoLoad();
+                }
             });
         }
 
@@ -109,7 +113,7 @@ namespace WStation.Core
                     DownloadMessage = timedOut ? "A letöltés fél óra alatt sem fejeződött be, ezért leállítottam. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja."
                                                : "A letöltés megszakítva. A már letöltött napok megmaradtak; a többit a következő frissítés pótolja.";
                     cancelDownload = false;
-                    Interlocked.Increment(ref DownloadSerial);
+                    Interlocked.Increment(ref Ctx.Current.DownloadSerial);
                     return;
                 }
                 p.WaitForExit();   // az aszinkron kimenet utolsó sorai (pl. „hálózati hiba”) is feldolgozódjanak
@@ -128,7 +132,7 @@ namespace WStation.Core
                     default: DownloadMessage = "A letöltés hibával ért véget (kód " + code + "). Részletek: appdata_letöltő\\lekerdezes_naplo.log"; break;
                 }
             }
-            Interlocked.Increment(ref DownloadSerial);
+            Interlocked.Increment(ref Ctx.Current.DownloadSerial);
         }
 
         static void DoLoad()
@@ -152,7 +156,7 @@ namespace WStation.Core
                     Data = ds;
                     Message = "";
                     Status = "ready";
-                    if (!backupChecked) { backupChecked = true; System.Threading.ThreadPool.QueueUserWorkItem(_ => Api.BackupIfDue()); }
+                    if (!backupChecked) { backupChecked = true; var ws = Ctx.Current; System.Threading.ThreadPool.QueueUserWorkItem(_ => { using (Ctx.Enter(ws)) Api.BackupIfDue(); }); }
                 }
             }
             catch (Exception ex)
@@ -164,7 +168,7 @@ namespace WStation.Core
             finally
             {
                 Progress = "";
-                Interlocked.Exchange(ref busy, 0);
+                Interlocked.Exchange(ref Ctx.Current.busy, 0);
             }
         }
     }
@@ -397,7 +401,7 @@ namespace WStation.Core
             var w = new JW().Obj()
                 .P("status", AppState.Status).P("message", AppState.Message).P("progress", AppState.Progress)
                 .P("dir", AppState.L.Base).P("dataDir", AppState.L.Data).P("hasData", AppState.Data != null).P("version", Version)
-                .P("hasDownloader", AppState.L.FindDownloader() != null).P("downloadSerial", Interlocked.Read(ref AppState.DownloadSerial))
+                .P("hasDownloader", AppState.L.FindDownloader() != null).P("downloadSerial", Interlocked.Read(ref Ctx.Current.DownloadSerial))
                 .P("downloadMessage", AppState.DownloadMessage).P("downloadOk", AppState.DownloadOk);
             return w.End().ToString();
         }

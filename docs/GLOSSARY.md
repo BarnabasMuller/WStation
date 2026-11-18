@@ -26,6 +26,8 @@ The code, file names and comments are in Hungarian. These are the terms you will
 | nyelv (`Nyelv.cs`) | language | |
 | önteszt (`--teszt`) | self-test | |
 | fordítás, sablon | translation, template | `web/lang/_sablon.json` |
+| munkaterület | workspace | one data folder (`data\`, `appdata_*\`) with its own state – `WorkspaceContext` (3.0) |
+| munkaterület-környezet, belépés | workspace context, entering it | `Ctx.Current`, `using (Ctx.Enter(ws))` (3.0) |
 
 ## Command-line switches
 
